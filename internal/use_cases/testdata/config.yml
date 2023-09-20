@@ -1,0 +1,4 @@
+jira:
+  auth:
+    host: https://jira.example.com
+    token: fa0d3adf-4df6-439d-ac8e-d639b285b760

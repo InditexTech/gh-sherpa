@@ -1,0 +1,6 @@
+bin/
+dist/
+.vscode
+**/__debug_bin*
+.local
+.scannerwork

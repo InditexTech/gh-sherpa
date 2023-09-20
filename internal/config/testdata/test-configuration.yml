@@ -1,0 +1,22 @@
+jira:
+  auth:
+    host: https://jira.example.com/jira
+    token: "1234567890"
+  issue_types:
+    bugfix: ["1"]
+    feature: ["3"]
+    improvement: ["4"]
+github:
+  issue_labels:
+    bugfix: ["kind/bug"]
+    dependency: ["kind/dependency"]
+    deprecation: ["kind/deprecation"]
+    documentation: ["kind/documentation"]
+    feature: ["kind/feature"]
+    hotfix: ["kind/hotfix"]
+    improvement: ["kind/improvement"]
+    refactoring: ["kind/refactoring"]
+    release: ["kind/release"]
+    removal: ["kind/removal"]
+    revert: ["kind/revert"]
+    security: ["kind/security"]

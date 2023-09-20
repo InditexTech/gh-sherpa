@@ -1,0 +1,9 @@
+inpackage: False
+testonly: False
+with-expecter: True
+keeptree: False
+packages:
+  github.com/InditexTech/gh-sherpa/internal/domain:
+    config:
+      all: true
+      dir: "internal/mocks/domain"

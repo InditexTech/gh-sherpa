@@ -1,0 +1,80 @@
+#!/bin/bash
+set -e
+
+###############################################################################
+#            _____ __                             ________    ____            #
+#           / ___// /_  ___  _________  ____ _   / ____/ /   /  _/            #
+#           \__ \/ __ \/ _ \/ ___/ __ \/ __ `/  / /   / /    / /              #
+#          ___/ / / / /  __/ /  / /_/ / /_/ /  / /___/ /____/ /               #
+#         /____/_/ /_/\___/_/  / .___/\__,_/   \____/_____/___/               #
+#                             /_/                                             #
+###############################################################################
+
+ROOT_DIR="$(dirname "$0")"
+
+NAME="gh-sherpa"
+REPO="InditexTech/gh-sherpa"
+VERSION=$(head -1 "${ROOT_DIR}/version")
+
+ARCH="$(uname -m)"
+
+BIN_DIR="${ROOT_DIR}/bin"
+BIN=""
+
+if [ "${GH_SHERPA_DEV}" == 1 ]; then
+  echo "=> Development mode activated."
+fi
+
+# Match the architecture with the the binary name
+if uname -a | grep Msys > /dev/null; then
+  if [ "${ARCH}" = "x86_64" ]; then
+    BIN="${NAME}-windows-x86_64-${VERSION}.exe"
+  elif [ "${ARCH}" = "i686" ]; then
+    BIN="${NAME}-windows-i386-${VERSION}.exe"
+  elif [ "${ARCH}" = "i386" ]; then
+    BIN="${NAME}-windows-i386-${VERSION}.exe"
+  elif [ "${ARCH}" = "arm64" ]; then
+    BIN="${NAME}-windows-arm64-${VERSION}.exe"
+  fi
+elif uname -a | grep Darwin > /dev/null; then
+  if [ "${ARCH}" = "x86_64" ]; then
+    BIN="${NAME}-darwin-x86_64-${VERSION}"
+  elif
+    [ "${ARCH}" = "arm64" ]; then
+    BIN="${NAME}-darwin-arm64-${VERSION}"
+  fi
+elif uname -a | grep Linux > /dev/null; then
+  if [ "${ARCH}" = "x86_64" ]; then
+    BIN="${NAME}-linux-x86_64-${VERSION}"
+  elif [ "${ARCH}" = "i686" ]; then
+    BIN="${NAME}-linux-i386-${VERSION}"
+  elif [ "${ARCH}" = "i386" ]; then
+    BIN="${NAME}-linux-i386-${VERSION}"
+  elif [ "${ARCH}" = "arm64" ]; then
+    BIN="${NAME}-linux-arm64-${VERSION}"
+  fi
+fi
+
+mkdir -p "${BIN_DIR}"
+# Build if required
+if [ -z "${BIN}" ] || [ -z "${VERSION}" ] || [ "${GH_SHERPA_DEV}" == 1 ]; then
+  if ! hash go &> /dev/null; then
+    echo "Go must be installed to use this GitHub extension on this platform!"
+    exit 1
+  fi
+
+  BIN="${NAME}-build"
+
+  cd "${ROOT_DIR}" > /dev/null
+  go build -o "${BIN_DIR}/${BIN}"
+  cd - > /dev/null
+# Download otherwise
+else
+  if [[ ! -x "${BIN_DIR}/${BIN}" ]]; then
+    rm -f "${BIN_DIR}/*"
+    gh release -R"${REPO}" download "${VERSION}" -p "${BIN}" --dir="${BIN_DIR}"
+    chmod +x "${BIN_DIR}/${BIN}"
+  fi
+fi
+
+exec "${BIN_DIR}/${BIN}" "$@"
