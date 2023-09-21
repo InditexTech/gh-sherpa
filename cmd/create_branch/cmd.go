@@ -38,10 +38,9 @@ func init() {
 
 	Command.PersistentFlags().StringVarP(&flags.BaseValue, "base", "b", "", "base branch for checkout. Use the default branch of the repository if it is not set")
 	Command.PersistentFlags().BoolVar(&flags.NoFetchValue, "no-fetch", false, "does not fetch the base branch")
-	Command.PersistentFlags().BoolVarP(&flags.UseDefaultValues, "yes", "y", false, "use the default proposed fields")
 }
 
-func runCommand(_ *cobra.Command, _ []string) (err error) {
+func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	logging.PrintCommandHeader(cmdName)
 
 	cfg := config.GetConfig()
@@ -69,7 +68,14 @@ func runCommand(_ *cobra.Command, _ []string) (err error) {
 
 func preRunCommand(cmd *cobra.Command, _ []string) error {
 	if cmd.Flags().Lookup("no-fetch").Changed {
-		cmd.MarkFlagRequired("issue")
+		if err := cmd.MarkFlagRequired("issue"); err != nil {
+			return err
+		}
+	}
+
+	yesFlag := cmd.Flags().Lookup("yes")
+	if yesFlag != nil {
+		flags.UseDefaultValues = yesFlag.Changed
 	}
 
 	return nil

@@ -93,7 +93,9 @@ func Initialize(isInteractive bool) error {
 	if err := vip.MergeInConfig(); err != nil {
 		switch err.(type) {
 		case viper.ConfigFileNotFoundError:
-			generateConfigurationFile(cfgFile, isInteractive)
+			if err := generateConfigurationFile(cfgFile, isInteractive); err != nil {
+				return err
+			}
 		default:
 			return err
 		}

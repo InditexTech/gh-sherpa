@@ -48,9 +48,11 @@ var useDefaultValues bool
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetVersionTemplate(versionTemplate)
+
+	rootCmd.PersistentFlags().BoolVarP(&useDefaultValues, "yes", "y", false, "use the default proposed fields")
+
 	rootCmd.AddCommand(create_branch.Command)
 	rootCmd.AddCommand(create_pull_request.Command)
-	rootCmd.PersistentFlags().BoolVarP(&useDefaultValues, "yes", "y", false, "use the default proposed fields")
 }
 
 func SetVersion(version string) {
