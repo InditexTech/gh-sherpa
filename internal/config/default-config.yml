@@ -8,6 +8,8 @@ jira:
     # Jira already generated PAT
     # WARNING: Replace it with your actual Jira PAT
     token: <Jira PAT>
+    # Jira insecure TLS configuration
+    insecure_tls: false
   # Jira issue types configuration
   issue_types:
     # Jira issue types for bugfix

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"net/http"
 
-	gojira "github.com/andygrunwald/go-jira"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
+	gojira "github.com/andygrunwald/go-jira"
 )
 
 // Jira configuration
@@ -18,8 +18,9 @@ type Jira struct {
 
 // JiraAuth Jira authentication configuration
 type JiraAuth struct {
-	Host  string
-	Token string
+	Host        string
+	Token       string
+	InsecureTLS bool `mapstructure:"insecure_tls"`
 }
 
 // JiraIssueTypes Jira issue types mapping configuration
@@ -59,7 +60,8 @@ func configureJira() error {
 
 func generateJiraPAT(host, username, password, name string) (pat string, err error) {
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	insecureTLS := vip.GetBool("jira.auth.insecure_tls")
+	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecureTLS}
 
 	tp := gojira.BasicAuthTransport{
 		Username:  username,
