@@ -20,7 +20,7 @@ type Jira struct {
 type JiraAuth struct {
 	Host        string
 	Token       string
-	InsecureTLS bool `mapstructure:"insecure_tls"`
+	InsecureTLS bool `mapstructure:"skip_tls_verify"`
 }
 
 // JiraIssueTypes Jira issue types mapping configuration
@@ -60,7 +60,7 @@ func configureJira() error {
 
 func generateJiraPAT(host, username, password, name string) (pat string, err error) {
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	insecureTLS := vip.GetBool("jira.auth.insecure_tls")
+	insecureTLS := vip.GetBool("jira.auth.skip_tls_verify")
 	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecureTLS}
 
 	tp := gojira.BasicAuthTransport{
