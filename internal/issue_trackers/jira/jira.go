@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"regexp"
 
-	gojira "github.com/andygrunwald/go-jira"
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
+	gojira "github.com/andygrunwald/go-jira"
 )
 
 var issuePattern = regexp.MustCompile(`^(?P<issue_key>\w+)-(?P<issue_num>\d+)$`)
@@ -42,7 +42,7 @@ func New(cfg Configuration) (jira *Jira, err error) {
 
 	jira = &Jira{cfg: cfg}
 
-	gojiraClient, err := createBearerClient(cfg.Auth.Token, cfg.Auth.Host)
+	gojiraClient, err := createBearerClient(cfg.Auth.Token, cfg.Auth.Host, cfg.Auth.InsecureTLS)
 	if err != nil {
 		return nil, fmt.Errorf("could not create a Jira client: %s", err)
 	}
@@ -111,9 +111,9 @@ func (j *Jira) GetIssueTrackerType() domain.IssueTrackerType {
 	return domain.IssueTrackerTypeJira
 }
 
-func createBearerClient(token string, host string) (client *JiraClient, err error) {
+func createBearerClient(token string, host string, insecureTLS bool) (client *JiraClient, err error) {
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecureTLS}
 
 	tp := gojira.BearerAuthTransport{
 		Token:     token,

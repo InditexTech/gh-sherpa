@@ -52,7 +52,7 @@ func TestFormatBranchName(t *testing.T) {
 		{
 			name: "Does format branch name",
 			args: args{repository: "InditexTech/gh-sherpa", branchType: "feature", issueId: "GH-1", issueContext: "my-title-is-too-long-and-it-should-be-truncated"},
-			want: "feature/GH-1-my-title-is-too-long-and-it-shoul",
+			want: "feature/GH-1-my-title-is-too-long-and-it-s",
 		},
 	}
 	for _, tt := range tests {
