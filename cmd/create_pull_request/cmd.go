@@ -32,7 +32,6 @@ func init() {
 	Command.PersistentFlags().StringVarP(&flags.BaseBranch, "base", "b", "", "base branch for checkout. Use the default branch of the repository if it is not set")
 	Command.PersistentFlags().BoolVar(&flags.NoFetch, "no-fetch", false, "does not fetch the base branch")
 	Command.PersistentFlags().BoolVar(&flags.NoDraft, "no-draft", false, "create the pull request in ready for review mode")
-	Command.PersistentFlags().BoolVarP(&flags.UseDefaultValues, "yes", "y", false, "use the default proposed fields")
 	Command.PersistentFlags().BoolVarP(&flags.NoCloseIssue, "no-close-issue", "n", false, "do not close the GitHub issue after merging the pull request")
 }
 
@@ -71,6 +70,11 @@ func validateFlags(cmd *cobra.Command) error {
 	if cmd.Flags().Lookup("no-fetch").Changed {
 		logging.Debug("Flag no-fetch used found, marking issue flag as required...")
 		return cmd.MarkFlagRequired("issue")
+	}
+
+	yesFlag := cmd.Flags().Lookup("yes")
+	if yesFlag != nil {
+		flags.UseDefaultValues = yesFlag.Changed
 	}
 
 	return nil
