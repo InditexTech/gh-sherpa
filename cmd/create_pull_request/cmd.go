@@ -63,10 +63,6 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 }
 
 func preRunCommand(cmd *cobra.Command, _ []string) error {
-	return validateFlags(cmd)
-}
-
-func validateFlags(cmd *cobra.Command) error {
 	if cmd.Flags().Lookup("no-fetch").Changed {
 		logging.Debug("Flag no-fetch used found, marking issue flag as required...")
 		return cmd.MarkFlagRequired("issue")
