@@ -8,28 +8,22 @@ jira:
     # Jira already generated PAT
     # WARNING: Replace it with your actual Jira PAT
     token: <Jira PAT>
+    # Jira insecure TLS configuration
+    skip_tls_verify: false
   # Jira issue types configuration
   issue_types:
     # Jira issue types for bugfix
-    bugfix: ["1", "10205", "14500"]
+    bugfix: ["1"]
     # Jira issue types for features
-    feature: ["3", "5", "57", "11501", "14200", "14838"]
+    feature: ["3", "5"]
     # Jira issue types for improvements
-    improvement: ["4", "13500"]
+    improvement: ["4"]
 
 # Github configuration --------------------------------#
 github:
   # Github issue labels configuration
   issue_labels:
     bugfix: ["kind/bug"]
-    dependency: ["kind/dependency"]
-    deprecation: ["kind/deprecation"]
-    documentation: ["kind/documentation"]
     feature: ["kind/feature"]
-    hotfix: ["kind/hotfix"]
-    improvement: ["kind/improvement"]
     refactoring: ["kind/refactoring"]
-    release: ["kind/release"]
-    removal: ["kind/removal"]
-    revert: ["kind/revert"]
-    security: ["kind/security"]
+    documentation: ["kind/documentation"]
