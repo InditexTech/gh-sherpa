@@ -80,6 +80,17 @@ func TestFormatBranchName(t *testing.T) {
 			},
 			want: "feat/GH-1-my-title-is-too-long-and-it-shou",
 		},
+		{
+			name: "Does format branch with empty override",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "refactoring",
+				issueId:              "GH-1",
+				issueContext:         "refactor-issue",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Refactoring: ""},
+			},
+			want: "refactoring/GH-1-refactor-issue",
+		},
 	}
 
 	for _, tt := range tests {
@@ -100,11 +111,11 @@ func TestParseBranchName(t *testing.T) {
 	}{
 		{
 			branchName: "feature/GH-1-my-title",
-			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "my-title"},
+			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "issue-title"},
 		},
 		{
 			branchName: "bugfix/PROJECTKEY-1-my-title",
-			want:       &BranchNameInfo{BranchType: "bugfix", IssueId: "PROJECTKEY-1", IssueContext: "my-title"},
+			want:       &BranchNameInfo{BranchType: "bugfix", IssueId: "PROJECTKEY-1", IssueContext: "issue-title"},
 		},
 		{
 			branchName: "feature/GH-1-my-title-is-too-long-and-it-should-not-matter",
