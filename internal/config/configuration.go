@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 	"github.com/spf13/viper"
@@ -22,9 +23,12 @@ const (
 var defaultConfigBuff []byte
 
 type Configuration struct {
-	Jira   Jira
-	Github Github
+	Jira                 Jira
+	Github               Github
+	BranchPrefixOverride BranchPrefixOverrides `mapstructure:"branch_prefix_overrides"`
 }
+
+type BranchPrefixOverrides map[issue_types.IssueType]string
 
 // Validate validates the configuration
 func (cfg Configuration) Validate() error {

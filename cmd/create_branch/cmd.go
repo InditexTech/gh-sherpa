@@ -51,6 +51,7 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	createBranch := use_cases.CreateBranch{
+		BranchPrefixOverride:    cfg.BranchPrefixOverride,
 		Git:                     &git.Provider{},
 		GhCli:                   &gh.Cli{},
 		IssueTrackerProvider:    issueTrackers,

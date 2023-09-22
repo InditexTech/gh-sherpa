@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
@@ -15,6 +16,7 @@ type CreateBranchArgs struct {
 }
 
 type CreateBranch struct {
+	BranchPrefixOverride    map[issue_types.IssueType]string
 	Git                     domain.GitProvider
 	GhCli                   domain.GhCli
 	IssueTrackerProvider    domain.IssueTrackerProvider
@@ -81,7 +83,7 @@ func (cb CreateBranch) askUserForNewBranchName(branchName *string, issueTracker 
 	provs := providers{
 		UserInteraction: cb.UserInteractionProvider,
 	}
-	if err := askBranchName(branchName, issueTracker, issueID, repo, useDefaultValues, provs); err != nil {
+	if err := askBranchName(cb.BranchPrefixOverride, branchName, issueTracker, issueID, repo, useDefaultValues, provs); err != nil {
 		return false, err
 	}
 

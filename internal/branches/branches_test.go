@@ -3,6 +3,7 @@ package branches
 import (
 	"testing"
 
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,11 +34,14 @@ func TestParseIssueContext(t *testing.T) {
 }
 
 func TestFormatBranchName(t *testing.T) {
+	repositoryName := "InditexTech/gh-sherpa"
+
 	type args struct {
-		repository   string
-		branchType   string
-		issueId      string
-		issueContext string
+		repository           string
+		branchType           string
+		issueId              string
+		issueContext         string
+		branchPrefixOverride map[issue_types.IssueType]string
 	}
 	tests := []struct {
 		name string
@@ -46,18 +50,42 @@ func TestFormatBranchName(t *testing.T) {
 	}{
 		{
 			name: "Does format branch name",
-			args: args{repository: "InditexTech/gh-sherpa", branchType: "feature", issueId: "GH-1", issueContext: "my-title"},
+			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title"},
 			want: "feature/GH-1-my-title",
 		},
 		{
-			name: "Does format branch name",
-			args: args{repository: "InditexTech/gh-sherpa", branchType: "feature", issueId: "GH-1", issueContext: "my-title-is-too-long-and-it-should-be-truncated"},
+			name: "Does format branch name with override",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1",
+				issueContext:         "my-title",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+			},
+			want: "feat/GH-1-my-title",
+		},
+		{
+			name: "Does format long branch name",
+			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title-is-too-long-and-it-should-be-truncated"},
 			want: "feature/GH-1-my-title-is-too-long-and-it-s",
 		},
+		{
+			name: "Does format long branch name with override",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1",
+				issueContext:         "my-title-is-too-long-and-it-should-be-truncated",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+			},
+			want: "feat/GH-1-my-title-is-too-long-and-it-shou",
+		},
 	}
+
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			branchName := FormatBranchName(tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)
+			branchName := FormatBranchName(tt.args.branchPrefixOverride, tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)
 
 			assert.Equal(t, tt.want, branchName)
 		})

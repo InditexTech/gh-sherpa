@@ -15,7 +15,7 @@ type providers struct {
 	UserInteraction domain.UserInteractionProvider
 }
 
-func askBranchName(branchName *string, issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool, prov providers) (err error) {
+func askBranchName(branchPrefixOverride map[issue_types.IssueType]string, branchName *string, issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool, prov providers) (err error) {
 	issue, err := issueTracker.GetIssue(issueIdentifier)
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func askBranchName(branchName *string, issueTracker domain.IssueTracker, issueId
 	if err != nil {
 		return err
 	}
-	branchPrefix := issueType.String()
+	branchType := issueType.String()
 
 	issueID := issueTracker.FormatIssueId(issue.ID)
 
@@ -34,7 +34,7 @@ func askBranchName(branchName *string, issueTracker domain.IssueTracker, issueId
 	issueTrackerType := issueTracker.GetIssueTrackerType()
 
 	if !useDefaultValues {
-		branchPrefix, err = getBranchPrefix(issueType, issueTrackerType, prov)
+		branchType, err = getBranchPrefix(issueType, issueTrackerType, prov)
 		if err != nil {
 			return err
 		}
@@ -53,51 +53,51 @@ func askBranchName(branchName *string, issueTracker domain.IssueTracker, issueId
 		}
 
 		if issueType == issue_types.Bug {
-			branchPrefix = issue_types.Bugfix.String()
+			branchType = issue_types.Bugfix.String()
 		}
 	}
 
-	*branchName = branches.FormatBranchName(repo.NameWithOwner, branchPrefix, issueID, issueSlug)
+	*branchName = branches.FormatBranchName(branchPrefixOverride, repo.NameWithOwner, branchType, issueID, issueSlug)
 
 	return nil
 }
 
-func askBranchPrefixBug(branchPrefix *string, issueTrackerType domain.IssueTrackerType, interactionProvider domain.UserInteractionProvider) error {
+func askBranchTypeBug(branchType *string, issueTrackerType domain.IssueTrackerType, interactionProvider domain.UserInteractionProvider) error {
 	bugValues := issue_types.GetBugValues()
 	bugValuesStr := make([]string, len(bugValues))
 	for i, branchType := range bugValues {
 		bugValuesStr[i] = branchType.String()
 	}
-	*branchPrefix = bugValuesStr[0]
+	*branchType = bugValuesStr[0]
 
-	promptMessage := interactive.GetPromptMessageBranchType(*branchPrefix, issueTrackerType)
-	if err := interactionProvider.SelectOrInputPrompt(promptMessage, bugValuesStr, branchPrefix, true); err != nil {
+	promptMessage := interactive.GetPromptMessageBranchType(*branchType, issueTrackerType)
+	if err := interactionProvider.SelectOrInputPrompt(promptMessage, bugValuesStr, branchType, true); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func askBranchPrefix(branchPrefix *string, issueTrackerType domain.IssueTrackerType, interactionProvider domain.UserInteractionProvider) (err error) {
-	branchPrefixes := []string{*branchPrefix, issue_types.Other.String()}
+func askBranchType(branchType *string, issueTrackerType domain.IssueTrackerType, interactionProvider domain.UserInteractionProvider) (err error) {
+	branchPrefixes := []string{*branchType, issue_types.Other.String()}
 
-	promptMessage := interactive.GetPromptMessageBranchType(*branchPrefix, issueTrackerType)
-	if err := interactionProvider.SelectOrInputPrompt(promptMessage, branchPrefixes, branchPrefix, true); err != nil {
+	promptMessage := interactive.GetPromptMessageBranchType(*branchType, issueTrackerType)
+	if err := interactionProvider.SelectOrInputPrompt(promptMessage, branchPrefixes, branchType, true); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func askBranchPrefixOther(branchPrefix *string, interactionProvider domain.UserInteractionProvider) error {
+func askBranchTypeOther(branchType *string, interactionProvider domain.UserInteractionProvider) error {
 	validIssueTypes := issue_types.GetValidIssueTypes()
 	branchTypes := make([]string, len(validIssueTypes))
 	for i, branchType := range validIssueTypes {
 		branchTypes[i] = branchType.String()
 	}
-	*branchPrefix = branchTypes[0]
+	*branchType = branchTypes[0]
 
-	if err := interactionProvider.SelectOrInput("branch type", branchTypes, branchPrefix, true); err != nil {
+	if err := interactionProvider.SelectOrInput("branch type", branchTypes, branchType, true); err != nil {
 		return err
 	}
 
@@ -118,9 +118,9 @@ func getBranchPrefix(issueType issue_types.IssueType, issueTrackerType domain.Is
 	branchPrefix = issueType.String()
 
 	if issueType == issue_types.Bug || issueType == issue_types.Bugfix {
-		err = askBranchPrefixBug(&branchPrefix, issueTrackerType, prov.UserInteraction)
+		err = askBranchTypeBug(&branchPrefix, issueTrackerType, prov.UserInteraction)
 	} else if issueType != issue_types.Other && issueType != issue_types.Unknown {
-		err = askBranchPrefix(&branchPrefix, issueTrackerType, prov.UserInteraction)
+		err = askBranchType(&branchPrefix, issueTrackerType, prov.UserInteraction)
 	} else {
 		logging.PrintWarn("undetermined issue type")
 	}
@@ -130,7 +130,7 @@ func getBranchPrefix(issueType issue_types.IssueType, issueTrackerType domain.Is
 	}
 
 	if issueType == issue_types.Other || issueType == issue_types.Unknown {
-		err = askBranchPrefixOther(&branchPrefix, prov.UserInteraction)
+		err = askBranchTypeOther(&branchPrefix, prov.UserInteraction)
 		if err != nil {
 			return
 		}

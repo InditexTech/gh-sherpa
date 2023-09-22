@@ -5,6 +5,7 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
@@ -19,6 +20,7 @@ type CreatePullRequestArgs struct {
 }
 
 type CreatePullRequest struct {
+	BranchPrefixOverride    map[issue_types.IssueType]string
 	Git                     domain.GitProvider
 	GhCli                   domain.GhCli
 	IssueTrackerProvider    domain.IssueTrackerProvider
@@ -303,7 +305,7 @@ func (cpr *CreatePullRequest) askUserForNewBranchName(branchName *string, baseBr
 	provs := providers{
 		UserInteraction: cpr.UserInteractionProvider,
 	}
-	if err := askBranchName(branchName, issueTracker, issueID, repo, useDefaultValues, provs); err != nil {
+	if err := askBranchName(cpr.BranchPrefixOverride, branchName, issueTracker, issueID, repo, useDefaultValues, provs); err != nil {
 		return false, err
 	}
 

@@ -52,6 +52,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	createPullRequestUseCase := use_cases.CreatePullRequest{
+		BranchPrefixOverride:    cfg.BranchPrefixOverride,
 		Git:                     &git.Provider{},
 		GhCli:                   &gh.Cli{},
 		IssueTrackerProvider:    issueTrackers,

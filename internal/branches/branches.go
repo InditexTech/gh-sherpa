@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 )
 
 var patternBranchName = regexp.MustCompile(`^(?:(?P<branch_type>\w*)/)?(?P<issue_id>(?:(?P<issue_key>\w*)-)?(?P<issue_number>\d+))(?:-?(?P<issue_context>[\w\-]*))$`)
@@ -67,8 +69,20 @@ func ParseIssueContext(issueContext string) string {
 	return issueContext
 }
 
-func FormatBranchName(repoNameWithOwner string, branchType string, issueId string, issueContext string) (branchName string) {
-	branchName = fmt.Sprintf("%s/%s", branchType, issueId)
+// FormatBranchName formats a branch name based on the issue type and the issue identifier.
+// It overrides the branch prefix if the issue type is present in the branchPrefixOverride map.
+func FormatBranchName(branchPrefixOverride map[issue_types.IssueType]string, repoNameWithOwner string, branchType string, issueId string, issueContext string) (branchName string) {
+	branchMapping := make(map[string]string)
+	for k, v := range branchPrefixOverride {
+		branchMapping[k.String()] = v
+	}
+
+	branchPrefix, found := branchMapping[branchType]
+	if !found {
+		branchPrefix = branchType
+	}
+
+	branchName = fmt.Sprintf("%s/%s", branchPrefix, issueId)
 
 	if issueContext != "" {
 		branchName = fmt.Sprintf("%s-%s", branchName, issueContext)
