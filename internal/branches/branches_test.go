@@ -111,11 +111,11 @@ func TestParseBranchName(t *testing.T) {
 	}{
 		{
 			branchName: "feature/GH-1-my-title",
-			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "issue-title"},
+			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "my-title"},
 		},
 		{
 			branchName: "bugfix/PROJECTKEY-1-my-title",
-			want:       &BranchNameInfo{BranchType: "bugfix", IssueId: "PROJECTKEY-1", IssueContext: "issue-title"},
+			want:       &BranchNameInfo{BranchType: "bugfix", IssueId: "PROJECTKEY-1", IssueContext: "my-title"},
 		},
 		{
 			branchName: "feature/GH-1-my-title-is-too-long-and-it-should-not-matter",
