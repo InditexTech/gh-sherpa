@@ -91,3 +91,35 @@ func TestFormatBranchName(t *testing.T) {
 		})
 	}
 }
+
+func TestParseBranchName(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		branchName string
+		want       *BranchNameInfo
+	}{
+		{
+			branchName: "feature/GH-1-my-title",
+			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "my-title"},
+		},
+		{
+			branchName: "bugfix/PROJECTKEY-1-my-title",
+			want:       &BranchNameInfo{BranchType: "bugfix", IssueId: "PROJECTKEY-1", IssueContext: "my-title"},
+		},
+		{
+			branchName: "feature/GH-1-my-title-is-too-long-and-it-should-not-matter",
+			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "my-title-is-too-long-and-it-should-not-matter"},
+		},
+		{
+			branchName: "randomprefix/A_PROJECT_KEY-99-issue-tittle-here",
+			want:       &BranchNameInfo{BranchType: "randomprefix", IssueId: "A_PROJECT_KEY-99", IssueContext: "issue-tittle-here"},
+		},
+	} {
+		tc := tc
+		t.Run(tc.branchName, func(t *testing.T) {
+			branchInfo := ParseBranchName(tc.branchName)
+
+			assert.Equal(t, tc.want, branchInfo)
+		})
+	}
+}
