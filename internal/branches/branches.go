@@ -72,14 +72,13 @@ func ParseIssueContext(issueContext string) string {
 // FormatBranchName formats a branch name based on the issue type and the issue identifier.
 // It overrides the branch prefix if the issue type is present in the branchPrefixOverride map.
 func FormatBranchName(branchPrefixOverride map[issue_types.IssueType]string, repoNameWithOwner string, branchType string, issueId string, issueContext string) (branchName string) {
-	branchMapping := make(map[string]string)
-	for k, v := range branchPrefixOverride {
-		branchMapping[k.String()] = v
-	}
+	branchPrefix := branchType
 
-	branchPrefix, found := branchMapping[branchType]
-	if !found {
-		branchPrefix = branchType
+	for issueType, prefix := range branchPrefixOverride {
+		if issueType.String() == branchType {
+			branchPrefix = prefix
+			break
+		}
 	}
 
 	branchName = fmt.Sprintf("%s/%s", branchPrefix, issueId)
