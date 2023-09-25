@@ -82,7 +82,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		ShouldFetch:   !flags.NoFetch,
 		IsInteractive: isInteractive,
 		NoDraft:       flags.NoDraft,
-		NoCloseIssue:  flags.NoCloseIssue,
+		ShouldClose:   !flags.NoCloseIssue,
 	}
 	createPullRequestUseCase := use_cases.CreatePullRequest{
 		Cfg:                     createPullRequestConfig,

@@ -15,7 +15,7 @@ type CreatePullRequestConfiguration struct {
 	ShouldFetch   bool
 	NoDraft       bool
 	IsInteractive bool
-	NoCloseIssue  bool
+	ShouldClose   bool
 }
 
 type CreatePullRequest struct {
@@ -161,7 +161,7 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	//15. GET ISSUE INFO
-	title, body, err := cpr.getPullRequestInfo(issueID, cpr.Cfg.NoCloseIssue)
+	title, body, err := cpr.getPullRequestInfo(issueID)
 	if err != nil {
 		return err
 	}
@@ -203,13 +203,13 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 	return
 }
 
-func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue, noCloseIssue bool) (title string, body string, err error) {
+func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
 	switch issue.IssueTracker {
 	case domain.IssueTrackerTypeGithub:
 		title = issue.Title
 
 		keyword := "Closes"
-		if noCloseIssue {
+		if !cpr.Cfg.ShouldClose {
 			keyword = "Related to"
 		}
 		body = fmt.Sprintf("%s #%s", keyword, issue.ID)
@@ -291,13 +291,13 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	return nil
 }
 
-func (cpr *CreatePullRequest) getPullRequestInfo(issueID string, noCloseIssue bool) (title string, body string, err error) {
+func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, body string, err error) {
 	issue, err := cpr.getIssueFromIssueID(issueID)
 	if err != nil {
 		return
 	}
 
-	title, body, err = cpr.getPullRequestTitleAndBody(issue, noCloseIssue)
+	title, body, err = cpr.getPullRequestTitleAndBody(issue)
 
 	return
 }
