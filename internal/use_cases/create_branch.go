@@ -8,7 +8,7 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
-type CreateBranchArgs struct {
+type CreateBranchConfiguration struct {
 	IssueValue       string
 	BaseValue        string
 	NoFetchValue     bool
@@ -16,6 +16,7 @@ type CreateBranchArgs struct {
 }
 
 type CreateBranch struct {
+	Cfg                     CreateBranchConfiguration
 	Git                     domain.GitProvider
 	RepositoryProvider      domain.RepositoryProvider
 	IssueTrackerProvider    domain.IssueTrackerProvider
@@ -24,8 +25,8 @@ type CreateBranch struct {
 }
 
 // Execute executes the create branch use case
-func (cb CreateBranch) Execute(args CreateBranchArgs) (err error) {
-	if args.IssueValue == "" {
+func (cb CreateBranch) Execute() (err error) {
+	if cb.Cfg.IssueValue == "" {
 		return fmt.Errorf("sherpa needs an valid issue identifier")
 	}
 
@@ -34,27 +35,27 @@ func (cb CreateBranch) Execute(args CreateBranchArgs) (err error) {
 		return err
 	}
 
-	baseBranch := args.BaseValue
+	baseBranch := cb.Cfg.BaseValue
 	if baseBranch == "" {
 		logging.Debugf("Base branch not set, using default branch, %s", repo.DefaultBranchRef)
 		baseBranch = repo.DefaultBranchRef
 	}
 
-	issueTrackerProvider, err := cb.IssueTrackerProvider.GetIssueTracker(args.IssueValue)
+	issueTrackerProvider, err := cb.IssueTrackerProvider.GetIssueTracker(cb.Cfg.IssueValue)
 	if err != nil {
 		return err
 	}
 
-	branchName, err := cb.BranchProvider.GetBranchName(issueTrackerProvider, args.IssueValue, *repo, args.UseDefaultValues)
+	branchName, err := cb.BranchProvider.GetBranchName(issueTrackerProvider, cb.Cfg.IssueValue, *repo, cb.Cfg.UseDefaultValues)
 	if err != nil {
 		return err
 	}
 
-	if err := cb.confirmBranchName(branchName, args.UseDefaultValues); err != nil {
+	if err := cb.confirmBranchName(branchName, cb.Cfg.UseDefaultValues); err != nil {
 		return err
 	}
 
-	return cb.checkoutBranch(branchName, baseBranch, !args.NoFetchValue)
+	return cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.NoFetchValue)
 }
 
 func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetch bool) error {

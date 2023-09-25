@@ -26,7 +26,14 @@ var Command = &cobra.Command{
 	Aliases: []string{"cb"},
 }
 
-var flags = use_cases.CreateBranchArgs{}
+type createBranchFlags struct {
+	IssueValue       string
+	BaseValue        string
+	NoFetchValue     bool
+	UseDefaultValues bool
+}
+
+var flags = createBranchFlags{}
 
 func init() {
 	Command.PersistentFlags().StringVarP(&flags.IssueValue, "issue", "i", "", "issue identifier")
@@ -58,7 +65,14 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		return err
 	}
 
+	createBranchConfig := use_cases.CreateBranchConfiguration{
+		IssueValue:       flags.IssueValue,
+		BaseValue:        flags.BaseValue,
+		NoFetchValue:     flags.NoFetchValue,
+		UseDefaultValues: flags.UseDefaultValues,
+	}
 	createBranch := use_cases.CreateBranch{
+		Cfg:                     createBranchConfig,
 		Git:                     &git.Provider{},
 		RepositoryProvider:      &gh.Cli{},
 		IssueTrackerProvider:    issueTrackers,
@@ -66,7 +80,7 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		BranchProvider:          branchProvider,
 	}
 
-	err = createBranch.Execute(flags)
+	err = createBranch.Execute()
 
 	if err != nil {
 		return err

@@ -87,11 +87,12 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue: "1",
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.Error(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -101,9 +102,10 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if no issue flag is provided", func() {
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{}
+		args := use_cases.CreateBranchConfiguration{}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
 		s.gitProvider.AssertExpectations(s.T())
@@ -116,12 +118,13 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue:       "1",
 			UseDefaultValues: true,
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/GH-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
@@ -135,12 +138,13 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue:       "1",
 			UseDefaultValues: true,
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -155,11 +159,12 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue: "1",
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreateBranchCalled(domain.IssueTrackerTypeGithub)
@@ -175,11 +180,12 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue: "1",
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/GH-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
@@ -301,11 +307,12 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue: "PROJECTKEY-1",
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.Error(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -315,9 +322,10 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if no issue flag is provided", func() {
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{}
+		args := use_cases.CreateBranchConfiguration{}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
 		s.gitProvider.AssertExpectations(s.T())
@@ -330,12 +338,13 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue:       "PROJECTKEY-1",
 			UseDefaultValues: true,
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/PROJECTKEY-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
@@ -349,12 +358,13 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Maybe()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue:       "PROJECTKEY-1",
 			UseDefaultValues: true,
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -369,11 +379,12 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Maybe()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue: "PROJECTKEY-1",
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreateBranchCalled(domain.IssueTrackerTypeJira)
@@ -389,11 +400,12 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
+		args := use_cases.CreateBranchConfiguration{
 			IssueValue: "PROJECTKEY-1",
 		}
 
-		err := s.uc.Execute(args)
+		s.uc.Cfg = args
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/PROJECTKEY-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
