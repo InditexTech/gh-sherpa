@@ -1,8 +1,11 @@
 package domain
 
 type GhCli interface {
-	GetRepo() (repo *Repository, err error)
 	Execute(result any, args []string) (err error)
+}
+
+type RepositoryProvider interface {
+	GetRepository() (repo *Repository, err error)
 }
 
 type PullRequestProvider interface {

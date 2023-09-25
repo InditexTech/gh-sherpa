@@ -20,7 +20,7 @@ type CreatePullRequestArgs struct {
 
 type CreatePullRequest struct {
 	Git                     domain.GitProvider
-	GhCli                   domain.GhCli
+	RepositoryProvider      domain.RepositoryProvider
 	IssueTrackerProvider    domain.IssueTrackerProvider
 	UserInteractionProvider domain.UserInteractionProvider
 	PullRequestProvider     domain.PullRequestProvider
@@ -30,7 +30,7 @@ type CreatePullRequest struct {
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 
-	repo, err := cpr.GhCli.GetRepo()
+	repo, err := cpr.RepositoryProvider.GetRepository()
 	if err != nil {
 		logging.Debugf("error while getting repo: %s", err)
 		return err

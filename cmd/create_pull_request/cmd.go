@@ -59,12 +59,14 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	ghCliProvider := &gh.Cli{}
+
 	createPullRequestUseCase := use_cases.CreatePullRequest{
 		Git:                     &git.Provider{},
-		GhCli:                   &gh.Cli{},
+		RepositoryProvider:      ghCliProvider,
 		IssueTrackerProvider:    issueTrackers,
 		UserInteractionProvider: userInteraction,
-		PullRequestProvider:     &gh.Cli{},
+		PullRequestProvider:     ghCliProvider,
 		BranchProvider:          branchProvider,
 	}
 

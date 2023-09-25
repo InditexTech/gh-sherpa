@@ -60,7 +60,7 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 
 	createBranch := use_cases.CreateBranch{
 		Git:                     &git.Provider{},
-		GhCli:                   &gh.Cli{},
+		RepositoryProvider:      &gh.Cli{},
 		IssueTrackerProvider:    issueTrackers,
 		UserInteractionProvider: userInteraction,
 		BranchProvider:          branchProvider,

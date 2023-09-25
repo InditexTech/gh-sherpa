@@ -22,12 +22,12 @@ type CreatePullRequestExecutionTestSuite struct {
 	defaultBranchName       string
 	uc                      use_cases.CreatePullRequest
 	gitProvider             *domainMocks.MockGitProvider
-	ghCliProvider           *domainMocks.MockGhCli
 	issueTrackerProvider    *domainMocks.MockIssueTrackerProvider
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	pullRequestProvider     *domainMocks.MockPullRequestProvider
 	issueTracker            *domainMocks.MockIssueTracker
 	branchProvider          *domainMocks.MockBranchProvider
+	repositoryProvider      *domainMocks.MockRepositoryProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
@@ -44,31 +44,31 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.initializeGitProvider()
-	s.ghCliProvider = s.initializeGhCli()
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
+	s.repositoryProvider = s.initializeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
 	s.uc = use_cases.CreatePullRequest{
 		Git:                     s.gitProvider,
-		GhCli:                   s.ghCliProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
 		PullRequestProvider:     s.pullRequestProvider,
 		BranchProvider:          s.branchProvider,
+		RepositoryProvider:      s.repositoryProvider,
 	}
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.ghCliProvider.Mock, s.ghCliProvider.GetRepo)
-		s.ghCliProvider.EXPECT().GetRepo().Return(nil, assert.AnError).Once()
+		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
+		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
@@ -447,17 +447,17 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTrackerProvid
 	return issueTrackerProvider
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeGhCli() *domainMocks.MockGhCli {
-	ghCliProvider := &domainMocks.MockGhCli{}
+func (s *CreateGithubPullRequestExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
+	repositoryProvider := &domainMocks.MockRepositoryProvider{}
 
-	ghCliProvider.EXPECT().GetRepo().Return(&domain.Repository{
+	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
 		Owner:            "inditex",
 		Name:             "gh-sherpa",
 		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}, nil).Maybe()
 
-	return ghCliProvider
+	return repositoryProvider
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
@@ -518,31 +518,31 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.initializeGitProvider()
-	s.ghCliProvider = s.initializeGhCli()
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
+	s.repositoryProvider = s.initializeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
 	s.uc = use_cases.CreatePullRequest{
 		Git:                     s.gitProvider,
-		GhCli:                   s.ghCliProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
 		PullRequestProvider:     s.pullRequestProvider,
 		BranchProvider:          s.branchProvider,
+		RepositoryProvider:      s.repositoryProvider,
 	}
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.ghCliProvider.Mock, s.ghCliProvider.GetRepo)
-		s.ghCliProvider.EXPECT().GetRepo().Return(nil, assert.AnError).Once()
+		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
+		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
@@ -923,17 +923,17 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTrackerProvider
 	return issueTrackerProvider
 }
 
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeGhCli() *domainMocks.MockGhCli {
-	ghCliProvider := &domainMocks.MockGhCli{}
+func (s *CreateJiraPullRequestExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
+	repositoryProvider := &domainMocks.MockRepositoryProvider{}
 
-	ghCliProvider.EXPECT().GetRepo().Return(&domain.Repository{
+	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
 		Owner:            "inditex",
 		Name:             "gh-sherpa",
 		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}, nil).Maybe()
 
-	return ghCliProvider
+	return repositoryProvider
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {

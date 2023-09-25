@@ -17,7 +17,7 @@ type CreateBranchArgs struct {
 
 type CreateBranch struct {
 	Git                     domain.GitProvider
-	GhCli                   domain.GhCli
+	RepositoryProvider      domain.RepositoryProvider
 	IssueTrackerProvider    domain.IssueTrackerProvider
 	UserInteractionProvider domain.UserInteractionProvider
 	BranchProvider          domain.BranchProvider
@@ -29,7 +29,7 @@ func (cb CreateBranch) Execute(args CreateBranchArgs) (err error) {
 		return fmt.Errorf("sherpa needs an valid issue identifier")
 	}
 
-	repo, err := cb.GhCli.GetRepo()
+	repo, err := cb.RepositoryProvider.GetRepository()
 	if err != nil {
 		return err
 	}
