@@ -26,7 +26,7 @@ var Command = &cobra.Command{
 	PreRunE: preRunCommand,
 }
 
-var flags = use_cases.CreatePullRequestArgs{}
+var flags = use_cases.CreatePullRequestConfiguration{}
 
 func init() {
 	Command.PersistentFlags().StringVarP(&flags.IssueId, "issue", "i", "", "issue identifier")
@@ -62,6 +62,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	ghCliProvider := &gh.Cli{}
 
 	createPullRequestUseCase := use_cases.CreatePullRequest{
+		Cfg:                     flags,
 		Git:                     &git.Provider{},
 		RepositoryProvider:      ghCliProvider,
 		IssueTrackerProvider:    issueTrackers,
@@ -70,7 +71,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		BranchProvider:          branchProvider,
 	}
 
-	return createPullRequestUseCase.Execute(flags)
+	return createPullRequestUseCase.Execute()
 }
 
 func preRunCommand(cmd *cobra.Command, _ []string) error {

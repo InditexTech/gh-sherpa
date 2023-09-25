@@ -8,8 +8,8 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
-// CreatePullRequestArgs contains the arguments for the CreatePullRequest use case
-type CreatePullRequestArgs struct {
+// CreatePullRequestConfiguration contains the arguments for the CreatePullRequest use case
+type CreatePullRequestConfiguration struct {
 	IssueId          string
 	BaseBranch       string
 	NoFetch          bool
@@ -19,6 +19,7 @@ type CreatePullRequestArgs struct {
 }
 
 type CreatePullRequest struct {
+	Cfg                     CreatePullRequestConfiguration
 	Git                     domain.GitProvider
 	RepositoryProvider      domain.RepositoryProvider
 	IssueTrackerProvider    domain.IssueTrackerProvider
@@ -28,7 +29,7 @@ type CreatePullRequest struct {
 }
 
 // Execute executes the create pull request use case
-func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
+func (cpr CreatePullRequest) Execute() error {
 
 	repo, err := cpr.RepositoryProvider.GetRepository()
 	if err != nil {
@@ -36,7 +37,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 		return err
 	}
 
-	baseBranch := args.BaseBranch
+	baseBranch := cpr.Cfg.BaseBranch
 	if baseBranch == "" {
 		baseBranch = repo.DefaultBranchRef
 	}
@@ -46,7 +47,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 		return fmt.Errorf("could not get the current branch name because %s", err)
 	}
 
-	issueID := args.IssueId
+	issueID := cpr.Cfg.IssueId
 	//1. FLAG ISSUE IS USED
 	if issueID != "" {
 		issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
@@ -60,7 +61,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 		name, exists := cpr.Git.BranchExistsContains(fmt.Sprintf("/%s-", formattedIssueId))
 		if exists {
 			//8. FLAG DEFAULT IS USED
-			if args.UseDefaultValues {
+			if cpr.Cfg.UseDefaultValues {
 				return fmt.Errorf("the branch %s already exists", logging.PaintWarning(name))
 			}
 
@@ -73,7 +74,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 			}
 
 			if !confirmed {
-				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
+				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo, cpr.Cfg.UseDefaultValues, cpr.Cfg.NoFetch)
 				if err != nil {
 					return err
 				}
@@ -99,7 +100,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 			}
 
 		} else {
-			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
+			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo, cpr.Cfg.UseDefaultValues, cpr.Cfg.NoFetch)
 			if err != nil {
 				return err
 			}
@@ -124,7 +125,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 		issueID = cpr.IssueTrackerProvider.ParseIssueId(branchNameInfo.IssueId)
 
 		//4. FLAG DEFAULT IS USED
-		if !args.UseDefaultValues {
+		if !cpr.Cfg.UseDefaultValues {
 			//5. CONFIG USER TO USE THIS BRANCH
 			confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
 			if err != nil {
@@ -160,18 +161,18 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 	}
 
 	//15. GET ISSUE INFO
-	title, body, err := cpr.getPullRequestInfo(issueID, args.NoCloseIssue)
+	title, body, err := cpr.getPullRequestInfo(issueID, cpr.Cfg.NoCloseIssue)
 	if err != nil {
 		return err
 	}
 
 	//16. CREATE PULL REQUEST
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, !args.NoDraft)
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, !cpr.Cfg.NoDraft)
 	if err != nil {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
 
-	if !args.UseDefaultValues {
+	if !cpr.Cfg.UseDefaultValues {
 		fmt.Println()
 	}
 
