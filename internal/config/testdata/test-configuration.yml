@@ -20,6 +20,7 @@ github:
     removal: ["kind/removal"]
     revert: ["kind/revert"]
     security: ["kind/security"]
-branch_prefix_overrides:
-  feature: "feat"
-  bugfix: "fix"
+branches:
+  prefixes:
+    feature: "feat"
+    bugfix: "fix"

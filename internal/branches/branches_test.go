@@ -3,6 +3,7 @@ package branches
 import (
 	"testing"
 
+	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/stretchr/testify/assert"
 )
@@ -98,7 +99,9 @@ func TestFormatBranchName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			b := BranchProvider{
 				cfg: Configuration{
-					BranchPrefixOverrides: tt.args.branchPrefixOverride,
+					Branches: config.Branches{
+						Prefixes: tt.args.branchPrefixOverride,
+					},
 				},
 			}
 			branchName := b.formatBranchName(tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)

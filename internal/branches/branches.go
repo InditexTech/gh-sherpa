@@ -17,7 +17,7 @@ type BranchProvider struct {
 }
 
 type Configuration struct {
-	config.BranchPrefixOverrides
+	config.Branches
 }
 
 func (c Configuration) Validate() (err error) {
@@ -27,7 +27,7 @@ func (c Configuration) Validate() (err error) {
 
 func NewFromConfiguration(globalConfig config.Configuration, userInteractionProvider domain.UserInteractionProvider) (*BranchProvider, error) {
 	return New(Configuration{
-		BranchPrefixOverrides: globalConfig.BranchPrefixOverrides,
+		Branches: globalConfig.Branches,
 	}, userInteractionProvider)
 }
 
@@ -107,7 +107,7 @@ func parseIssueContext(issueContext string) string {
 func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType string, issueId string, issueContext string) (branchName string) {
 	branchPrefix := branchType
 
-	for issueType, prefix := range b.cfg.BranchPrefixOverrides {
+	for issueType, prefix := range b.cfg.Prefixes {
 		if prefix != "" && issueType.String() == branchType {
 			branchPrefix = prefix
 			break

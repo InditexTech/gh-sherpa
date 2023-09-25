@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
-	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
@@ -17,7 +16,6 @@ type CreateBranchArgs struct {
 }
 
 type CreateBranch struct {
-	BranchPrefixOverride    map[issue_types.IssueType]string
 	Git                     domain.GitProvider
 	GhCli                   domain.GhCli
 	IssueTrackerProvider    domain.IssueTrackerProvider

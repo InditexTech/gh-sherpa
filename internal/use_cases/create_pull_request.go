@@ -5,7 +5,6 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
-	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
@@ -20,7 +19,6 @@ type CreatePullRequestArgs struct {
 }
 
 type CreatePullRequest struct {
-	BranchPrefixOverride    map[issue_types.IssueType]string
 	Git                     domain.GitProvider
 	GhCli                   domain.GhCli
 	IssueTrackerProvider    domain.IssueTrackerProvider

@@ -61,8 +61,8 @@ func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIde
 }
 
 func (b BranchProvider) getBugFixBranchType() (branchType string) {
-	if b.cfg.BranchPrefixOverrides[issue_types.Bugfix] != "" {
-		branchType = b.cfg.BranchPrefixOverrides[issue_types.Bugfix]
+	if b.cfg.Prefixes[issue_types.Bugfix] != "" {
+		branchType = b.cfg.Prefixes[issue_types.Bugfix]
 	} else {
 		branchType = issue_types.Bugfix.String()
 	}
