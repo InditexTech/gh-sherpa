@@ -20,8 +20,8 @@ func (_m *MockBranchProvider) EXPECT() *MockBranchProvider_Expecter {
 	return &MockBranchProvider_Expecter{mock: &_m.Mock}
 }
 
-// AskBranchName provides a mock function with given fields: issueTracker, issueIdentifier, repo, useDefaultValues
-func (_m *MockBranchProvider) AskBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool) (string, error) {
+// GetBranchName provides a mock function with given fields: issueTracker, issueIdentifier, repo, useDefaultValues
+func (_m *MockBranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool) (string, error) {
 	ret := _m.Called(issueTracker, issueIdentifier, repo, useDefaultValues)
 
 	var r0 string
@@ -44,33 +44,33 @@ func (_m *MockBranchProvider) AskBranchName(issueTracker domain.IssueTracker, is
 	return r0, r1
 }
 
-// MockBranchProvider_AskBranchName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AskBranchName'
-type MockBranchProvider_AskBranchName_Call struct {
+// MockBranchProvider_GetBranchName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBranchName'
+type MockBranchProvider_GetBranchName_Call struct {
 	*mock.Call
 }
 
-// AskBranchName is a helper method to define mock.On call
+// GetBranchName is a helper method to define mock.On call
 //   - issueTracker domain.IssueTracker
 //   - issueIdentifier string
 //   - repo domain.Repository
 //   - useDefaultValues bool
-func (_e *MockBranchProvider_Expecter) AskBranchName(issueTracker interface{}, issueIdentifier interface{}, repo interface{}, useDefaultValues interface{}) *MockBranchProvider_AskBranchName_Call {
-	return &MockBranchProvider_AskBranchName_Call{Call: _e.mock.On("AskBranchName", issueTracker, issueIdentifier, repo, useDefaultValues)}
+func (_e *MockBranchProvider_Expecter) GetBranchName(issueTracker interface{}, issueIdentifier interface{}, repo interface{}, useDefaultValues interface{}) *MockBranchProvider_GetBranchName_Call {
+	return &MockBranchProvider_GetBranchName_Call{Call: _e.mock.On("GetBranchName", issueTracker, issueIdentifier, repo, useDefaultValues)}
 }
 
-func (_c *MockBranchProvider_AskBranchName_Call) Run(run func(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool)) *MockBranchProvider_AskBranchName_Call {
+func (_c *MockBranchProvider_GetBranchName_Call) Run(run func(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool)) *MockBranchProvider_GetBranchName_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(domain.IssueTracker), args[1].(string), args[2].(domain.Repository), args[3].(bool))
 	})
 	return _c
 }
 
-func (_c *MockBranchProvider_AskBranchName_Call) Return(branchName string, err error) *MockBranchProvider_AskBranchName_Call {
+func (_c *MockBranchProvider_GetBranchName_Call) Return(branchName string, err error) *MockBranchProvider_GetBranchName_Call {
 	_c.Call.Return(branchName, err)
 	return _c
 }
 
-func (_c *MockBranchProvider_AskBranchName_Call) RunAndReturn(run func(domain.IssueTracker, string, domain.Repository, bool) (string, error)) *MockBranchProvider_AskBranchName_Call {
+func (_c *MockBranchProvider_GetBranchName_Call) RunAndReturn(run func(domain.IssueTracker, string, domain.Repository, bool) (string, error)) *MockBranchProvider_GetBranchName_Call {
 	_c.Call.Return(run)
 	return _c
 }

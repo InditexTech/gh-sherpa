@@ -30,5 +30,5 @@ type GitProvider interface {
 }
 
 type BranchProvider interface {
-	AskBranchName(issueTracker IssueTracker, issueIdentifier string, repo Repository, useDefaultValues bool) (branchName string, err error)
+	GetBranchName(issueTracker IssueTracker, issueIdentifier string, repo Repository, useDefaultValues bool) (branchName string, err error)
 }

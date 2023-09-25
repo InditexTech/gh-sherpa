@@ -481,7 +481,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *do
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
 	branchProvider := &domainMocks.MockBranchProvider{}
 
-	branchProvider.EXPECT().AskBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/GH-1-sample-issue", nil).Maybe()
+	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/GH-1-sample-issue", nil).Maybe()
 
 	return branchProvider
 }
@@ -962,7 +962,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *doma
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
 	branchProvider := &domainMocks.MockBranchProvider{}
 
-	branchProvider.EXPECT().AskBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/PROJECTKEY-1-sample-issue", nil).Maybe()
+	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/PROJECTKEY-1-sample-issue", nil).Maybe()
 
 	return branchProvider
 }

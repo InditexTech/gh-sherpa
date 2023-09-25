@@ -10,8 +10,8 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
-// AskBranchName asks the user for a branch name in an interactive way
-func (b BranchProvider) AskBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool) (branchName string, err error) {
+// GetBranchName asks the user for a branch name in an interactive way
+func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool) (branchName string, err error) {
 	issue, err := issueTracker.GetIssue(issueIdentifier)
 	if err != nil {
 		return "", err

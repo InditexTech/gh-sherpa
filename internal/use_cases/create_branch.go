@@ -47,7 +47,7 @@ func (cb CreateBranch) Execute(args CreateBranchArgs) (err error) {
 		return err
 	}
 
-	branchName, err := cb.BranchProvider.AskBranchName(issueTrackerProvider, args.IssueValue, *repo, args.UseDefaultValues)
+	branchName, err := cb.BranchProvider.GetBranchName(issueTrackerProvider, args.IssueValue, *repo, args.UseDefaultValues)
 	if err != nil {
 		return err
 	}
