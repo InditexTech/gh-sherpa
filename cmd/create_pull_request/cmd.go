@@ -63,7 +63,13 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	userInteraction := &interactive.UserInteractionProvider{}
 
-	branchProvider, err := branches.NewFromConfiguration(cfg, userInteraction)
+	isInteractive := !flags.UseDefaultValues
+
+	branchProviderCfg := branches.Configuration{
+		Branches:      cfg.Branches,
+		IsInteractive: isInteractive,
+	}
+	branchProvider, err := branches.New(branchProviderCfg, userInteraction)
 	if err != nil {
 		return err
 	}
@@ -74,7 +80,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		IssueID:       flags.IssueID,
 		BaseBranch:    flags.BaseBranch,
 		ShouldFetch:   !flags.NoFetch,
-		IsInteractive: !flags.UseDefaultValues,
+		IsInteractive: isInteractive,
 		NoDraft:       flags.NoDraft,
 		NoCloseIssue:  flags.NoCloseIssue,
 	}

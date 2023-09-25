@@ -18,6 +18,7 @@ type BranchProvider struct {
 
 type Configuration struct {
 	config.Branches
+	IsInteractive bool
 }
 
 func (c Configuration) Validate() (err error) {
@@ -25,9 +26,10 @@ func (c Configuration) Validate() (err error) {
 	return nil
 }
 
-func NewFromConfiguration(globalConfig config.Configuration, userInteractionProvider domain.UserInteractionProvider) (*BranchProvider, error) {
+func NewFromConfiguration(globalConfig config.Configuration, userInteractionProvider domain.UserInteractionProvider, isInteractive bool) (*BranchProvider, error) {
 	return New(Configuration{
-		Branches: globalConfig.Branches,
+		Branches:      globalConfig.Branches,
+		IsInteractive: isInteractive,
 	}, userInteractionProvider)
 }
 

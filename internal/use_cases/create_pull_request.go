@@ -304,7 +304,7 @@ func (cpr *CreatePullRequest) getPullRequestInfo(issueID string, noCloseIssue bo
 
 func (cpr *CreatePullRequest) askUserForNewBranchName(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (newBranchName string, cancelled bool, err error) {
 
-	newBranchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo, cpr.Cfg.IsInteractive)
+	newBranchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
 	if err != nil {
 		return "", false, err
 	}
