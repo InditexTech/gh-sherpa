@@ -5,6 +5,7 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
+	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
@@ -46,23 +47,13 @@ func (cb CreateBranch) Execute(args CreateBranchArgs) (err error) {
 		return err
 	}
 
-	// branchName, canceled, err := cb.askUserForNewBranchName(issueTrackerProvider, args.IssueValue, *repo, args.UseDefaultValues)
-	// if err != nil {
-	// 	return err
-	// }
-
 	branchName, err := cb.BranchProvider.AskBranchName(issueTrackerProvider, args.IssueValue, *repo, args.UseDefaultValues)
 	if err != nil {
 		return err
 	}
 
-	confirmed, err := cb.confirmBranchName(branchName, args.UseDefaultValues)
-	if err != nil {
+	if err := cb.confirmBranchName(branchName, args.UseDefaultValues); err != nil {
 		return err
-	}
-
-	if !confirmed {
-		return nil
 	}
 
 	return cb.checkoutBranch(branchName, baseBranch, !args.NoFetchValue)
@@ -88,15 +79,21 @@ func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetc
 	return nil
 }
 
-func (cb CreateBranch) confirmBranchName(branchName string, useDefaultValues bool) (confirmed bool, err error) {
-	confirmed = true
+func (cb CreateBranch) confirmBranchName(branchName string, useDefaultValues bool) (err error) {
 	if !useDefaultValues {
 		fmt.Println()
 		fmt.Printf("A new local branch named %s is going to be created", logging.PaintInfo(branchName))
 		fmt.Println()
 
-		confirmed, err = cb.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+		confirmed, err := cb.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+		if err != nil {
+			return err
+		}
+
+		if !confirmed {
+			return interactive.ErrOpCanceled
+		}
 	}
 
-	return confirmed, err
+	return nil
 }
