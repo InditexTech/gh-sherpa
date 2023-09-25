@@ -72,7 +72,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -88,7 +90,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -106,7 +110,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -123,7 +129,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -135,7 +143,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should exit if pr already exists", func() {
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -146,7 +156,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 	s.Run("should not ask the user for branch confirmation if default flag is used", func() {
 		args := use_cases.CreatePullRequestConfiguration{
-			UseDefaultValues: true,
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -167,7 +177,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -188,7 +200,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -205,7 +219,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.EXPECT().CommitEmpty(mock.Anything).Return(assert.AnError).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -221,7 +237,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 		s.gitProvider.EXPECT().PushBranch(s.defaultBranchName).Return(assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -237,7 +255,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
 		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -254,7 +274,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.EXPECT().CheckoutBranch("feature/GH-1-sample-issue").Return(nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "1",
+			IssueID:       "1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -266,8 +287,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 	s.Run("should error if branch already exists when using default and issue flags", func() {
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId:          "1",
-			UseDefaultValues: true,
+			IssueID:       "1",
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -287,7 +308,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "1",
+			IssueID:       "1",
+			IsInteractive: true,
+			ShouldFetch:   true,
 		}
 
 		s.uc.Cfg = args
@@ -306,7 +329,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.expectCreatePullRequestNotCalled()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "1",
+			IssueID:       "1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -326,7 +350,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.EXPECT().CheckoutBranch("feature/GH-1-sample-issue").Return(nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "1",
+			IssueID:       "1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -340,7 +365,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -366,7 +393,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "1",
+			IssueID:       "1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -384,7 +412,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.expectNoPrFound()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			NoCloseIssue: true,
+			NoCloseIssue:  true,
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -565,7 +594,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -581,7 +612,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -599,7 +632,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -616,7 +651,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -628,7 +665,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should exit if pr already exists", func() {
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -639,7 +678,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 	s.Run("should not ask the user for branch confirmation if default flag is used", func() {
 		args := use_cases.CreatePullRequestConfiguration{
-			UseDefaultValues: true,
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -660,7 +699,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -681,7 +722,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -699,7 +742,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.EXPECT().CommitEmpty(mock.Anything).Return(assert.AnError).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -715,7 +760,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 		s.gitProvider.EXPECT().PushBranch(s.defaultBranchName).Return(assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -732,7 +779,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
 		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -749,7 +798,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.EXPECT().CheckoutBranch("feature/PROJECTKEY-1-sample-issue").Return(nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "PROJECTKEY-1",
+			IssueID:       "PROJECTKEY-1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -761,8 +811,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 	s.Run("should error if branch already exists when using default and issue flags", func() {
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId:          "1",
-			UseDefaultValues: true,
+			IssueID:       "1",
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -782,7 +832,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "PROJECTKEY-1",
+			IssueID:       "PROJECTKEY-1",
+			IsInteractive: true,
+			ShouldFetch:   true,
 		}
 
 		s.uc.Cfg = args
@@ -801,7 +853,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.expectCreatePullRequestNotCalled()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "PROJECTKEY-1",
+			IssueID:       "PROJECTKEY-1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -821,7 +874,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.EXPECT().CheckoutBranch("feature/PROJECTKEY-1-sample-issue").Return(nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "PROJECTKEY-1",
+			IssueID:       "PROJECTKEY-1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -835,7 +889,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
-		args := use_cases.CreatePullRequestConfiguration{}
+		args := use_cases.CreatePullRequestConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -861,7 +917,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			IssueId: "PROJECTKEY-1",
+			IssueID:       "PROJECTKEY-1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -879,7 +936,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.expectNoPrFound()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			NoCloseIssue: true,
+			NoCloseIssue:  true,
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args

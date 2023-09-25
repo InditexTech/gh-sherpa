@@ -26,10 +26,19 @@ var Command = &cobra.Command{
 	PreRunE: preRunCommand,
 }
 
-var flags = use_cases.CreatePullRequestConfiguration{}
+type createPullRequestFlags struct {
+	IssueID          string
+	BaseBranch       string
+	NoFetch          bool
+	NoDraft          bool
+	NoCloseIssue     bool
+	UseDefaultValues bool
+}
+
+var flags createPullRequestFlags
 
 func init() {
-	Command.PersistentFlags().StringVarP(&flags.IssueId, "issue", "i", "", "issue identifier")
+	Command.PersistentFlags().StringVarP(&flags.IssueID, "issue", "i", "", "issue identifier")
 	Command.PersistentFlags().StringVarP(&flags.BaseBranch, "base", "b", "", "base branch for checkout. Use the default branch of the repository if it is not set")
 	Command.PersistentFlags().BoolVar(&flags.NoFetch, "no-fetch", false, "does not fetch the base branch")
 	Command.PersistentFlags().BoolVar(&flags.NoDraft, "no-draft", false, "create the pull request in ready for review mode")
@@ -39,7 +48,7 @@ func init() {
 func runCommand(cmd *cobra.Command, _ []string) error {
 	isIssueIDFlagUsed := cmd.Flags().Lookup("issue").Changed
 
-	if isIssueIDFlagUsed && flags.IssueId == "" {
+	if isIssueIDFlagUsed && flags.IssueID == "" {
 		return fmt.Errorf("sherpa needs an valid issue identifier")
 	}
 
@@ -61,8 +70,16 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 
 	ghCliProvider := &gh.Cli{}
 
+	createPullRequestConfig := use_cases.CreatePullRequestConfiguration{
+		IssueID:       flags.IssueID,
+		BaseBranch:    flags.BaseBranch,
+		ShouldFetch:   !flags.NoFetch,
+		IsInteractive: !flags.UseDefaultValues,
+		NoDraft:       flags.NoDraft,
+		NoCloseIssue:  flags.NoCloseIssue,
+	}
 	createPullRequestUseCase := use_cases.CreatePullRequest{
-		Cfg:                     flags,
+		Cfg:                     createPullRequestConfig,
 		Git:                     &git.Provider{},
 		RepositoryProvider:      ghCliProvider,
 		IssueTrackerProvider:    issueTrackers,
