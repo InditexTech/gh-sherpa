@@ -23,9 +23,9 @@ const (
 var defaultConfigBuff []byte
 
 type Configuration struct {
-	Jira                 Jira
-	Github               Github
-	BranchPrefixOverride BranchPrefixOverrides `mapstructure:"branch_prefix_overrides"`
+	Jira                  Jira
+	Github                Github
+	BranchPrefixOverrides BranchPrefixOverrides `mapstructure:"branch_prefix_overrides"`
 }
 
 type BranchPrefixOverrides map[issue_types.IssueType]string

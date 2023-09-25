@@ -26,7 +26,7 @@ func TestParseIssueContext(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			context := ParseIssueContext(tt.given)
+			context := parseIssueContext(tt.given)
 
 			assert.Equal(t, tt.want, context)
 		})
@@ -96,7 +96,12 @@ func TestFormatBranchName(t *testing.T) {
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			branchName := FormatBranchName(tt.args.branchPrefixOverride, tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)
+			b := BranchProvider{
+				cfg: Configuration{
+					BranchPrefixOverrides: tt.args.branchPrefixOverride,
+				},
+			}
+			branchName := b.formatBranchName(tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)
 
 			assert.Equal(t, tt.want, branchName)
 		})

@@ -26,6 +26,7 @@ type CreatePullRequest struct {
 	IssueTrackerProvider    domain.IssueTrackerProvider
 	UserInteractionProvider domain.UserInteractionProvider
 	PullRequestProvider     domain.PullRequestProvider
+	BranchProvider          domain.BranchProvider
 }
 
 // Execute executes the create pull request use case
@@ -74,10 +75,11 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 			}
 
 			if !confirmed {
-				canceled, err := cpr.createNewUserBranchAndPush(&currentBranch, baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
+				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
 				if err != nil {
 					return err
 				}
+				currentBranch = branchName
 				if canceled {
 					return nil
 				}
@@ -99,10 +101,11 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 			}
 
 		} else {
-			canceled, err := cpr.createNewUserBranchAndPush(&currentBranch, baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
+			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
 			if err != nil {
 				return err
 			}
+			currentBranch = branchName
 			if canceled {
 				return nil
 			}
@@ -300,48 +303,46 @@ func (cpr *CreatePullRequest) getPullRequestInfo(issueID string, noCloseIssue bo
 	return
 }
 
-func (cpr *CreatePullRequest) askUserForNewBranchName(branchName *string, baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository, useDefaultValues bool) (cancelled bool, err error) {
+func (cpr *CreatePullRequest) askUserForNewBranchName(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository, useDefaultValues bool) (newBranchName string, cancelled bool, err error) {
 
-	provs := providers{
-		UserInteraction: cpr.UserInteractionProvider,
-	}
-	if err := askBranchName(cpr.BranchPrefixOverride, branchName, issueTracker, issueID, repo, useDefaultValues, provs); err != nil {
-		return false, err
+	newBranchName, err = cpr.BranchProvider.AskBranchName(issueTracker, issueID, repo, useDefaultValues)
+	if err != nil {
+		return "", false, err
 	}
 
 	if !useDefaultValues {
 		fmt.Println()
-		fmt.Printf("A new pull request is going to be created from %s to %s branch", logging.PaintInfo(*branchName), logging.PaintInfo(baseBranch))
+		fmt.Printf("A new pull request is going to be created from %s to %s branch", logging.PaintInfo(newBranchName), logging.PaintInfo(baseBranch))
 		fmt.Println()
 
 		confirmation, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
 		if err != nil {
-			return false, err
+			return "", false, err
 		}
 
 		if !confirmation {
-			return true, nil
+			return "", true, nil
 		}
 	}
 
-	return false, nil
+	return newBranchName, false, nil
 }
 
-func (cpr *CreatePullRequest) createNewUserBranchAndPush(currentBranch *string, baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository, useDefaultValues, noFetch bool) (canceled bool, err error) {
+func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository, useDefaultValues, noFetch bool) (branchName string, canceled bool, err error) {
 	//useDefaultValues should always be false in this specific case but we use it anyways
-	canceled, err = cpr.askUserForNewBranchName(currentBranch, baseBranch, issueTracker, issueID, repo, useDefaultValues)
+	branchName, canceled, err = cpr.askUserForNewBranchName(baseBranch, issueTracker, issueID, repo, useDefaultValues)
 	if err != nil || canceled {
 		return
 	}
 
-	if err = cpr.createNewLocalBranch(*currentBranch, baseBranch, !noFetch); err != nil {
+	if err = cpr.createNewLocalBranch(branchName, baseBranch, !noFetch); err != nil {
 		return
 	}
 
 	//18. && 19.
-	if err = cpr.createEmptyCommitAndPush(*currentBranch); err != nil {
+	if err = cpr.createEmptyCommitAndPush(branchName); err != nil {
 		return
 	}
 
-	return
+	return branchName, false, nil
 }

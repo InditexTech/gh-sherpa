@@ -27,6 +27,7 @@ type CreatePullRequestExecutionTestSuite struct {
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	pullRequestProvider     *domainMocks.MockPullRequestProvider
 	issueTracker            *domainMocks.MockIssueTracker
+	branchProvider          *domainMocks.MockBranchProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
@@ -48,6 +49,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
+	s.branchProvider = s.initializeBranchProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -58,6 +60,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
 		PullRequestProvider:     s.pullRequestProvider,
+		BranchProvider:          s.branchProvider,
 	}
 }
 
@@ -265,9 +268,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Once()
 
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 29 chars", []string{}, mock.Anything, false).Return(nil).Once()
-
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.FetchBranchFromOrigin)
 		s.gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
@@ -288,9 +288,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(false, nil).Once()
-
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 29 chars", []string{}, mock.Anything, false).Return(nil).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
@@ -481,6 +478,14 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *do
 	return issueTracker
 }
 
+func (s *CreateGithubPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
+
+	branchProvider.EXPECT().AskBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/GH-1-sample-issue", nil).Maybe()
+
+	return branchProvider
+}
+
 type CreateJiraPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 	getConfigFile func() (config.ConfigFile, error)
@@ -518,6 +523,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
+	s.branchProvider = s.initializeBranchProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -528,6 +534,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
 		PullRequestProvider:     s.pullRequestProvider,
+		BranchProvider:          s.branchProvider,
 	}
 }
 
@@ -737,9 +744,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Once()
 
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 21 chars", []string{}, mock.Anything, false).Return(nil).Once()
-
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.FetchBranchFromOrigin)
 		s.gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
@@ -760,9 +764,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(false, nil).Once()
-
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 21 chars", []string{}, mock.Anything, false).Return(nil).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
@@ -956,4 +957,12 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *doma
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
 
 	return issueTracker
+}
+
+func (s *CreateJiraPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
+
+	branchProvider.EXPECT().AskBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/PROJECTKEY-1-sample-issue", nil).Maybe()
+
+	return branchProvider
 }

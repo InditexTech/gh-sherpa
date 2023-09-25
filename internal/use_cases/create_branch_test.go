@@ -22,6 +22,7 @@ type CreateBranchExecutionTestSuite struct {
 	issueTrackerProvider    *domainMocks.MockIssueTrackerProvider
 	issueTracker            *domainMocks.MockIssueTracker
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
+	branchProvider          *domainMocks.MockBranchProvider
 }
 
 func (s *CreateBranchExecutionTestSuite) expectCreateBranchNotCalled() {
@@ -64,6 +65,7 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
+	s.branchProvider = s.initializeBranchProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -73,6 +75,7 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 		GhCli:                   s.ghCliProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
+		BranchProvider:          s.branchProvider,
 	}
 }
 
@@ -220,6 +223,14 @@ func (s *CreateGithubBranchExecutionTestSuite) initializeIssueTrackerProvider() 
 	return issueTrackerProvider
 }
 
+func (s *CreateGithubBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
+
+	branchProvider.EXPECT().AskBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/GH-1-sample-issue", nil).Maybe()
+
+	return branchProvider
+}
+
 func (s *CreateGithubBranchExecutionTestSuite) initializeGhCli() *domainMocks.MockGhCli {
 	ghCliProvider := &domainMocks.MockGhCli{}
 
@@ -268,6 +279,7 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
+	s.branchProvider = s.initializeBranchProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -277,6 +289,7 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 		GhCli:                   s.ghCliProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
+		BranchProvider:          s.branchProvider,
 	}
 }
 
@@ -457,4 +470,12 @@ func (s *CreateJiraBranchExecutionTestSuite) initializeIssueTracker() *domainMoc
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
 
 	return issueTracker
+}
+
+func (s *CreateJiraBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
+
+	branchProvider.EXPECT().AskBranchName(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("feature/PROJECTKEY-1-sample-issue", nil).Maybe()
+
+	return branchProvider
 }

@@ -28,3 +28,7 @@ type GitProvider interface {
 	CommitEmpty(message string) (err error)
 	PushBranch(branch string) (err error)
 }
+
+type BranchProvider interface {
+	AskBranchName(issueTracker IssueTracker, issueIdentifier string, repo Repository, useDefaultValues bool) (branchName string, err error)
+}

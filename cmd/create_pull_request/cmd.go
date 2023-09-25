@@ -3,6 +3,7 @@ package create_pull_request
 import (
 	"fmt"
 
+	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/InditexTech/gh-sherpa/internal/git"
@@ -51,13 +52,21 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	userInteraction := &interactive.UserInteractionProvider{}
+
+	branchProvider, err := branches.NewFromConfiguration(cfg, userInteraction)
+	if err != nil {
+		return err
+	}
+
 	createPullRequestUseCase := use_cases.CreatePullRequest{
-		BranchPrefixOverride:    cfg.BranchPrefixOverride,
+		BranchPrefixOverride:    cfg.BranchPrefixOverrides,
 		Git:                     &git.Provider{},
 		GhCli:                   &gh.Cli{},
 		IssueTrackerProvider:    issueTrackers,
-		UserInteractionProvider: &interactive.UserInteractionProvider{},
+		UserInteractionProvider: userInteraction,
 		PullRequestProvider:     &gh.Cli{},
+		BranchProvider:          branchProvider,
 	}
 
 	return createPullRequestUseCase.Execute(flags)

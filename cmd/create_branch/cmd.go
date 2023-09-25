@@ -3,6 +3,7 @@ package create_branch
 import (
 	"os"
 
+	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/InditexTech/gh-sherpa/internal/git"
@@ -50,12 +51,20 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		return err
 	}
 
+	userInteraction := &interactive.UserInteractionProvider{}
+
+	branchProvider, err := branches.NewFromConfiguration(cfg, userInteraction)
+	if err != nil {
+		return err
+	}
+
 	createBranch := use_cases.CreateBranch{
-		BranchPrefixOverride:    cfg.BranchPrefixOverride,
+		BranchPrefixOverride:    cfg.BranchPrefixOverrides,
 		Git:                     &git.Provider{},
 		GhCli:                   &gh.Cli{},
 		IssueTrackerProvider:    issueTrackers,
-		UserInteractionProvider: &interactive.UserInteractionProvider{},
+		UserInteractionProvider: userInteraction,
+		BranchProvider:          branchProvider,
 	}
 
 	err = createBranch.Execute(flags)
