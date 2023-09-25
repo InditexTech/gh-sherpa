@@ -9,10 +9,10 @@ import (
 )
 
 type CreateBranchConfiguration struct {
-	IssueValue       string
-	BaseValue        string
-	NoFetchValue     bool
-	UseDefaultValues bool
+	IssueID       string
+	BaseBranch    string
+	ShouldFetch   bool
+	IsInteractive bool
 }
 
 type CreateBranch struct {
@@ -26,7 +26,7 @@ type CreateBranch struct {
 
 // Execute executes the create branch use case
 func (cb CreateBranch) Execute() (err error) {
-	if cb.Cfg.IssueValue == "" {
+	if cb.Cfg.IssueID == "" {
 		return fmt.Errorf("sherpa needs an valid issue identifier")
 	}
 
@@ -35,27 +35,27 @@ func (cb CreateBranch) Execute() (err error) {
 		return err
 	}
 
-	baseBranch := cb.Cfg.BaseValue
+	baseBranch := cb.Cfg.BaseBranch
 	if baseBranch == "" {
 		logging.Debugf("Base branch not set, using default branch, %s", repo.DefaultBranchRef)
 		baseBranch = repo.DefaultBranchRef
 	}
 
-	issueTrackerProvider, err := cb.IssueTrackerProvider.GetIssueTracker(cb.Cfg.IssueValue)
+	issueTrackerProvider, err := cb.IssueTrackerProvider.GetIssueTracker(cb.Cfg.IssueID)
 	if err != nil {
 		return err
 	}
 
-	branchName, err := cb.BranchProvider.GetBranchName(issueTrackerProvider, cb.Cfg.IssueValue, *repo, cb.Cfg.UseDefaultValues)
+	branchName, err := cb.BranchProvider.GetBranchName(issueTrackerProvider, cb.Cfg.IssueID, *repo, cb.Cfg.IsInteractive)
 	if err != nil {
 		return err
 	}
 
-	if err := cb.confirmBranchName(branchName, cb.Cfg.UseDefaultValues); err != nil {
+	if err := cb.confirmBranchName(branchName); err != nil {
 		return err
 	}
 
-	return cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.NoFetchValue)
+	return cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.ShouldFetch)
 }
 
 func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetch bool) error {
@@ -78,8 +78,8 @@ func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetc
 	return nil
 }
 
-func (cb CreateBranch) confirmBranchName(branchName string, useDefaultValues bool) (err error) {
-	if !useDefaultValues {
+func (cb CreateBranch) confirmBranchName(branchName string) (err error) {
+	if cb.Cfg.IsInteractive {
 		fmt.Println()
 		fmt.Printf("A new local branch named %s is going to be created", logging.PaintInfo(branchName))
 		fmt.Println()

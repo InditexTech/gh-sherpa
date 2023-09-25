@@ -66,10 +66,10 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	createBranchConfig := use_cases.CreateBranchConfiguration{
-		IssueValue:       flags.IssueValue,
-		BaseValue:        flags.BaseValue,
-		NoFetchValue:     flags.NoFetchValue,
-		UseDefaultValues: flags.UseDefaultValues,
+		IssueID:       flags.IssueValue,
+		BaseBranch:    flags.BaseValue,
+		ShouldFetch:   !flags.NoFetchValue,
+		IsInteractive: !flags.UseDefaultValues,
 	}
 	createBranch := use_cases.CreateBranch{
 		Cfg:                     createBranchConfig,

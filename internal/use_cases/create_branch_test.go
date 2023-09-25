@@ -88,7 +88,8 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.expectCreateBranchNotCalled()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue: "1",
+			IssueID:       "1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -102,7 +103,9 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if no issue flag is provided", func() {
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchConfiguration{}
+		args := use_cases.CreateBranchConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -119,8 +122,8 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.expectCreateBranchNotCalled()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue:       "1",
-			UseDefaultValues: true,
+			IssueID:       "1",
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -139,8 +142,8 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue:       "1",
-			UseDefaultValues: true,
+			IssueID:       "1",
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -160,7 +163,8 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue: "1",
+			IssueID:       "1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -181,7 +185,8 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.expectCreateBranchNotCalled()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue: "1",
+			IssueID:       "1",
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -301,6 +306,8 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 
 func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
+	issueID := "PROJECTKEY-1"
+
 	s.Run("should error if could not get git repository", func() {
 		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
 		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
@@ -308,7 +315,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.expectCreateBranchNotCalled()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue: "PROJECTKEY-1",
+			IssueID:       issueID,
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -322,7 +330,9 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if no issue flag is provided", func() {
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchConfiguration{}
+		args := use_cases.CreateBranchConfiguration{
+			IsInteractive: true,
+		}
 
 		s.uc.Cfg = args
 		err := s.uc.Execute()
@@ -339,8 +349,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.expectCreateBranchNotCalled()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue:       "PROJECTKEY-1",
-			UseDefaultValues: true,
+			IssueID:       issueID,
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -359,8 +369,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Maybe()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue:       "PROJECTKEY-1",
-			UseDefaultValues: true,
+			IssueID:       issueID,
+			IsInteractive: false,
 		}
 
 		s.uc.Cfg = args
@@ -380,7 +390,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.gitProvider.EXPECT().BranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Maybe()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue: "PROJECTKEY-1",
+			IssueID:       issueID,
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args
@@ -401,7 +412,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.expectCreateBranchNotCalled()
 
 		args := use_cases.CreateBranchConfiguration{
-			IssueValue: "PROJECTKEY-1",
+			IssueID:       issueID,
+			IsInteractive: true,
 		}
 
 		s.uc.Cfg = args

@@ -11,7 +11,7 @@ import (
 )
 
 // GetBranchName asks the user for a branch name in an interactive way
-func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, useDefaultValues bool) (branchName string, err error) {
+func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository, isInteractive bool) (branchName string, err error) {
 	issue, err := issueTracker.GetIssue(issueIdentifier)
 	if err != nil {
 		return "", err
@@ -29,7 +29,7 @@ func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIde
 
 	issueTrackerType := issueTracker.GetIssueTrackerType()
 
-	if !useDefaultValues {
+	if isInteractive {
 		branchType, err = b.getBranchType(issueType, issueTrackerType)
 		if err != nil {
 			return "", err
