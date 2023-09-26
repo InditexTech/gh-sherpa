@@ -55,10 +55,10 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
-		IsInteractive: true,
-		ShouldClose:   true,
-		ShouldFetch:   true,
-		NoDraft:       false,
+		IsInteractive:   true,
+		CloseIssue:      true,
+		FetchFromOrigin: true,
+		NoDraft:         false,
 	}
 	s.uc = use_cases.CreatePullRequest{
 		Cfg:                     defaultConfig,
@@ -336,7 +336,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectNoPrFound()
 
-		s.uc.Cfg.ShouldClose = false
+		s.uc.Cfg.CloseIssue = false
 
 		err := s.uc.Execute()
 
@@ -498,10 +498,10 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
-		IsInteractive: true,
-		ShouldClose:   true,
-		ShouldFetch:   true,
-		NoDraft:       false,
+		IsInteractive:   true,
+		CloseIssue:      true,
+		FetchFromOrigin: true,
+		NoDraft:         false,
 	}
 	s.uc = use_cases.CreatePullRequest{
 		Cfg:                     defaultConfig,
@@ -782,7 +782,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.expectNoPrFound()
 
 		args := use_cases.CreatePullRequestConfiguration{
-			ShouldClose:   false,
+			CloseIssue:    false,
 			IsInteractive: true,
 		}
 

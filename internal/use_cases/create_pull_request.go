@@ -10,12 +10,12 @@ import (
 
 // CreatePullRequestConfiguration contains the arguments for the CreatePullRequest use case
 type CreatePullRequestConfiguration struct {
-	IssueID       string
-	BaseBranch    string
-	ShouldFetch   bool
-	NoDraft       bool
-	IsInteractive bool
-	ShouldClose   bool
+	IssueID         string
+	BaseBranch      string
+	FetchFromOrigin bool
+	NoDraft         bool
+	IsInteractive   bool
+	CloseIssue      bool
 }
 
 type CreatePullRequest struct {
@@ -209,7 +209,7 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 		title = issue.Title
 
 		keyword := "Closes"
-		if !cpr.Cfg.ShouldClose {
+		if !cpr.Cfg.CloseIssue {
 			keyword = "Related to"
 		}
 		body = fmt.Sprintf("%s #%s", keyword, issue.ID)
@@ -277,7 +277,7 @@ func (cpr *CreatePullRequest) getIssueFromIssueID(issueID string) (issue domain.
 
 func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string) error {
 	// Check if the base branch will be fetched before the new branch is created
-	if cpr.Cfg.ShouldFetch {
+	if cpr.Cfg.FetchFromOrigin {
 		if err := cpr.Git.FetchBranchFromOrigin(baseBranch); err != nil {
 			return fmt.Errorf("could not fetch the changes from base branch because %s", err)
 		}

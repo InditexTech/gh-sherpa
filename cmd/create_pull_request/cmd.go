@@ -77,12 +77,12 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	ghCliProvider := &gh.Cli{}
 
 	createPullRequestConfig := use_cases.CreatePullRequestConfiguration{
-		IssueID:       flags.IssueID,
-		BaseBranch:    flags.BaseBranch,
-		ShouldFetch:   !flags.NoFetch,
-		IsInteractive: isInteractive,
-		NoDraft:       flags.NoDraft,
-		ShouldClose:   !flags.NoCloseIssue,
+		IssueID:         flags.IssueID,
+		BaseBranch:      flags.BaseBranch,
+		FetchFromOrigin: !flags.NoFetch,
+		IsInteractive:   isInteractive,
+		NoDraft:         flags.NoDraft,
+		CloseIssue:      !flags.NoCloseIssue,
 	}
 	createPullRequestUseCase := use_cases.CreatePullRequest{
 		Cfg:                     createPullRequestConfig,

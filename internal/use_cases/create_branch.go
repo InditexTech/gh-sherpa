@@ -9,10 +9,10 @@ import (
 )
 
 type CreateBranchConfiguration struct {
-	IssueID       string
-	BaseBranch    string
-	ShouldFetch   bool
-	IsInteractive bool
+	IssueID         string
+	BaseBranch      string
+	FetchFromOrigin bool
+	IsInteractive   bool
 }
 
 type CreateBranch struct {
@@ -55,7 +55,7 @@ func (cb CreateBranch) Execute() (err error) {
 		return err
 	}
 
-	return cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.ShouldFetch)
+	return cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.FetchFromOrigin)
 }
 
 func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetch bool) error {
