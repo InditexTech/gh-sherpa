@@ -172,13 +172,7 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
 
-	if cpr.Cfg.IsInteractive {
-		fmt.Println()
-	}
-
-	fmt.Printf("The pull request %s have been created!\nYou are now working on the branch %s", logging.PaintInfo(prURL), logging.PaintInfo(currentBranch))
-	fmt.Println()
-
+	fmt.Printf("\nThe pull request %s have been created!\nYou are now working on the branch %s\n", logging.PaintInfo(prURL), logging.PaintInfo(currentBranch))
 	// 17. EXIT
 	return nil
 }
@@ -302,35 +296,21 @@ func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, 
 	return
 }
 
-func (cpr *CreatePullRequest) askUserForNewBranchName(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (newBranchName string, cancelled bool, err error) {
-
-	newBranchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
+func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {
+	branchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
 	if err != nil {
 		return "", false, err
 	}
 
+	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n", logging.PaintInfo(branchName), logging.PaintInfo(baseBranch))
 	if cpr.Cfg.IsInteractive {
-		fmt.Println()
-		fmt.Printf("A new pull request is going to be created from %s to %s branch", logging.PaintInfo(newBranchName), logging.PaintInfo(baseBranch))
-		fmt.Println()
-
-		confirmation, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
 		if err != nil {
 			return "", false, err
 		}
-
-		if !confirmation {
+		if !confirmed {
 			return "", true, nil
 		}
-	}
-
-	return newBranchName, false, nil
-}
-
-func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {
-	branchName, canceled, err = cpr.askUserForNewBranchName(baseBranch, issueTracker, issueID, repo)
-	if err != nil || canceled {
-		return
 	}
 
 	if err = cpr.createNewLocalBranch(branchName, baseBranch); err != nil {

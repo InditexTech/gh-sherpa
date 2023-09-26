@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
-	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
@@ -51,8 +50,15 @@ func (cb CreateBranch) Execute() (err error) {
 		return err
 	}
 
-	if err := cb.confirmBranchName(branchName); err != nil {
-		return err
+	fmt.Printf("\nA new local branch named %s is going to be created\n", logging.PaintInfo(branchName))
+	if cb.Cfg.IsInteractive {
+		confirmed, err := cb.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+		if err != nil {
+			return err
+		}
+		if !confirmed {
+			return nil
+		}
 	}
 
 	return cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.FetchFromOrigin)
@@ -74,25 +80,6 @@ func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetc
 	}
 
 	fmt.Printf("A local branch named %s has been created!\n", logging.PaintInfo(branchName))
-
-	return nil
-}
-
-func (cb CreateBranch) confirmBranchName(branchName string) (err error) {
-	if cb.Cfg.IsInteractive {
-		fmt.Println()
-		fmt.Printf("A new local branch named %s is going to be created", logging.PaintInfo(branchName))
-		fmt.Println()
-
-		confirmed, err := cb.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
-		if err != nil {
-			return err
-		}
-
-		if !confirmed {
-			return interactive.ErrOpCanceled
-		}
-	}
 
 	return nil
 }
