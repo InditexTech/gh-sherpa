@@ -81,7 +81,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		BaseBranch:      flags.BaseBranch,
 		FetchFromOrigin: !flags.NoFetch,
 		IsInteractive:   isInteractive,
-		NoDraft:         flags.NoDraft,
+		DraftPR:         !flags.NoDraft,
 		CloseIssue:      !flags.NoCloseIssue,
 	}
 	createPullRequestUseCase := use_cases.CreatePullRequest{

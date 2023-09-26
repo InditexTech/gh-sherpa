@@ -58,7 +58,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 		IsInteractive:   true,
 		CloseIssue:      true,
 		FetchFromOrigin: true,
-		NoDraft:         false,
+		DraftPR:         true,
 	}
 	s.uc = use_cases.CreatePullRequest{
 		Cfg:                     defaultConfig,
@@ -501,7 +501,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 		IsInteractive:   true,
 		CloseIssue:      true,
 		FetchFromOrigin: true,
-		NoDraft:         false,
+		DraftPR:         true,
 	}
 	s.uc = use_cases.CreatePullRequest{
 		Cfg:                     defaultConfig,
@@ -781,12 +781,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectNoPrFound()
 
-		args := use_cases.CreatePullRequestConfiguration{
-			CloseIssue:    false,
-			IsInteractive: true,
-		}
+		s.uc.Cfg.CloseIssue = false
 
-		s.uc.Cfg = args
 		err := s.uc.Execute()
 
 		s.NoError(err)

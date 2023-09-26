@@ -13,7 +13,7 @@ type CreatePullRequestConfiguration struct {
 	IssueID         string
 	BaseBranch      string
 	FetchFromOrigin bool
-	NoDraft         bool
+	DraftPR         bool
 	IsInteractive   bool
 	CloseIssue      bool
 }
@@ -167,7 +167,7 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	//16. CREATE PULL REQUEST
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, !cpr.Cfg.NoDraft)
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR)
 	if err != nil {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
