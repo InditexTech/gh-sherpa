@@ -8,34 +8,36 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
-// CreatePullRequestArgs contains the arguments for the CreatePullRequest use case
-type CreatePullRequestArgs struct {
-	IssueId          string
-	BaseBranch       string
-	NoFetch          bool
-	NoDraft          bool
-	UseDefaultValues bool
-	NoCloseIssue     bool
+// CreatePullRequestConfiguration contains the arguments for the CreatePullRequest use case
+type CreatePullRequestConfiguration struct {
+	IssueID         string
+	BaseBranch      string
+	FetchFromOrigin bool
+	DraftPR         bool
+	IsInteractive   bool
+	CloseIssue      bool
 }
 
 type CreatePullRequest struct {
+	Cfg                     CreatePullRequestConfiguration
 	Git                     domain.GitProvider
-	GhCli                   domain.GhCli
+	RepositoryProvider      domain.RepositoryProvider
 	IssueTrackerProvider    domain.IssueTrackerProvider
 	UserInteractionProvider domain.UserInteractionProvider
 	PullRequestProvider     domain.PullRequestProvider
+	BranchProvider          domain.BranchProvider
 }
 
 // Execute executes the create pull request use case
-func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
+func (cpr CreatePullRequest) Execute() error {
 
-	repo, err := cpr.GhCli.GetRepo()
+	repo, err := cpr.RepositoryProvider.GetRepository()
 	if err != nil {
 		logging.Debugf("error while getting repo: %s", err)
 		return err
 	}
 
-	baseBranch := args.BaseBranch
+	baseBranch := cpr.Cfg.BaseBranch
 	if baseBranch == "" {
 		baseBranch = repo.DefaultBranchRef
 	}
@@ -45,7 +47,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 		return fmt.Errorf("could not get the current branch name because %s", err)
 	}
 
-	issueID := args.IssueId
+	issueID := cpr.Cfg.IssueID
 	//1. FLAG ISSUE IS USED
 	if issueID != "" {
 		issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
@@ -59,7 +61,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 		name, exists := cpr.Git.BranchExistsContains(fmt.Sprintf("/%s-", formattedIssueId))
 		if exists {
 			//8. FLAG DEFAULT IS USED
-			if args.UseDefaultValues {
+			if !cpr.Cfg.IsInteractive {
 				return fmt.Errorf("the branch %s already exists", logging.PaintWarning(name))
 			}
 
@@ -72,10 +74,11 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 			}
 
 			if !confirmed {
-				canceled, err := cpr.createNewUserBranchAndPush(&currentBranch, baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
+				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
 				if err != nil {
 					return err
 				}
+				currentBranch = branchName
 				if canceled {
 					return nil
 				}
@@ -97,10 +100,11 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 			}
 
 		} else {
-			canceled, err := cpr.createNewUserBranchAndPush(&currentBranch, baseBranch, issueTracker, issueID, *repo, args.UseDefaultValues, args.NoFetch)
+			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
 			if err != nil {
 				return err
 			}
+			currentBranch = branchName
 			if canceled {
 				return nil
 			}
@@ -121,7 +125,7 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 		issueID = cpr.IssueTrackerProvider.ParseIssueId(branchNameInfo.IssueId)
 
 		//4. FLAG DEFAULT IS USED
-		if !args.UseDefaultValues {
+		if cpr.Cfg.IsInteractive {
 			//5. CONFIG USER TO USE THIS BRANCH
 			confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
 			if err != nil {
@@ -157,24 +161,18 @@ func (cpr CreatePullRequest) Execute(args CreatePullRequestArgs) error {
 	}
 
 	//15. GET ISSUE INFO
-	title, body, err := cpr.getPullRequestInfo(issueID, args.NoCloseIssue)
+	title, body, err := cpr.getPullRequestInfo(issueID)
 	if err != nil {
 		return err
 	}
 
 	//16. CREATE PULL REQUEST
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, !args.NoDraft)
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR)
 	if err != nil {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
 
-	if !args.UseDefaultValues {
-		fmt.Println()
-	}
-
-	fmt.Printf("The pull request %s have been created!\nYou are now working on the branch %s", logging.PaintInfo(prURL), logging.PaintInfo(currentBranch))
-	fmt.Println()
-
+	fmt.Printf("\nThe pull request %s have been created!\nYou are now working on the branch %s\n", logging.PaintInfo(prURL), logging.PaintInfo(currentBranch))
 	// 17. EXIT
 	return nil
 }
@@ -199,13 +197,13 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 	return
 }
 
-func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue, noCloseIssue bool) (title string, body string, err error) {
+func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
 	switch issue.IssueTracker {
 	case domain.IssueTrackerTypeGithub:
 		title = issue.Title
 
 		keyword := "Closes"
-		if noCloseIssue {
+		if !cpr.Cfg.CloseIssue {
 			keyword = "Related to"
 		}
 		body = fmt.Sprintf("%s #%s", keyword, issue.ID)
@@ -271,9 +269,9 @@ func (cpr *CreatePullRequest) getIssueFromIssueID(issueID string) (issue domain.
 	return issueTracker.GetIssue(issueID)
 }
 
-func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string, fetch bool) error {
+func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string) error {
 	// Check if the base branch will be fetched before the new branch is created
-	if fetch {
+	if cpr.Cfg.FetchFromOrigin {
 		if err := cpr.Git.FetchBranchFromOrigin(baseBranch); err != nil {
 			return fmt.Errorf("could not fetch the changes from base branch because %s", err)
 		}
@@ -287,59 +285,42 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	return nil
 }
 
-func (cpr *CreatePullRequest) getPullRequestInfo(issueID string, noCloseIssue bool) (title string, body string, err error) {
+func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, body string, err error) {
 	issue, err := cpr.getIssueFromIssueID(issueID)
 	if err != nil {
 		return
 	}
 
-	title, body, err = cpr.getPullRequestTitleAndBody(issue, noCloseIssue)
+	title, body, err = cpr.getPullRequestTitleAndBody(issue)
 
 	return
 }
 
-func (cpr *CreatePullRequest) askUserForNewBranchName(branchName *string, baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository, useDefaultValues bool) (cancelled bool, err error) {
-
-	provs := providers{
-		UserInteraction: cpr.UserInteractionProvider,
-	}
-	if err := askBranchName(branchName, issueTracker, issueID, repo, useDefaultValues, provs); err != nil {
-		return false, err
+func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {
+	branchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
+	if err != nil {
+		return "", false, err
 	}
 
-	if !useDefaultValues {
-		fmt.Println()
-		fmt.Printf("A new pull request is going to be created from %s to %s branch", logging.PaintInfo(*branchName), logging.PaintInfo(baseBranch))
-		fmt.Println()
-
-		confirmation, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n", logging.PaintInfo(branchName), logging.PaintInfo(baseBranch))
+	if cpr.Cfg.IsInteractive {
+		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
 		if err != nil {
-			return false, err
+			return "", false, err
 		}
-
-		if !confirmation {
-			return true, nil
+		if !confirmed {
+			return "", true, nil
 		}
 	}
 
-	return false, nil
-}
-
-func (cpr *CreatePullRequest) createNewUserBranchAndPush(currentBranch *string, baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository, useDefaultValues, noFetch bool) (canceled bool, err error) {
-	//useDefaultValues should always be false in this specific case but we use it anyways
-	canceled, err = cpr.askUserForNewBranchName(currentBranch, baseBranch, issueTracker, issueID, repo, useDefaultValues)
-	if err != nil || canceled {
-		return
-	}
-
-	if err = cpr.createNewLocalBranch(*currentBranch, baseBranch, !noFetch); err != nil {
+	if err = cpr.createNewLocalBranch(branchName, baseBranch); err != nil {
 		return
 	}
 
 	//18. && 19.
-	if err = cpr.createEmptyCommitAndPush(*currentBranch); err != nil {
+	if err = cpr.createEmptyCommitAndPush(branchName); err != nil {
 		return
 	}
 
-	return
+	return branchName, false, nil
 }

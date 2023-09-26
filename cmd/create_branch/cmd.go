@@ -3,6 +3,7 @@ package create_branch
 import (
 	"os"
 
+	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/InditexTech/gh-sherpa/internal/git"
@@ -25,7 +26,14 @@ var Command = &cobra.Command{
 	Aliases: []string{"cb"},
 }
 
-var flags = use_cases.CreateBranchArgs{}
+type createBranchFlags struct {
+	IssueValue       string
+	BaseValue        string
+	NoFetchValue     bool
+	UseDefaultValues bool
+}
+
+var flags = createBranchFlags{}
 
 func init() {
 	Command.PersistentFlags().StringVarP(&flags.IssueValue, "issue", "i", "", "issue identifier")
@@ -50,14 +58,35 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		return err
 	}
 
-	createBranch := use_cases.CreateBranch{
-		Git:                     &git.Provider{},
-		GhCli:                   &gh.Cli{},
-		IssueTrackerProvider:    issueTrackers,
-		UserInteractionProvider: &interactive.UserInteractionProvider{},
+	userInteraction := &interactive.UserInteractionProvider{}
+
+	isInteractive := !flags.UseDefaultValues
+
+	branchProviderCfg := branches.Configuration{
+		Branches:      cfg.Branches,
+		IsInteractive: isInteractive,
+	}
+	branchProvider, err := branches.New(branchProviderCfg, userInteraction)
+	if err != nil {
+		return err
 	}
 
-	err = createBranch.Execute(flags)
+	createBranchConfig := use_cases.CreateBranchConfiguration{
+		IssueID:         flags.IssueValue,
+		BaseBranch:      flags.BaseValue,
+		FetchFromOrigin: !flags.NoFetchValue,
+		IsInteractive:   isInteractive,
+	}
+	createBranch := use_cases.CreateBranch{
+		Cfg:                     createBranchConfig,
+		Git:                     &git.Provider{},
+		RepositoryProvider:      &gh.Cli{},
+		IssueTrackerProvider:    issueTrackers,
+		UserInteractionProvider: userInteraction,
+		BranchProvider:          branchProvider,
+	}
+
+	err = createBranch.Execute()
 
 	if err != nil {
 		return err

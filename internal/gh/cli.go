@@ -7,15 +7,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cli/go-gh/v2"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/cli/go-gh/v2"
 )
 
 type Cli struct{}
 
 var _ domain.GhCli = (*Cli)(nil)
 
-func (c *Cli) GetRepo() (repo *domain.Repository, err error) {
+func (c *Cli) GetRepository() (repo *domain.Repository, err error) {
 	baseCommand := []string{"repo", "view", "--json", "name,owner,nameWithOwner,defaultBranchRef"}
 
 	stdout, stderr, err := gh.Exec(baseCommand...)

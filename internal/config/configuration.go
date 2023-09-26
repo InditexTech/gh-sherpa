@@ -22,14 +22,9 @@ const (
 var defaultConfigBuff []byte
 
 type Configuration struct {
-	Jira   Jira
-	Github Github
-}
-
-// Validate validates the configuration
-func (cfg Configuration) Validate() error {
-	//TODO: Implement validation if needed
-	return nil
+	Jira     Jira
+	Github   Github
+	Branches Branches
 }
 
 var cfg *Configuration
@@ -106,7 +101,7 @@ func Initialize(isInteractive bool) error {
 		return err
 	}
 
-	return cfg.Validate()
+	return nil
 }
 
 func generateConfigurationFile(cfgFile ConfigFile, isInteractive bool) error {

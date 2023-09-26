@@ -22,11 +22,12 @@ type CreatePullRequestExecutionTestSuite struct {
 	defaultBranchName       string
 	uc                      use_cases.CreatePullRequest
 	gitProvider             *domainMocks.MockGitProvider
-	ghCliProvider           *domainMocks.MockGhCli
 	issueTrackerProvider    *domainMocks.MockIssueTrackerProvider
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	pullRequestProvider     *domainMocks.MockPullRequestProvider
 	issueTracker            *domainMocks.MockIssueTracker
+	branchProvider          *domainMocks.MockBranchProvider
+	repositoryProvider      *domainMocks.MockRepositoryProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
@@ -43,35 +44,42 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.initializeGitProvider()
-	s.ghCliProvider = s.initializeGhCli()
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
+	s.branchProvider = s.initializeBranchProvider()
+	s.repositoryProvider = s.initializeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
+	defaultConfig := use_cases.CreatePullRequestConfiguration{
+		IsInteractive:   true,
+		CloseIssue:      true,
+		FetchFromOrigin: true,
+		DraftPR:         true,
+	}
 	s.uc = use_cases.CreatePullRequest{
+		Cfg:                     defaultConfig,
 		Git:                     s.gitProvider,
-		GhCli:                   s.ghCliProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
 		PullRequestProvider:     s.pullRequestProvider,
+		BranchProvider:          s.branchProvider,
+		RepositoryProvider:      s.repositoryProvider,
 	}
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.ghCliProvider.Mock, s.ghCliProvider.GetRepo)
-		s.ghCliProvider.EXPECT().GetRepo().Return(nil, assert.AnError).Once()
+		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
+		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.Error(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -84,9 +92,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not get the current branch name")
 		s.gitProvider.AssertExpectations(s.T())
@@ -101,9 +107,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		expectedError := fmt.Sprintf("could not find an issue identifier in the current branch named %s", branchName)
 		s.EqualError(err, expectedError)
@@ -117,9 +121,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreatePullRequestNotCalled()
@@ -128,20 +130,16 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should exit if pr already exists", func() {
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreatePullRequestNotCalled()
 	})
 
 	s.Run("should not ask the user for branch confirmation if default flag is used", func() {
-		args := use_cases.CreatePullRequestArgs{
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -158,9 +156,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -178,9 +174,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -194,9 +188,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.EXPECT().CommitEmpty(mock.Anything).Return(assert.AnError).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not do the empty commit because")
 		s.gitProvider.AssertNotCalled(s.T(), "PushBranch")
@@ -209,9 +201,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 		s.gitProvider.EXPECT().PushBranch(s.defaultBranchName).Return(assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not create the remote branch because")
 		s.gitProvider.AssertExpectations(s.T())
@@ -224,9 +214,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
 		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not create the pull request because")
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -239,23 +227,19 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutBranch)
 		s.gitProvider.EXPECT().CheckoutBranch("feature/GH-1-sample-issue").Return(nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
 	})
 
 	s.Run("should error if branch already exists when using default and issue flags", func() {
-		args := use_cases.CreatePullRequestArgs{
-			IssueId:          "1",
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IsInteractive = false
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "the branch feature/GH-1-sample-issue already exists")
 	})
@@ -265,19 +249,14 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Once()
 
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 29 chars", []string{}, mock.Anything, false).Return(nil).Once()
-
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.FetchBranchFromOrigin)
 		s.gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -289,16 +268,11 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(false, nil).Once()
 
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 29 chars", []string{}, mock.Anything, false).Return(nil).Once()
-
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -313,11 +287,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.gitProvider.EXPECT().CheckoutBranch("feature/GH-1-sample-issue").Return(nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -327,9 +299,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -351,11 +321,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -368,11 +336,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.expectNoPrFound()
 
-		args := use_cases.CreatePullRequestArgs{
-			NoCloseIssue: true,
-		}
+		s.uc.Cfg.CloseIssue = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -450,17 +416,17 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTrackerProvid
 	return issueTrackerProvider
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeGhCli() *domainMocks.MockGhCli {
-	ghCliProvider := &domainMocks.MockGhCli{}
+func (s *CreateGithubPullRequestExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
+	repositoryProvider := &domainMocks.MockRepositoryProvider{}
 
-	ghCliProvider.EXPECT().GetRepo().Return(&domain.Repository{
+	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
 		Owner:            "inditex",
 		Name:             "gh-sherpa",
 		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}, nil).Maybe()
 
-	return ghCliProvider
+	return repositoryProvider
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
@@ -479,6 +445,14 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *do
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeGithub).Maybe()
 
 	return issueTracker
+}
+
+func (s *CreateGithubPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
+
+	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return("feature/GH-1-sample-issue", nil).Maybe()
+
+	return branchProvider
 }
 
 type CreateJiraPullRequestExecutionTestSuite struct {
@@ -513,35 +487,42 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.initializeGitProvider()
-	s.ghCliProvider = s.initializeGhCli()
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
+	s.branchProvider = s.initializeBranchProvider()
+	s.repositoryProvider = s.initializeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
+	defaultConfig := use_cases.CreatePullRequestConfiguration{
+		IsInteractive:   true,
+		CloseIssue:      true,
+		FetchFromOrigin: true,
+		DraftPR:         true,
+	}
 	s.uc = use_cases.CreatePullRequest{
+		Cfg:                     defaultConfig,
 		Git:                     s.gitProvider,
-		GhCli:                   s.ghCliProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
 		PullRequestProvider:     s.pullRequestProvider,
+		BranchProvider:          s.branchProvider,
+		RepositoryProvider:      s.repositoryProvider,
 	}
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.ghCliProvider.Mock, s.ghCliProvider.GetRepo)
-		s.ghCliProvider.EXPECT().GetRepo().Return(nil, assert.AnError).Once()
+		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
+		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.Error(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -554,9 +535,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not get the current branch name")
 		s.gitProvider.AssertExpectations(s.T())
@@ -571,9 +550,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		expectedError := fmt.Sprintf("could not find an issue identifier in the current branch named %s", branchName)
 		s.EqualError(err, expectedError)
@@ -587,9 +564,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreatePullRequestNotCalled()
@@ -598,20 +573,16 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should exit if pr already exists", func() {
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreatePullRequestNotCalled()
 	})
 
 	s.Run("should not ask the user for branch confirmation if default flag is used", func() {
-		args := use_cases.CreatePullRequestArgs{
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -628,9 +599,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -648,9 +617,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -665,9 +632,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.EXPECT().CommitEmpty(mock.Anything).Return(assert.AnError).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not do the empty commit because")
 		s.gitProvider.AssertNotCalled(s.T(), "PushBranch")
@@ -680,9 +645,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.PushBranch)
 		s.gitProvider.EXPECT().PushBranch(s.defaultBranchName).Return(assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not create the remote branch because")
 		s.gitProvider.AssertExpectations(s.T())
@@ -696,9 +659,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
 		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not create the pull request because")
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -711,23 +672,19 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutBranch)
 		s.gitProvider.EXPECT().CheckoutBranch("feature/PROJECTKEY-1-sample-issue").Return(nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
 	})
 
 	s.Run("should error if branch already exists when using default and issue flags", func() {
-		args := use_cases.CreatePullRequestArgs{
-			IssueId:          "1",
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IssueID = "1"
+		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "the branch feature/PROJECTKEY-1-sample-issue already exists")
 	})
@@ -737,19 +694,14 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Once()
 
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 21 chars", []string{}, mock.Anything, false).Return(nil).Once()
-
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.FetchBranchFromOrigin)
 		s.gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -761,16 +713,11 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(false, nil).Once()
 
-		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInput)
-		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 21 chars", []string{}, mock.Anything, false).Return(nil).Once()
-
 		s.expectCreatePullRequestNotCalled()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -785,11 +732,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.gitProvider.EXPECT().CheckoutBranch("feature/PROJECTKEY-1-sample-issue").Return(nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -799,9 +744,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -823,11 +766,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
-		args := use_cases.CreatePullRequestArgs{
-			IssueId: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -840,11 +781,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.expectNoPrFound()
 
-		args := use_cases.CreatePullRequestArgs{
-			NoCloseIssue: true,
-		}
+		s.uc.Cfg.CloseIssue = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
@@ -922,17 +861,17 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTrackerProvider
 	return issueTrackerProvider
 }
 
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeGhCli() *domainMocks.MockGhCli {
-	ghCliProvider := &domainMocks.MockGhCli{}
+func (s *CreateJiraPullRequestExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
+	repositoryProvider := &domainMocks.MockRepositoryProvider{}
 
-	ghCliProvider.EXPECT().GetRepo().Return(&domain.Repository{
+	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
 		Owner:            "inditex",
 		Name:             "gh-sherpa",
 		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}, nil).Maybe()
 
-	return ghCliProvider
+	return repositoryProvider
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
@@ -956,4 +895,12 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *doma
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
 
 	return issueTracker
+}
+
+func (s *CreateJiraPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
+
+	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return("feature/PROJECTKEY-1-sample-issue", nil).Maybe()
+
+	return branchProvider
 }

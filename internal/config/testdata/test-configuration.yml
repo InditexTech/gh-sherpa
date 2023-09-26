@@ -20,3 +20,7 @@ github:
     removal: ["kind/removal"]
     revert: ["kind/revert"]
     security: ["kind/security"]
+branches:
+  prefixes:
+    feature: "feat"
+    bugfix: "fix"

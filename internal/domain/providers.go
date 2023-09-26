@@ -1,8 +1,11 @@
 package domain
 
 type GhCli interface {
-	GetRepo() (repo *Repository, err error)
 	Execute(result any, args []string) (err error)
+}
+
+type RepositoryProvider interface {
+	GetRepository() (repo *Repository, err error)
 }
 
 type PullRequestProvider interface {
@@ -27,4 +30,8 @@ type GitProvider interface {
 	RemoteBranchExists(branch string) (exists bool)
 	CommitEmpty(message string) (err error)
 	PushBranch(branch string) (err error)
+}
+
+type BranchProvider interface {
+	GetBranchName(issueTracker IssueTracker, issueIdentifier string, repo Repository) (branchName string, err error)
 }

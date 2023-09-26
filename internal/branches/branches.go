@@ -4,9 +4,37 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/InditexTech/gh-sherpa/internal/config"
+	"github.com/InditexTech/gh-sherpa/internal/domain"
 )
 
 var patternBranchName = regexp.MustCompile(`^(?:(?P<branch_type>\w*)/)?(?P<issue_id>(?:(?P<issue_key>\w*)-)?(?P<issue_number>\d+))(?:-?(?P<issue_context>[\w\-]*))$`)
+
+type BranchProvider struct {
+	cfg             Configuration
+	UserInteraction domain.UserInteractionProvider
+}
+
+type Configuration struct {
+	config.Branches
+	IsInteractive bool
+}
+
+func NewFromConfiguration(globalConfig config.Configuration, userInteractionProvider domain.UserInteractionProvider, isInteractive bool) (*BranchProvider, error) {
+	return New(Configuration{
+		Branches:      globalConfig.Branches,
+		IsInteractive: isInteractive,
+	}, userInteractionProvider)
+}
+
+func New(cfg Configuration, userInteractionProvider domain.UserInteractionProvider) (*BranchProvider, error) {
+
+	return &BranchProvider{
+		cfg:             cfg,
+		UserInteraction: userInteractionProvider,
+	}, nil
+}
 
 type BranchNameInfo struct {
 	BranchType   string
@@ -51,7 +79,7 @@ var issueContextRules = []issueContextRule{
 	{pattern: *regexp.MustCompile(`[^\w\-]`), replace: ""},                                 // Remove any other character for Kubernetes compatibility
 }
 
-func ParseIssueContext(issueContext string) string {
+func parseIssueContext(issueContext string) string {
 	issueContext = strings.TrimSpace(issueContext)
 
 	for _, r := range issueContextRules {
@@ -67,18 +95,30 @@ func ParseIssueContext(issueContext string) string {
 	return issueContext
 }
 
-func FormatBranchName(repoNameWithOwner string, branchType string, issueId string, issueContext string) (branchName string) {
-	branchName = fmt.Sprintf("%s/%s", branchType, issueId)
+// formatBranchName formats a branch name based on the issue type and the issue identifier.
+// It overrides the branch prefix if the issue type is present in the branchPrefixOverride map.
+// If the prefix is empty, it uses the branch type as the prefix.
+func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType string, issueId string, issueContext string) (branchName string) {
+	branchPrefix := branchType
+
+	for issueType, prefix := range b.cfg.Prefixes {
+		if prefix != "" && issueType.String() == branchType {
+			branchPrefix = prefix
+			break
+		}
+	}
+
+	branchName = fmt.Sprintf("%s/%s", branchPrefix, issueId)
 
 	if issueContext != "" {
 		branchName = fmt.Sprintf("%s-%s", branchName, issueContext)
 	}
 
-	return strings.TrimSuffix(branchName[:Min(63-len([]rune(repoNameWithOwner)), len([]rune(branchName)))], "-")
+	return strings.TrimSuffix(branchName[:min(63-len([]rune(repoNameWithOwner)), len([]rune(branchName)))], "-")
 }
 
-// Min returns the smallest of x or y.
-func Min(x, y int) int {
+// min returns the smallest of x or y.
+func min(x, y int) int {
 	if x > y {
 		return y
 	}

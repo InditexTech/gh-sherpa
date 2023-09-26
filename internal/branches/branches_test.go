@@ -3,7 +3,11 @@ package branches
 import (
 	"testing"
 
+	"github.com/InditexTech/gh-sherpa/internal/config"
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
+	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseIssueContext(t *testing.T) {
@@ -25,7 +29,7 @@ func TestParseIssueContext(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			context := ParseIssueContext(tt.given)
+			context := parseIssueContext(tt.given)
 
 			assert.Equal(t, tt.want, context)
 		})
@@ -33,11 +37,14 @@ func TestParseIssueContext(t *testing.T) {
 }
 
 func TestFormatBranchName(t *testing.T) {
+	repositoryName := "InditexTech/gh-sherpa"
+
 	type args struct {
-		repository   string
-		branchType   string
-		issueId      string
-		issueContext string
+		repository           string
+		branchType           string
+		issueId              string
+		issueContext         string
+		branchPrefixOverride map[issue_types.IssueType]string
 	}
 	tests := []struct {
 		name string
@@ -46,20 +53,106 @@ func TestFormatBranchName(t *testing.T) {
 	}{
 		{
 			name: "Does format branch name",
-			args: args{repository: "InditexTech/gh-sherpa", branchType: "feature", issueId: "GH-1", issueContext: "my-title"},
+			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title"},
 			want: "feature/GH-1-my-title",
 		},
 		{
-			name: "Does format branch name",
-			args: args{repository: "InditexTech/gh-sherpa", branchType: "feature", issueId: "GH-1", issueContext: "my-title-is-too-long-and-it-should-be-truncated"},
+			name: "Does format branch name with override",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1",
+				issueContext:         "my-title",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+			},
+			want: "feat/GH-1-my-title",
+		},
+		{
+			name: "Does format long branch name",
+			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title-is-too-long-and-it-should-be-truncated"},
 			want: "feature/GH-1-my-title-is-too-long-and-it-s",
 		},
+		{
+			name: "Does format long branch name with override",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1",
+				issueContext:         "my-title-is-too-long-and-it-should-be-truncated",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+			},
+			want: "feat/GH-1-my-title-is-too-long-and-it-shou",
+		},
+		{
+			name: "Does format branch with empty override",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "refactoring",
+				issueId:              "GH-1",
+				issueContext:         "refactor-issue",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Refactoring: ""},
+			},
+			want: "refactoring/GH-1-refactor-issue",
+		},
 	}
+
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			branchName := FormatBranchName(tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)
+			b := BranchProvider{
+				cfg: Configuration{
+					Branches: config.Branches{
+						Prefixes: tt.args.branchPrefixOverride,
+					},
+				},
+			}
+			branchName := b.formatBranchName(tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)
 
 			assert.Equal(t, tt.want, branchName)
 		})
 	}
+}
+
+func TestParseBranchName(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		branchName string
+		want       *BranchNameInfo
+	}{
+		{
+			branchName: "feature/GH-1-my-title",
+			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "my-title"},
+		},
+		{
+			branchName: "bugfix/PROJECTKEY-1-my-title",
+			want:       &BranchNameInfo{BranchType: "bugfix", IssueId: "PROJECTKEY-1", IssueContext: "my-title"},
+		},
+		{
+			branchName: "feature/GH-1-my-title-is-too-long-and-it-should-not-matter",
+			want:       &BranchNameInfo{BranchType: "feature", IssueId: "GH-1", IssueContext: "my-title-is-too-long-and-it-should-not-matter"},
+		},
+		{
+			branchName: "randomprefix/A_PROJECT_KEY-99-issue-tittle-here",
+			want:       &BranchNameInfo{BranchType: "randomprefix", IssueId: "A_PROJECT_KEY-99", IssueContext: "issue-tittle-here"},
+		},
+	} {
+		tc := tc
+		t.Run(tc.branchName, func(t *testing.T) {
+			branchInfo := ParseBranchName(tc.branchName)
+
+			assert.Equal(t, tc.want, branchInfo)
+		})
+	}
+}
+
+func TestNew(t *testing.T) {
+	t.Run("Creates a branch provider from configuration", func(t *testing.T) {
+		cfg := config.Configuration{}
+		userInteraction := new(domainMocks.MockUserInteractionProvider)
+		provider, err := NewFromConfiguration(cfg, userInteraction, false)
+		require.NoError(t, err)
+
+		assert.NotNil(t, provider)
+	})
+	//TODO: Add test cases when validation is implemented
 }

@@ -3,6 +3,7 @@ package create_pull_request
 import (
 	"fmt"
 
+	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/InditexTech/gh-sherpa/internal/git"
@@ -25,10 +26,19 @@ var Command = &cobra.Command{
 	PreRunE: preRunCommand,
 }
 
-var flags = use_cases.CreatePullRequestArgs{}
+type createPullRequestFlags struct {
+	IssueID          string
+	BaseBranch       string
+	NoFetch          bool
+	NoDraft          bool
+	NoCloseIssue     bool
+	UseDefaultValues bool
+}
+
+var flags createPullRequestFlags
 
 func init() {
-	Command.PersistentFlags().StringVarP(&flags.IssueId, "issue", "i", "", "issue identifier")
+	Command.PersistentFlags().StringVarP(&flags.IssueID, "issue", "i", "", "issue identifier")
 	Command.PersistentFlags().StringVarP(&flags.BaseBranch, "base", "b", "", "base branch for checkout. Use the default branch of the repository if it is not set")
 	Command.PersistentFlags().BoolVar(&flags.NoFetch, "no-fetch", false, "does not fetch the base branch")
 	Command.PersistentFlags().BoolVar(&flags.NoDraft, "no-draft", false, "create the pull request in ready for review mode")
@@ -38,7 +48,7 @@ func init() {
 func runCommand(cmd *cobra.Command, _ []string) error {
 	isIssueIDFlagUsed := cmd.Flags().Lookup("issue").Changed
 
-	if isIssueIDFlagUsed && flags.IssueId == "" {
+	if isIssueIDFlagUsed && flags.IssueID == "" {
 		return fmt.Errorf("sherpa needs an valid issue identifier")
 	}
 
@@ -51,15 +61,40 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	createPullRequestUseCase := use_cases.CreatePullRequest{
-		Git:                     &git.Provider{},
-		GhCli:                   &gh.Cli{},
-		IssueTrackerProvider:    issueTrackers,
-		UserInteractionProvider: &interactive.UserInteractionProvider{},
-		PullRequestProvider:     &gh.Cli{},
+	userInteraction := &interactive.UserInteractionProvider{}
+
+	isInteractive := !flags.UseDefaultValues
+
+	branchProviderCfg := branches.Configuration{
+		Branches:      cfg.Branches,
+		IsInteractive: isInteractive,
+	}
+	branchProvider, err := branches.New(branchProviderCfg, userInteraction)
+	if err != nil {
+		return err
 	}
 
-	return createPullRequestUseCase.Execute(flags)
+	ghCliProvider := &gh.Cli{}
+
+	createPullRequestConfig := use_cases.CreatePullRequestConfiguration{
+		IssueID:         flags.IssueID,
+		BaseBranch:      flags.BaseBranch,
+		FetchFromOrigin: !flags.NoFetch,
+		IsInteractive:   isInteractive,
+		DraftPR:         !flags.NoDraft,
+		CloseIssue:      !flags.NoCloseIssue,
+	}
+	createPullRequestUseCase := use_cases.CreatePullRequest{
+		Cfg:                     createPullRequestConfig,
+		Git:                     &git.Provider{},
+		RepositoryProvider:      ghCliProvider,
+		IssueTrackerProvider:    issueTrackers,
+		UserInteractionProvider: userInteraction,
+		PullRequestProvider:     ghCliProvider,
+		BranchProvider:          branchProvider,
+	}
+
+	return createPullRequestUseCase.Execute()
 }
 
 func preRunCommand(cmd *cobra.Command, _ []string) error {

@@ -27,3 +27,4 @@ github:
     feature: ["kind/feature"]
     refactoring: ["kind/refactoring"]
     documentation: ["kind/documentation"]
+    improvement: ["kind/improvement"]

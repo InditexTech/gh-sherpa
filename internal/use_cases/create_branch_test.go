@@ -18,10 +18,11 @@ type CreateBranchExecutionTestSuite struct {
 	defaultBranchName       string
 	uc                      use_cases.CreateBranch
 	gitProvider             *domainMocks.MockGitProvider
-	ghCliProvider           *domainMocks.MockGhCli
 	issueTrackerProvider    *domainMocks.MockIssueTrackerProvider
 	issueTracker            *domainMocks.MockIssueTracker
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
+	branchProvider          *domainMocks.MockBranchProvider
+	repositoryProvider      *domainMocks.MockRepositoryProvider
 }
 
 func (s *CreateBranchExecutionTestSuite) expectCreateBranchNotCalled() {
@@ -60,35 +61,40 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSuite() {
 
 func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.initializeGitProvider()
-	s.ghCliProvider = s.initializeGhCli()
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
+	s.branchProvider = s.initializeBranchProvider()
+	s.repositoryProvider = s.initializeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
+	defaultConfig := use_cases.CreateBranchConfiguration{
+		FetchFromOrigin: true,
+		IsInteractive:   true,
+	}
 	s.uc = use_cases.CreateBranch{
+		Cfg:                     defaultConfig,
 		Git:                     s.gitProvider,
-		GhCli:                   s.ghCliProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
+		BranchProvider:          s.branchProvider,
+		RepositoryProvider:      s.repositoryProvider,
 	}
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.ghCliProvider.Mock, s.ghCliProvider.GetRepo)
-		s.ghCliProvider.EXPECT().GetRepo().Return(nil, assert.AnError).Once()
+		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
+		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.Error(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -98,9 +104,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if no issue flag is provided", func() {
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
 		s.gitProvider.AssertExpectations(s.T())
@@ -113,12 +117,10 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue:       "1",
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IssueID = "1"
+		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/GH-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
@@ -132,12 +134,10 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue:       "1",
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IssueID = "1"
+		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -152,11 +152,9 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreateBranchCalled(domain.IssueTrackerTypeGithub)
@@ -172,11 +170,9 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue: "1",
-		}
+		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/GH-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
@@ -220,17 +216,25 @@ func (s *CreateGithubBranchExecutionTestSuite) initializeIssueTrackerProvider() 
 	return issueTrackerProvider
 }
 
-func (s *CreateGithubBranchExecutionTestSuite) initializeGhCli() *domainMocks.MockGhCli {
-	ghCliProvider := &domainMocks.MockGhCli{}
+func (s *CreateGithubBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
 
-	ghCliProvider.EXPECT().GetRepo().Return(&domain.Repository{
+	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return("feature/GH-1-sample-issue", nil).Maybe()
+
+	return branchProvider
+}
+
+func (s *CreateGithubBranchExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
+	repositoryProvider := &domainMocks.MockRepositoryProvider{}
+
+	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
 		Owner:            "inditex",
 		Name:             "gh-sherpa",
 		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}, nil).Maybe()
 
-	return ghCliProvider
+	return repositoryProvider
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
@@ -264,35 +268,37 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSuite() {
 
 func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.initializeGitProvider()
-	s.ghCliProvider = s.initializeGhCli()
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
+	s.branchProvider = s.initializeBranchProvider()
+	s.repositoryProvider = s.initializeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
 	s.uc = use_cases.CreateBranch{
 		Git:                     s.gitProvider,
-		GhCli:                   s.ghCliProvider,
+		RepositoryProvider:      s.repositoryProvider,
 		IssueTrackerProvider:    s.issueTrackerProvider,
 		UserInteractionProvider: s.userInteractionProvider,
+		BranchProvider:          s.branchProvider,
 	}
 }
 
 func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
+	issueID := "PROJECTKEY-1"
+
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.ghCliProvider.Mock, s.ghCliProvider.GetRepo)
-		s.ghCliProvider.EXPECT().GetRepo().Return(nil, assert.AnError).Once()
+		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
+		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = issueID
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.Error(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -302,9 +308,7 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if no issue flag is provided", func() {
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{}
-
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
 		s.gitProvider.AssertExpectations(s.T())
@@ -317,12 +321,10 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue:       "PROJECTKEY-1",
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IssueID = issueID
+		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/PROJECTKEY-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
@@ -336,12 +338,10 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Maybe()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue:       "PROJECTKEY-1",
-			UseDefaultValues: true,
-		}
+		s.uc.Cfg.IssueID = issueID
+		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
@@ -356,11 +356,9 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Maybe()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = issueID
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.NoError(err)
 		s.assertCreateBranchCalled(domain.IssueTrackerTypeJira)
@@ -376,11 +374,9 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
-		args := use_cases.CreateBranchArgs{
-			IssueValue: "PROJECTKEY-1",
-		}
+		s.uc.Cfg.IssueID = issueID
 
-		err := s.uc.Execute(args)
+		err := s.uc.Execute()
 
 		s.ErrorContains(err, "a local branch with the name feature/PROJECTKEY-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
@@ -424,17 +420,17 @@ func (s *CreateJiraBranchExecutionTestSuite) initializeIssueTrackerProvider() *d
 	return issueTrackerProvider
 }
 
-func (s *CreateJiraBranchExecutionTestSuite) initializeGhCli() *domainMocks.MockGhCli {
-	ghCliProvider := &domainMocks.MockGhCli{}
+func (s *CreateJiraBranchExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
+	repositoryProvider := &domainMocks.MockRepositoryProvider{}
 
-	ghCliProvider.EXPECT().GetRepo().Return(&domain.Repository{
+	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
 		Owner:            "inditex",
 		Name:             "gh-sherpa",
 		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}, nil).Maybe()
 
-	return ghCliProvider
+	return repositoryProvider
 }
 
 func (s *CreateJiraBranchExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
@@ -457,4 +453,12 @@ func (s *CreateJiraBranchExecutionTestSuite) initializeIssueTracker() *domainMoc
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
 
 	return issueTracker
+}
+
+func (s *CreateJiraBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
+	branchProvider := &domainMocks.MockBranchProvider{}
+
+	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return("feature/PROJECTKEY-1-sample-issue", nil).Maybe()
+
+	return branchProvider
 }

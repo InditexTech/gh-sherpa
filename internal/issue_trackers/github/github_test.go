@@ -125,7 +125,7 @@ func TestGetIssueType(t *testing.T) {
 
 	cfg := Configuration{
 		Github: config.Github{
-			IssueLabels: map[issue_types.IssueType][]string{
+			IssueLabels: config.GithubIssueLabels{
 				issue_types.Bug:         {"bug", "bugfix"},
 				issue_types.Feature:     {"feature", "enhancement"},
 				issue_types.Refactoring: {},

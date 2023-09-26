@@ -7,98 +7,79 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
-type CreateBranchArgs struct {
-	IssueValue       string
-	BaseValue        string
-	NoFetchValue     bool
-	UseDefaultValues bool
+type CreateBranchConfiguration struct {
+	IssueID         string
+	BaseBranch      string
+	FetchFromOrigin bool
+	IsInteractive   bool
 }
 
 type CreateBranch struct {
+	Cfg                     CreateBranchConfiguration
 	Git                     domain.GitProvider
-	GhCli                   domain.GhCli
+	RepositoryProvider      domain.RepositoryProvider
 	IssueTrackerProvider    domain.IssueTrackerProvider
 	UserInteractionProvider domain.UserInteractionProvider
+	BranchProvider          domain.BranchProvider
 }
 
 // Execute executes the create branch use case
-func (cb CreateBranch) Execute(args CreateBranchArgs) (err error) {
-	if args.IssueValue == "" {
+func (cb CreateBranch) Execute() (err error) {
+	if cb.Cfg.IssueID == "" {
 		return fmt.Errorf("sherpa needs an valid issue identifier")
 	}
 
-	repo, err := cb.GhCli.GetRepo()
+	repo, err := cb.RepositoryProvider.GetRepository()
 	if err != nil {
 		return err
 	}
 
-	baseBranch := args.BaseValue
+	baseBranch := cb.Cfg.BaseBranch
 	if baseBranch == "" {
 		logging.Debugf("Base branch not set, using default branch, %s", repo.DefaultBranchRef)
 		baseBranch = repo.DefaultBranchRef
 	}
 
-	issueTrackerProvider, err := cb.IssueTrackerProvider.GetIssueTracker(args.IssueValue)
+	issueTrackerProvider, err := cb.IssueTrackerProvider.GetIssueTracker(cb.Cfg.IssueID)
 	if err != nil {
 		return err
 	}
 
-	var branch string
-	canceled, err := cb.askUserForNewBranchName(&branch, issueTrackerProvider, args.IssueValue, *repo, args.UseDefaultValues)
+	branchName, err := cb.BranchProvider.GetBranchName(issueTrackerProvider, cb.Cfg.IssueID, *repo)
 	if err != nil {
 		return err
 	}
 
-	if canceled {
-		return nil
+	fmt.Printf("\nA new local branch named %s is going to be created\n", logging.PaintInfo(branchName))
+	if cb.Cfg.IsInteractive {
+		confirmed, err := cb.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+		if err != nil {
+			return err
+		}
+		if !confirmed {
+			return nil
+		}
 	}
 
-	return checkoutBranch(branch, baseBranch, !args.NoFetchValue, cb.Git)
+	return cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.FetchFromOrigin)
 }
 
-func checkoutBranch(branchName string, baseBranch string, fetch bool, git domain.GitProvider) error {
-	if git.BranchExists(branchName) {
+func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetch bool) error {
+	if cb.Git.BranchExists(branchName) {
 		return fmt.Errorf("a local branch with the name %s already exists", branchName)
 	}
 
 	if fetch {
-		if err := git.FetchBranchFromOrigin(baseBranch); err != nil {
+		if err := cb.Git.FetchBranchFromOrigin(baseBranch); err != nil {
 			return fmt.Errorf("error while fetching the branch %s: %s", baseBranch, err)
 		}
 	}
 
-	if err := git.CheckoutNewBranchFromOrigin(branchName, baseBranch); err != nil {
+	if err := cb.Git.CheckoutNewBranchFromOrigin(branchName, baseBranch); err != nil {
 		return err
 	}
 
 	fmt.Printf("A local branch named %s has been created!\n", logging.PaintInfo(branchName))
 
 	return nil
-}
-
-func (cb CreateBranch) askUserForNewBranchName(branchName *string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository, useDefaultValues bool) (cancelled bool, err error) {
-
-	provs := providers{
-		UserInteraction: cb.UserInteractionProvider,
-	}
-	if err := askBranchName(branchName, issueTracker, issueID, repo, useDefaultValues, provs); err != nil {
-		return false, err
-	}
-
-	if !useDefaultValues {
-		fmt.Println()
-		fmt.Printf("A new local branch named %s is going to be created", logging.PaintInfo(*branchName))
-		fmt.Println()
-
-		confirmation, err := cb.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
-		if err != nil {
-			return false, err
-		}
-
-		if !confirmation {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
