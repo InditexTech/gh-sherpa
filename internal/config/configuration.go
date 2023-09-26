@@ -27,12 +27,6 @@ type Configuration struct {
 	Branches Branches
 }
 
-// Validate validates the configuration
-func (cfg Configuration) Validate() error {
-	//TODO: Implement validation if needed
-	return nil
-}
-
 var cfg *Configuration
 var vip *viper.Viper
 
@@ -107,7 +101,7 @@ func Initialize(isInteractive bool) error {
 		return err
 	}
 
-	return cfg.Validate()
+	return nil
 }
 
 func generateConfigurationFile(cfgFile ConfigFile, isInteractive bool) error {

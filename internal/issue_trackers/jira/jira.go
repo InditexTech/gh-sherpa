@@ -28,17 +28,8 @@ type Configuration struct {
 	config.Jira
 }
 
-// Validate validates the configuration
-func (c Configuration) Validate() (err error) {
-	//TODO: Validate configuration
-	return nil
-}
-
 // New returns a new Jira issue tracker with the given configuration
 func New(cfg Configuration) (jira *Jira, err error) {
-	if err := cfg.Validate(); err != nil {
-		return nil, err
-	}
 
 	jira = &Jira{cfg: cfg}
 

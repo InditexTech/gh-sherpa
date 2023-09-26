@@ -26,11 +26,6 @@ type Configuration struct {
 	config.Github
 }
 
-func (c Configuration) Validate() (err error) {
-	//TODO: Validate configuration
-	return nil
-}
-
 type Issue struct {
 	Number int64
 	Title  string
@@ -50,9 +45,6 @@ var _ domain.IssueTracker = (*Github)(nil)
 
 // New returns a new Github issue tracker with the given configuration
 func New(cfg Configuration) (*Github, error) {
-	if err := cfg.Validate(); err != nil {
-		return nil, err
-	}
 
 	return &Github{
 		cfg: cfg,

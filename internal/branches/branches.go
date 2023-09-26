@@ -21,11 +21,6 @@ type Configuration struct {
 	IsInteractive bool
 }
 
-func (c Configuration) Validate() (err error) {
-	//TODO: Validate configuration
-	return nil
-}
-
 func NewFromConfiguration(globalConfig config.Configuration, userInteractionProvider domain.UserInteractionProvider, isInteractive bool) (*BranchProvider, error) {
 	return New(Configuration{
 		Branches:      globalConfig.Branches,
@@ -34,9 +29,6 @@ func NewFromConfiguration(globalConfig config.Configuration, userInteractionProv
 }
 
 func New(cfg Configuration, userInteractionProvider domain.UserInteractionProvider) (*BranchProvider, error) {
-	if err := cfg.Validate(); err != nil {
-		return nil, err
-	}
 
 	return &BranchProvider{
 		cfg:             cfg,
