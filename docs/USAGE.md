@@ -1,5 +1,26 @@
 # Usage
 
+## TL;DR
+
+```
+$ gh sherpa --help
+
+Usage:
+  sherpa [command]
+
+Available Commands:
+  create-branch Create a local branch from an issue type
+  create-pr     Create a pull request from the current local branch or issue type
+  help          Help about any command
+
+Flags:
+  -h, --help      help for sherpa
+  -v, --version   version for sherpa
+  -y, --yes       use the default proposed fields
+
+Use "sherpa [command] --help" for more information about a command.
+```
+
 ## Create branch
 
 Create a git branch associated to a GitHub or Jira issue.
