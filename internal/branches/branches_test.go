@@ -5,7 +5,9 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
+	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseIssueContext(t *testing.T) {
@@ -141,4 +143,16 @@ func TestParseBranchName(t *testing.T) {
 			assert.Equal(t, tc.want, branchInfo)
 		})
 	}
+}
+
+func TestNew(t *testing.T) {
+	t.Run("Creates a branch provider from configuration", func(t *testing.T) {
+		cfg := config.Configuration{}
+		userInteraction := new(domainMocks.MockUserInteractionProvider)
+		provider, err := NewFromConfiguration(cfg, userInteraction, false)
+		require.NoError(t, err)
+
+		assert.NotNil(t, provider)
+	})
+	//TODO: Add test cases when validation is implemented
 }
