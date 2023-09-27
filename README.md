@@ -225,7 +225,6 @@ go tool cover -html=.local/coverage.out
 It will generate an HTML file with the coverage report that you can open in your browser.
 
 >NOTE: For Windows WSL users, you may need to convert the `coverage.out` file to a Windows compatible path. You can do it with the following command:
-
 > ```sh
 > wslpath -w PATH/TO/GENERATED/HTML/FILE
 > ```
