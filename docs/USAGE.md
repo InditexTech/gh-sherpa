@@ -1,5 +1,7 @@
 # Usage
 
+While using GitHub issues you **must** be within a working github repository, so it can interact with the repository's issues and pull requests.
+
 ## TL;DR
 
 ```
@@ -83,7 +85,7 @@ gh sherpa create-pr, cpr [flags]
 * `--yes, -y`: The pull request will be created without confirmation.
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
-git
+
 ### Posibles scenarios
 
 #### Create a pull request associated to an existing local branch
