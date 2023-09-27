@@ -26,7 +26,7 @@ development life cycle of a task**.
 ## Prerequisites
 
 - An available GitHub account.
-- [**GitHub CLI**](https://github.com/cli/cli) configured in your development environment (version `2.0.0` or higher).
+- [**GitHub CLI**](https://github.com/cli/cli) configured (and [authenticated](https://cli.github.com/manual/gh_auth_login)) in your development environment (version `2.0.0` or higher).
 - **Bash**: Supports Linux, MacOS and Windows (for the latter, we recommend using [`WSL2`](https://learn.microsoft.com/en-us/windows/wsl/install)).
 
 ## Installation
