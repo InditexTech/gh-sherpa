@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD033 -->
 <!-- omit from toc -->
 # Sherpa extension for GitHub CLI
 
@@ -26,7 +27,7 @@ development life cycle of a task**.
 
 - An available GitHub account.
 - [**GitHub CLI**](https://github.com/cli/cli) configured in your development environment (version `2.0.0` or higher).
-- **Bash**: Supports Linux, MacOS and Windows (for the latter, we recommend using `WSL2`).
+- **Bash**: Supports Linux, MacOS and Windows (for the latter, we recommend using [`WSL2`](https://learn.microsoft.com/en-us/windows/wsl/install)).
 
 ## Installation
 
@@ -72,6 +73,7 @@ Check the corresponding section in [`Build / install from source`](#build--insta
 ```sh
 go install github.com/InditexTech/gh-sherpa@latest
 ```
+
 ### Option 4: Download the binary file
 
 You can download the binary file from the [releases page](https://github.com/InditexTech/gh-sherpa/releases).
@@ -122,6 +124,8 @@ Check the [`internal/config/default-config.yml`](internal/config/default-config.
 
 <!-- omit from toc -->
 ### Jira configuration
+
+>NOTE: This configuration is only required if you want to use Jira integration.
 
 | Parameter                      | Description                                   | Default value |
 | ------------------------------ | --------------------------------------------- | ------------- |
