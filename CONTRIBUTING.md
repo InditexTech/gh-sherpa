@@ -75,7 +75,7 @@ make generate-mocks
 
 This command will generate the mocks in the `internal/mocks` directory, as configured in the [`.mockery.yaml`](.mockery.yaml) file.
 
->NOTE: Please, refrain from using the generated `NewMockXXXX` constructors. Instead instantiate the mocks using `&MockXXXX{}`. This is needed because the generated constructors will always execute `mock.AssertExpectation(t)` on cleanup, which will fail if the test did not expect a call to the mock.
+>NOTE: Please, refrain from using the generated `NewMockXXXX` constructors. Instead, instantiate the mocks using `&MockXXXX{}`. This is needed because the generated constructors will always execute `mock.AssertExpectation(t)` on cleanup, which will fail if the test does not expect a call to the mock.
 
 ### Coverage report
 
@@ -93,7 +93,7 @@ go tool cover -html=.local/coverage.out
 
 It will generate an HTML file with the coverage report that you can open in your browser.
 
->NOTE: For Windows WSL users, you may need to convert the `coverage.out` file to a Windows compatible path. You can do it with the following command:
+>NOTE: For Windows WSL users, you may need to convert the `coverage.out` file to a Windows-compatible path. You can do it with the following command:
 > ```sh
 > wslpath -w PATH/TO/GENERATED/HTML/FILE
 > ```

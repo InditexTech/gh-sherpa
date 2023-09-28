@@ -1,10 +1,9 @@
-<!-- markdownlint-disable MD033 -->
 # Sherpa extension for GitHub CLI
 
 **Sherpa** extension for [GitHub CLI](https://github.com/cli/cli) helps you to **automate certain operations of the
 development life cycle of a task**.
 
-<img src="docs/images/create-pr.svg" alt="alt text" width="700" height="450"/>
+![Create PR](docs/images/create-pr.svg "Create Pull Request")
 
 ## Table of contents
 
@@ -45,8 +44,6 @@ To **remove** this extension just run:
 ```sh
 gh extension remove sherpa
 ```
-
-</details>
 
 ## Usage
 

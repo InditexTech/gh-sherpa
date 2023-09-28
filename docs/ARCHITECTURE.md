@@ -27,7 +27,8 @@ graph TD;
   End([End])
 
 ```
-*\*\* The user may need to enter input manually in interactive mode*
+
+>*\*\* The user may need to enter input manually in interactive mode*
 
 </details>
 
@@ -70,7 +71,8 @@ graph TD;
 
   End([End])
 ```
-*\*\* The user may need to enter input manually in interactive mode*
+
+>*\*\* The user may need to enter input manually in interactive mode*
 
 </details>
 
