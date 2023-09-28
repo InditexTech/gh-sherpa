@@ -3,7 +3,7 @@
 **Sherpa** extension for [GitHub CLI](https://github.com/cli/cli) helps you to **automate certain operations of the
 development life cycle of a task**.
 
-![Create PR](docs/images/create-pr.svg "Create Pull Request")
+![Create PR](docs/images/create-pr.svg)
 
 ## Table of contents
 
