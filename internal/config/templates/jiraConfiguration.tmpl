@@ -1,0 +1,23 @@
+{{ define "jiraConfiguration" -}}
+# Jira configuration
+jira:
+  # Jira authentication configuration
+  auth:
+    # Jira authentication url to generate PAT
+    # WARNING: Replace it with your actual Jira authentication url
+    host: {{.Auth.Host}}
+    # Jira already generated PAT
+    # WARNING: Replace it with your actual Jira PAT
+    token: {{.Auth.Token}}
+    # Jira insecure TLS configuration
+    skip_tls_verify: {{.Auth.InsecureTLS}}
+  # Jira issue types configuration
+  issue_types: {{with .IssueTypes}}{{range $issueType, $jiraIDs := .}}
+    {{$issueType}}: [{{block "jiraIDsMap" $jiraIDs}}{{end}}]
+    {{- end}}
+    {{- else}}{}{{end}}
+{{- end }}
+
+{{define "jiraIDsMap" -}}
+{{range $index, $id := .}}{{if $index}}, {{end}}"{{$id}}"{{end}}
+{{- end}}

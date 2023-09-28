@@ -143,8 +143,31 @@ func writeConfigurationFile(cfgFile ConfigFile) error {
 	if err := os.MkdirAll(cfgFile.Path, os.ModePerm); err != nil {
 		return err
 	}
-	vip.SetConfigFile(cfgFile.getFilePath())
-	if err := vip.WriteConfig(); err != nil {
+	filePath := cfgFile.getFilePath()
+	vip.SetConfigFile(filePath)
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err := vip.Unmarshal(&cfg); err != nil {
+		return err
+	}
+
+	configFileTemplateData := configFileTemplateData{
+		JiraData: JiraTemplateConfiguration{
+			Jira: cfg.Jira,
+		},
+		GithubData: GithubTemplateConfiguration{
+			Github: cfg.Github,
+		},
+		BranchesData: BranchesTemplateConfiguration{
+			Branches: cfg.Branches,
+		},
+	}
+	if err := writeTemplatedConfigFile(f, configFileTemplateData); err != nil {
 		return err
 	}
 

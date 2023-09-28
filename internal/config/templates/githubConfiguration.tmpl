@@ -1,0 +1,12 @@
+{{define "githubConfiguration" -}}
+# Github configuration 
+github:
+  issue_labels: {{with .IssueLabels -}}{{range $issue, $labels := .}}
+    {{$issue}}: [{{block "labelsMap" $labels}}{{end}}]
+    {{- end}}
+    {{- else}}{}{{end}}
+{{- end}}
+
+{{define "labelsMap" -}}
+{{range $index, $label := .}}{{if $index}}, {{end}}"{{$label}}"{{end}}
+{{- end}}

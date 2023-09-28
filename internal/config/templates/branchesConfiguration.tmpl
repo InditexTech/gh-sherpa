@@ -1,0 +1,7 @@
+{{define "branchesConfiguration" -}}
+# Branches configuration
+branches:
+  prefixes: {{if .Prefixes}}{{range $prefix, $mapping := .Prefixes}}
+    {{$prefix}}: {{$mapping}}{{end}}
+    {{- else}}{}{{end}}
+{{end}}
