@@ -62,7 +62,7 @@ Sherpa CLI can be configured using its own configuration file, stored in `$HOME/
 
 If no configuration file is found, the first time you run a command it will ask you to configure your Jira credentials (if you want to use Jira integration) and then proceed to create the configuration file.
 
-Check the [`internal/config/default-config.yml`](internal/config/default-config.yml) file to see the available configuration parameters as well as the default values and some examples.
+Check the [`internal/config/default-config.yml`](internal/config/default-config.yml) file to see the available configuration parameters as well as the default values and some examples. This file should be the same as the one generated in your `$HOME/.config/sherpa/config.yml` file prior to any modification.
 
 <!-- omit from toc -->
 ### Jira configuration
