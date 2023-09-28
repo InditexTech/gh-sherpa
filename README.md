@@ -69,14 +69,16 @@ Check the [`internal/config/default-config.yml`](internal/config/default-config.
 
 >NOTE: This configuration is only required if you want to use Jira integration.
 
-| Parameter                      | Description                                   | Default value |
-| ------------------------------ | --------------------------------------------- | ------------- |
-| `jira.auth.host`               | Jira host to connect to.                      | `""`          |
-| `jira.auth.token`              | Jira already generated PAT                    | `""`          |
-| `jira.auth.skip_tls_verify`    | Skip TLS verification for the given hos       | `false`       |
-| `jira.issue_types.bugfix`      | List of Jira types ID related to bugfixes     | `["1"]`       |
-| `jira.issue_types.feature`     | List of Jira types ID related to features     | `["3", "5"]`  |
-| `jira.issue_types.improvement` | List of Jira types ID related to improvements | `["4"]`       |
+| Parameter                      | Description                                         | Default value |
+| ------------------------------ | --------------------------------------------------- | ------------- |
+| `jira.auth.host`               | Jira host to connect to.                            | `""`          |
+| `jira.auth.token`              | Jira already generated PAT                          | `""`          |
+| `jira.auth.skip_tls_verify`    | Skip TLS verification for the given hos             | `false`       |
+| `jira.issue_types.bugfix`      | List of Jira issue type IDs related to bugfixes     | `["1"]`       |
+| `jira.issue_types.feature`     | List of Jira issue type IDs related to features     | `["3", "5"]`  |
+| `jira.issue_types.improvement` | List of Jira issue type IDs related to improvements | `["4"]`       |
+
+>NOTE: You can get a list of the Jira issue type IDs making a request to `https://{your-jira-domain}/jira/rest/api/2/issuetype`. More information in the [Jira issue types REST API documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-types/#api-group-issue-types).
 
 <!-- omit from toc -->
 ### GitHub configuration
