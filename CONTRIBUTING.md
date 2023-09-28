@@ -109,12 +109,16 @@ make verify
 This command will do the following:
 
 - Download the required dependencies (`make tidy`)
-- Run the linter (`make lint`)
+- Check the code format using [`gofmt`](https://pkg.go.dev/cmd/gofmt) (`make checkfmt`).
+  - If the code format is not correct, you can fix it with `make fmt`.
+- Run the [`staticcheck`](https://staticcheck.dev/) linter (`make lint`)
 - Run [go vet](https://pkg.go.dev/cmd/vet) (`make vet`)
 - Build the application (`make build`)
 - Run the tests (`make test`)
 
 It's recommended to run this command before pushing your changes to the repository.
+
+>NOTE: Since we are using `go run` to execute the required dependencies while verifying, you don't have to install them in your development environment.
 
 ## Helpful Resources
 
