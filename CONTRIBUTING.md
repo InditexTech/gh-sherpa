@@ -98,6 +98,24 @@ It will generate an HTML file with the coverage report that you can open in your
 > wslpath -w PATH/TO/GENERATED/HTML/FILE
 > ```
 
+## Verifying code integrity
+
+You can verify the code integrity with the following command:
+
+```sh
+make verify
+```
+
+This command will do the following:
+
+- Download the required dependencies (`make tidy`)
+- Run the linter (`make lint`)
+- Run [go vet](https://pkg.go.dev/cmd/vet) (`make vet`)
+- Build the application (`make build`)
+- Run the tests (`make test`)
+
+It's recommended to run this command before pushing your changes to the repository.
+
 ## Helpful Resources
 
 - [Project documentation](README.md): Refer to our documentation for more information on the project structure and how to contribute.
