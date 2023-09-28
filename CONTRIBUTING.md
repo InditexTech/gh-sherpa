@@ -61,12 +61,10 @@ You can run the tests with the following command:
 make test
 ```
 
-<!-- omit from toc -->
 ### Writing tests
 
 We use [stretchr/testify suite package](https://github.com/stretchr/testify#suite-package) for testing when needed. You can also write regular tests without using the suite package.
 
-<!-- omit from toc -->
 ### Mocking interfaces
 
 We use [vektra/mockery](https://github.com/vektra/mockery) for mocking interfaces. You can generate the mocks with the following command:
@@ -79,7 +77,6 @@ This command will generate the mocks in the `internal/mocks` directory, as confi
 
 >NOTE: Please, refrain from using the generated `NewMockXXXX` constructors. Instead instantiate the mocks using `&MockXXXX{}`. This is needed because the generated constructors will always execute `mock.AssertExpectation(t)` on cleanup, which will fail if the test did not expect a call to the mock.
 
-<!-- omit from toc -->
 ### Coverage report
 
 You can also run the tests with coverage with the following command:

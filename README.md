@@ -1,5 +1,4 @@
 <!-- markdownlint-disable MD033 -->
-<!-- omit from toc -->
 # Sherpa extension for GitHub CLI
 
 **Sherpa** extension for [GitHub CLI](https://github.com/cli/cli) helps you to **automate certain operations of the
@@ -7,7 +6,6 @@ development life cycle of a task**.
 
 <img src="docs/images/create-pr.svg" alt="alt text" width="700" height="450"/>
 
-<!-- omit from toc -->
 ## Table of contents
 
 - [Prerequisites](#prerequisites)
@@ -32,7 +30,6 @@ You can **install** this extension just running this command from your terminal:
 gh extension install InditexTech/gh-sherpa
 ```
 
-<!-- omit from toc -->
 ### Upgrade
 
 If you have already installed this extension and you want to **upgrade** it, so, you should run this command from your terminal:
@@ -41,7 +38,6 @@ If you have already installed this extension and you want to **upgrade** it, so,
 gh extension upgrade sherpa
 ```
 
-<!-- omit from toc -->
 ### Remove
 
 To **remove** this extension just run:
@@ -64,7 +60,6 @@ If no configuration file is found, the first time you run a command it will ask 
 
 Check the [`internal/config/default-config.yml`](internal/config/default-config.yml) file to see the available configuration parameters as well as the default values and some examples. This file should be the same as the one generated in your `$HOME/.config/sherpa/config.yml` file prior to any modification.
 
-<!-- omit from toc -->
 ### Jira configuration
 
 >NOTE: This configuration is only required if you want to use Jira integration.
@@ -80,7 +75,6 @@ Check the [`internal/config/default-config.yml`](internal/config/default-config.
 
 >NOTE: You can get a list of the Jira issue type IDs making a request to `https://{your-jira-domain}/jira/rest/api/2/issuetype`. More information in the [Jira issue types REST API documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-types/#api-group-issue-types).
 
-<!-- omit from toc -->
 ### GitHub configuration
 
 | Parameter                           | Description                             | Default value            |
@@ -92,7 +86,6 @@ Check the [`internal/config/default-config.yml`](internal/config/default-config.
 | `github.issue_labels.documentation` | List of labels related to documentation | `["kind/documentation"]` |
 | `github.issue_labels.improvement`   | List of labels related to improvements  | `["kind/improvement"]`   |
 
-<!-- omit from toc -->
 ### Branches configuration
 
 | Parameter           | Description                             | Default value |
