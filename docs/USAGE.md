@@ -43,7 +43,7 @@ gh sherpa create-branch, cb [flags]
 * `--no-fetch`: The base branch will not be fetched.
 * `--yes, -y`: The branch will be created without confirmation.
 
-### Posibles scenarios
+### Possibles scenarios
 
 #### Create a branch name associated to an issue
 
@@ -86,7 +86,7 @@ gh sherpa create-pr, cpr [flags]
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
 
-### Posibles scenarios
+### Possibles scenarios
 
 #### Create a pull request associated to an existing local branch
 
