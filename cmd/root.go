@@ -16,7 +16,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:           "sherpa",
 	Short:         "Interact with Inditex Sherpa",
-	Long:          "GitHub CLI Sherpa Extension - Interact with the Inditex Sherpa service from the command line.",
+	Long:          "GitHub CLI Sherpa Extension - Interact with Inditex Sherpa",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

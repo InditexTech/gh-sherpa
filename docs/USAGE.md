@@ -1,5 +1,28 @@
 # Usage
 
+While using GitHub issues you **must** be within a working github repository, so it can interact with the repository's issues and pull requests.
+
+## TL;DR
+
+```
+$ gh sherpa --help
+
+Usage:
+  sherpa [command]
+
+Available Commands:
+  create-branch Create a local branch from an issue type
+  create-pr     Create a pull request from the current local branch or issue type
+  help          Help about any command
+
+Flags:
+  -h, --help      help for sherpa
+  -v, --version   version for sherpa
+  -y, --yes       use the default proposed fields
+
+Use "sherpa [command] --help" for more information about a command.
+```
+
 ## Create branch
 
 Create a git branch associated to a GitHub or Jira issue.
@@ -20,7 +43,7 @@ gh sherpa create-branch, cb [flags]
 * `--no-fetch`: The base branch will not be fetched.
 * `--yes, -y`: The branch will be created without confirmation.
 
-### Posibles scenarios
+### Possible scenarios
 
 #### Create a branch name associated to an issue
 
@@ -62,8 +85,8 @@ gh sherpa create-pr, cpr [flags]
 * `--yes, -y`: The pull request will be created without confirmation.
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
-git
-### Posibles scenarios
+
+### Possible scenarios
 
 #### Create a pull request associated to an existing local branch
 
