@@ -27,6 +27,80 @@ collaborative and respectful environment, please consider the following guidelin
 - Document any new changes or features you add. This will help other contributors and project users understand your work and its purpose.
 - Be sure to link the corresponding issue in your pull request to maintain proper tracking of contributions.
 
+## Development
+
+Make sure that you have:
+
+- Read the rest of the [`CONTRIBUTING.md`](CONTRIBUTING.md) sections.
+- Meet the [prerequisites](#prerequisites).
+- [Golang](https://golang.org/doc/install) (version `1.20.4` or higher).
+- [GNU Make](https://www.gnu.org/software/make/) (version `4.2.1` or higher).
+- [Git](https://git-scm.com/downloads) (version `2.25.1` or higher).
+
+Activate the development mode setting `GH_SHERPA_DEV` environment variable:
+
+```sh
+export GH_SHERPA_DEV=1
+```
+
+Install the extension using the local path:
+
+```sh
+git clone https://github.com/InditexTech/gh-sherpa.git
+cd gh-sherpa
+gh extension remove sherpa && gh extension install .
+```
+
+>NOTE: You can also use `make install` to install the extension as a binary in your `$GOPATH/bin` or just run the generated binary after a `make build` execution with `./bin/gh-sherpa`.
+
+## Testing the application
+
+You can run the tests with the following command:
+
+```sh
+make test
+```
+
+<!-- omit from toc -->
+### Writing tests
+
+We use [stretchr/testify suite package](https://github.com/stretchr/testify#suite-package) for testing when needed. You can also write regular tests without using the suite package.
+
+<!-- omit from toc -->
+### Mocking interfaces
+
+We use [vektra/mockery](https://github.com/vektra/mockery) for mocking interfaces. You can generate the mocks with the following command:
+
+```sh
+make generate-mocks
+```
+
+This command will generate the mocks in the `internal/mocks` directory, as configured in the [`.mockery.yaml`](.mockery.yaml) file.
+
+>NOTE: Please, refrain from using the generated `NewMockXXXX` constructors. Instead instantiate the mocks using `&MockXXXX{}`. This is needed because the generated constructors will always execute `mock.AssertExpectation(t)` on cleanup, which will fail if the test did not expect a call to the mock.
+
+<!-- omit from toc -->
+### Coverage report
+
+You can also run the tests with coverage with the following command:
+
+```sh
+make coverage
+```
+
+It will generate a `coverage.out` file in the `.local` directory. You can see the coverage report running the following command:
+
+```sh
+go tool cover -html=.local/coverage.out
+```
+
+It will generate an HTML file with the coverage report that you can open in your browser.
+
+>NOTE: For Windows WSL users, you may need to convert the `coverage.out` file to a Windows compatible path. You can do it with the following command:
+> ```sh
+> wslpath -w PATH/TO/GENERATED/HTML/FILE
+> ```
+
 ## Helpful Resources
 
 - [Project documentation](README.md): Refer to our documentation for more information on the project structure and how to contribute.
