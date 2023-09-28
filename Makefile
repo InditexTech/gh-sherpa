@@ -72,9 +72,9 @@ checkfmt:
 	$(info $(M) Running gofmt checking code style...)
 	@fmtRes=$$($(GOFMT) -d .); \
 	if [ -n "$${fmtRes}" ]; then \
-					echo "gofmt checking failed!"; echo "$${fmtRes}"; echo; \
-					echo "Please ensure you are using $$($(GO) version) for formatting code."; \
-					exit 1; \
+		echo "gofmt checking failed!"; echo "$${fmtRes}"; echo; \
+		echo "Please ensure you are using $$($(GO) version) for formatting code."; \
+		exit 1; \
 	fi
 
 ## fmt: Formats the code
