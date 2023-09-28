@@ -105,6 +105,7 @@ It will generate an HTML file with the coverage report that you can open in your
 
 - [Project documentation](README.md): Refer to our documentation for more information on the project structure and how to contribute.
 - [Use cases](docs/USAGE.md): Check out the available use cases and examples to learn how to use this extension.
+- [Architecture](docs/ARCHITECTURE.md): Learn more about the project's architecture and how it works.
 - [Issues](../../issues): Check open issues and look for opportunities to contribute. Make sure to open an issue before starting work on a new feature or fix.
 
 Thank you for your time and contribution! Your work helps to grow and improve this project. If you have any questions, feel free to reach out to us.
