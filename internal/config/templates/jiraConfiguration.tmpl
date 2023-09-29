@@ -12,9 +12,9 @@ jira:
     # Jira insecure TLS configuration
     skip_tls_verify: {{.Auth.InsecureTLS}}
   # Jira issue types configuration
-  issue_types: {{with .IssueTypes}}{{range $issueType, $jiraIDs := .}}
+  issue_types: {{- with .IssueTypes}}{{range $issueType, $jiraIDs := .}}
     {{$issueType}}: {{template "yamlArray" $jiraIDs}}
     {{- end}}
-    {{- else}}{}{{end}}
+    {{- else}} {}{{end}}
 {{end }}
 

@@ -119,11 +119,59 @@ jira:
     # Jira insecure TLS configuration
     skip_tls_verify: true
   # Jira issue types configuration
-  issue_types: 
+  issue_types:
     bug: ["1"]
     feature: ["2", "3", "4"]
     improvement: []
 `, buff.String())
 
+	})
+}
+
+func TestGithubTemplateConfiguration(t *testing.T) {
+	tmpl, err := template.ParseFS(embeddedTemplates, "templates/*.tmpl")
+	require.NoError(t, err)
+
+	t.Run("Should generate empty configuration", func(t *testing.T) {
+		githubData := GithubTemplateConfiguration{
+			Github: Github{},
+		}
+
+		var buff bytes.Buffer
+		err := tmpl.ExecuteTemplate(&buff, "githubConfiguration", githubData)
+		require.NoError(t, err)
+
+		require.Equal(t, `# Github configuration --------------------------------#
+github:
+  # Github issue labels configuration
+  issue_labels: {}
+`, buff.String())
+	})
+
+	t.Run("Should generate configuration with values", func(t *testing.T) {
+		githubData := GithubTemplateConfiguration{
+			Github: Github{
+				IssueLabels: map[issue_types.IssueType][]string{
+					issue_types.Bugfix:        {"kind/bug", "kind/bugfix"},
+					issue_types.Feature:       {"kind/feature"},
+					issue_types.Refactoring:   {"kind/refactoring"},
+					issue_types.Documentation: {},
+				},
+			},
+		}
+
+		var buff bytes.Buffer
+		err := tmpl.ExecuteTemplate(&buff, "githubConfiguration", githubData)
+		require.NoError(t, err)
+
+		require.Equal(t, `# Github configuration --------------------------------#
+github:
+  # Github issue labels configuration
+  issue_labels:
+    bugfix: ["kind/bug", "kind/bugfix"]
+    documentation: []
+    feature: ["kind/feature"]
+    refactoring: ["kind/refactoring"]
+`, buff.String())
 	})
 }

@@ -1,8 +1,9 @@
 {{define "githubConfiguration" -}}
-# Github configuration 
+# Github configuration --------------------------------#
 github:
-  issue_labels: {{with .IssueLabels -}}{{range $issue, $labels := .}}
+  # Github issue labels configuration
+  issue_labels: {{- with .IssueLabels -}}{{range $issue, $labels := .}}
     {{$issue}}: {{template "yamlArray" $labels}}
     {{- end}}
-    {{- else}}{}{{end}}
-{{- end}}
+    {{- else}} {}{{end}}
+{{end}}
