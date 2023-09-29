@@ -12,13 +12,9 @@ jira:
     skip_tls_verify: false
   # Jira issue types configuration
   issue_types:
-    # Jira issue types for bugfix
     bugfix: ["1"]
-    # Jira issue types for features
     feature: ["3", "5"]
-    # Jira issue types for improvements
     improvement: ["4"]
-
 # Github configuration --------------------------------#
 github:
   # Github issue labels configuration

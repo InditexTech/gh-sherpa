@@ -1,5 +1,5 @@
 {{ define "jiraConfiguration" -}}
-# Jira configuration
+# Jira configuration -----------------------------------#
 jira:
   # Jira authentication configuration
   auth:
@@ -16,4 +16,5 @@ jira:
     {{$issueType}}: {{template "yamlArray" $jiraIDs}}
     {{- end}}
     {{- else}}{}{{end}}
-{{- end }}
+{{end }}
+
