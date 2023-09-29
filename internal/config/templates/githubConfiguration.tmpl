@@ -2,11 +2,7 @@
 # Github configuration 
 github:
   issue_labels: {{with .IssueLabels -}}{{range $issue, $labels := .}}
-    {{$issue}}: [{{block "labelsMap" $labels}}{{end}}]
+    {{$issue}}: {{template "yamlArray" $labels}}
     {{- end}}
     {{- else}}{}{{end}}
-{{- end}}
-
-{{define "labelsMap" -}}
-{{range $index, $label := .}}{{if $index}}, {{end}}"{{$label}}"{{end}}
 {{- end}}

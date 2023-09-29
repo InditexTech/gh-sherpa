@@ -13,11 +13,7 @@ jira:
     skip_tls_verify: {{.Auth.InsecureTLS}}
   # Jira issue types configuration
   issue_types: {{with .IssueTypes}}{{range $issueType, $jiraIDs := .}}
-    {{$issueType}}: [{{block "jiraIDsMap" $jiraIDs}}{{end}}]
+    {{$issueType}}: [{{template "yamlArray" $jiraIDs}}]
     {{- end}}
     {{- else}}{}{{end}}
 {{- end }}
-
-{{define "jiraIDsMap" -}}
-{{range $index, $id := .}}{{if $index}}, {{end}}"{{$id}}"{{end}}
-{{- end}}
