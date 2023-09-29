@@ -175,3 +175,50 @@ github:
 `, buff.String())
 	})
 }
+
+func TestBranchesTemplateConfiguration(t *testing.T) {
+	tmpl, err := template.ParseFS(embeddedTemplates, "templates/*.tmpl")
+	require.NoError(t, err)
+
+	t.Run("Should generate empty configuration", func(t *testing.T) {
+		branchesData := BranchesTemplateConfiguration{
+			Branches: Branches{},
+		}
+
+		var buff bytes.Buffer
+		err := tmpl.ExecuteTemplate(&buff, "branchesConfiguration", branchesData)
+		require.NoError(t, err)
+
+		require.Equal(t, `# Branches configuration ------------------------------#
+branches:
+  # Branch prefix configuration
+  prefixes: {}
+`, buff.String())
+	})
+
+	t.Run("Should generate configuration with values", func(t *testing.T) {
+		branchesData := BranchesTemplateConfiguration{
+			Branches: Branches{
+				Prefixes: map[issue_types.IssueType]string{
+					issue_types.Bug:         "fix",
+					issue_types.Feature:     "feat",
+					issue_types.Improvement: "",
+				},
+			},
+		}
+
+		var buff bytes.Buffer
+		err := tmpl.ExecuteTemplate(&buff, "branchesConfiguration", branchesData)
+		require.NoError(t, err)
+
+		require.Equal(t, `# Branches configuration ------------------------------#
+branches:
+  # Branch prefix configuration
+  prefixes:
+    bug: fix
+    feature: feat
+    improvement: 
+`, buff.String())
+	})
+
+}

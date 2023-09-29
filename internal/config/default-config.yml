@@ -24,3 +24,7 @@ github:
     refactoring: ["kind/refactoring"]
     documentation: ["kind/documentation"]
     improvement: ["kind/improvement"]
+# Branches configuration ------------------------------#
+branches:
+  # Branch prefix configuration
+  prefixes: {}
