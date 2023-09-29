@@ -12,8 +12,14 @@ import (
 )
 
 func TestWriteTemplatedConfigFile(t *testing.T) {
+	resetConfigInitialization := func() {
+		cfg = nil
+		vip = nil
+	}
 
 	t.Run("Written config file should be the same as the expected default-config", func(t *testing.T) {
+		resetConfigInitialization()
+
 		originalGetConfigFile := GetConfigFile
 		defer func() {
 			GetConfigFile = originalGetConfigFile

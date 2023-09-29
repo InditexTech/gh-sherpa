@@ -84,7 +84,25 @@ func (s *ConfigurationTestSuite) TestGetConfiguration() {
 
 		configuration := GetConfig()
 
-		s.Truef(reflect.DeepEqual(defaultConfig, configuration), "Expected: %v\nActual: %v", defaultConfig, configuration)
+		// Jira configuration
+		s.Equal(defaultConfig.Jira.Auth.Host, configuration.Jira.Auth.Host)
+		s.Equal(defaultConfig.Jira.Auth.Token, configuration.Jira.Auth.Token)
+		s.Equal(defaultConfig.Jira.Auth.InsecureTLS, configuration.Jira.Auth.InsecureTLS)
+		s.Equal(len(defaultConfig.Jira.IssueTypes), len(configuration.Jira.IssueTypes))
+		for k, v := range defaultConfig.Jira.IssueTypes {
+			s.Equal(v, configuration.Jira.IssueTypes[k])
+		}
+
+		// Github configuration
+		s.Equal(len(defaultConfig.Github.IssueLabels), len(configuration.Github.IssueLabels))
+		for k, v := range defaultConfig.Github.IssueLabels {
+			s.Equal(v, configuration.Github.IssueLabels[k])
+		}
+
+		// Branches configuration
+		for k, v := range defaultConfig.Branches.Prefixes {
+			s.Equal(v, configuration.Branches.Prefixes[k])
+		}
 	})
 
 	s.Run("Loads configuration from file if file exists", func() {

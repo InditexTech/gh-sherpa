@@ -15,15 +15,17 @@ jira:
     bugfix: ["1"]
     feature: ["3", "5"]
     improvement: ["4"]
+
 # Github configuration --------------------------------#
 github:
   # Github issue labels configuration
   issue_labels:
     bugfix: ["kind/bug"]
-    feature: ["kind/feature"]
-    refactoring: ["kind/refactoring"]
     documentation: ["kind/documentation"]
+    feature: ["kind/feature"]
     improvement: ["kind/improvement"]
+    refactoring: ["kind/refactoring"]
+
 # Branches configuration ------------------------------#
 branches:
   # Branch prefix configuration
