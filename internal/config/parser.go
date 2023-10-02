@@ -4,15 +4,22 @@ import (
 	"embed"
 	"io"
 	"text/template"
+	"time"
 )
 
 //go:embed templates/*.tmpl
 var embeddedTemplates embed.FS
 
 type configFileTemplateData struct {
+	Metadata     MetadataConfiguration
 	JiraData     JiraTemplateConfiguration
 	GithubData   GithubTemplateConfiguration
 	BranchesData BranchesTemplateConfiguration
+}
+
+type MetadataConfiguration struct {
+	Version     string
+	GeneratedAt time.Time
 }
 
 type JiraTemplateConfiguration struct {

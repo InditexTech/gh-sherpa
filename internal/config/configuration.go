@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
+	"github.com/InditexTech/gh-sherpa/pkg/metadata"
 	"github.com/spf13/viper"
 )
 
@@ -157,6 +159,10 @@ func writeConfigurationFile(cfgFile ConfigFile) error {
 	}
 
 	configFileTemplateData := configFileTemplateData{
+		Metadata: MetadataConfiguration{
+			Version:     metadata.Version,
+			GeneratedAt: time.Now(),
+		},
 		JiraData: JiraTemplateConfiguration{
 			Jira: cfg.Jira,
 		},
