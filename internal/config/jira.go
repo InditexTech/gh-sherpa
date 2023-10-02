@@ -41,6 +41,9 @@ type patResponseBody struct {
 
 func configureJira() error {
 	configuredHost := vip.GetString("jira.auth.host")
+	if configuredHost == "" {
+		configuredHost = "https://jira.example.com"
+	}
 	host, pat, username, password, patName, err := interactive.AskUserForJiraInputs(configuredHost)
 	if err != nil {
 		return err
