@@ -21,6 +21,7 @@ jira:
     # WARNING: It is not recommended to enable this option unless 
     # you are in a trusted network.
     skip_tls_verify: false
+  # Jira issue types configuration
   # You can find the issue types in your Jira instance by navigating to
   # `https://{your-jira-domain}/jira/rest/api/2/issuetype`. More info in
   #  https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-types/#api-group-issue-types
@@ -69,7 +70,7 @@ branches:
   prefixes:
     # We provide some examples below to help you configure your prefixes, select one
     # issue type and map it to a custom prefix.
-    # Example: map `bugfix` type to a branch prefix `myfix/xxx`:
+    # Example: map `bugfix` type to a branch prefix `myfix/xxxx`:
     # bugfix: myfix
-    # Example: map `feature` type to a branch prefix `feat/xxx`:
+    # Example: map `feature` type to a branch prefix `feat/xxxx`:
     # feature: feat
