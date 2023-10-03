@@ -131,6 +131,7 @@ func askJiraConfiguration() error {
 		return err
 	}
 	if shouldConfigureJira {
+		vip.Set("configureJira", true)
 		if err := configureJira(); err != nil {
 			return err
 		}
@@ -165,12 +166,6 @@ func writeConfigurationFile(cfgFile ConfigFile) error {
 		},
 		JiraData: JiraTemplateConfiguration{
 			Jira: cfg.Jira,
-		},
-		GithubData: GithubTemplateConfiguration{
-			Github: cfg.Github,
-		},
-		BranchesData: BranchesTemplateConfiguration{
-			Branches: cfg.Branches,
 		},
 	}
 	if err := writeTemplatedConfigFile(f, configFileTemplateData); err != nil {

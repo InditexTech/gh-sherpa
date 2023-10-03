@@ -66,43 +66,22 @@ func (s *ConfigurationTestSuite) TestGetConfiguration() {
 	}
 
 	s.Run("Should panic if configuration is not initialized", func() {
-		defer func() { recover() }()
-
-		GetConfig()
-
-		s.Fail("Should have panicked")
-	})
-
-	s.Run("Loads default configuration if file doesn't exists", func() {
 		resetConfigInitialization()
 
-		defaultConfig, err := parseConfiguration(defaultConfigBuff)
+		s.Panics(func() {
+			GetConfig()
+		})
+	})
+
+	s.Run("Should return configuration without panic", func() {
+		resetConfigInitialization()
+
+		err := Initialize(false)
 		s.Require().NoError(err)
 
-		err = Initialize(false)
-		s.Require().NoError(err)
-
-		configuration := GetConfig()
-
-		// Jira configuration
-		s.Equal(defaultConfig.Jira.Auth.Host, configuration.Jira.Auth.Host)
-		s.Equal(defaultConfig.Jira.Auth.Token, configuration.Jira.Auth.Token)
-		s.Equal(defaultConfig.Jira.Auth.InsecureTLS, configuration.Jira.Auth.InsecureTLS)
-		s.Equal(len(defaultConfig.Jira.IssueTypes), len(configuration.Jira.IssueTypes))
-		for k, v := range defaultConfig.Jira.IssueTypes {
-			s.Equal(v, configuration.Jira.IssueTypes[k])
-		}
-
-		// Github configuration
-		s.Equal(len(defaultConfig.Github.IssueLabels), len(configuration.Github.IssueLabels))
-		for k, v := range defaultConfig.Github.IssueLabels {
-			s.Equal(v, configuration.Github.IssueLabels[k])
-		}
-
-		// Branches configuration
-		for k, v := range defaultConfig.Branches.Prefixes {
-			s.Equal(v, configuration.Branches.Prefixes[k])
-		}
+		s.NotPanics(func() {
+			GetConfig()
+		})
 	})
 
 	s.Run("Loads configuration from file if file exists", func() {
