@@ -131,7 +131,6 @@ func askJiraConfiguration() error {
 		return err
 	}
 	if shouldConfigureJira {
-		vip.Set("configureJira", true)
 		if err := configureJira(); err != nil {
 			return err
 		}
