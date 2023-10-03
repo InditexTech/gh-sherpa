@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
+	"github.com/InditexTech/gh-sherpa/pkg/metadata"
 	"github.com/spf13/viper"
 )
 
@@ -143,8 +145,29 @@ func writeConfigurationFile(cfgFile ConfigFile) error {
 	if err := os.MkdirAll(cfgFile.Path, os.ModePerm); err != nil {
 		return err
 	}
-	vip.SetConfigFile(cfgFile.getFilePath())
-	if err := vip.WriteConfig(); err != nil {
+	filePath := cfgFile.getFilePath()
+	vip.SetConfigFile(filePath)
+
+	f, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if err := vip.Unmarshal(&cfg); err != nil {
+		return err
+	}
+
+	configFileTemplateData := configFileTemplateData{
+		Metadata: MetadataConfiguration{
+			Version:     metadata.Version,
+			GeneratedAt: time.Now(),
+		},
+		JiraData: JiraTemplateConfiguration{
+			Jira: cfg.Jira,
+		},
+	}
+	if err := writeTemplatedConfigFile(f, configFileTemplateData); err != nil {
 		return err
 	}
 

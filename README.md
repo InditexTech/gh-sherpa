@@ -51,45 +51,12 @@ After installing this extension in your development environment, you can know th
 
 ## Configuration
 
-Sherpa CLI can be configured using its own configuration file, stored in `$HOME/.config/sherpa/config.yml`.
+Check the [`internal/config/default-config.yml`](internal/config/default-config.yml) file to see the available configuration parameters as well as the default values and some examples.
+You can also find here the available GH Sherpa issue types. These values will be set if no other configuration override those values.
 
-If no configuration file is found, the first time you run a command it will ask you to configure your Jira credentials (if you want to use Jira integration) and then proceed to create the configuration file.
+In order to override the default values, you can use your own configuration file located in `$HOME/.config/sherpa/config.yml` for this.
 
-Check the [`internal/config/default-config.yml`](internal/config/default-config.yml) file to see the available configuration parameters as well as the default values and some examples. This file should be the same as the one generated in your `$HOME/.config/sherpa/config.yml` file prior to any modification.
-
-### Jira configuration
-
->NOTE: This configuration is only required if you want to use Jira integration.
-
-| Parameter                      | Description                                         | Default value |
-| ------------------------------ | --------------------------------------------------- | ------------- |
-| `jira.auth.host`               | Jira host to connect to.                            | `""`          |
-| `jira.auth.token`              | Jira already generated PAT                          | `""`          |
-| `jira.auth.skip_tls_verify`    | Skip TLS verification for the given hos             | `false`       |
-| `jira.issue_types.bugfix`      | List of Jira issue type IDs related to bugfixes     | `["1"]`       |
-| `jira.issue_types.feature`     | List of Jira issue type IDs related to features     | `["3", "5"]`  |
-| `jira.issue_types.improvement` | List of Jira issue type IDs related to improvements | `["4"]`       |
-
->NOTE: You can get a list of the Jira issue type IDs making a request to `https://{your-jira-domain}/jira/rest/api/2/issuetype`. More information in the [Jira issue types REST API documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-types/#api-group-issue-types).
-
-### GitHub configuration
-
-| Parameter                           | Description                             | Default value            |
-| ----------------------------------- | --------------------------------------- | ------------------------ |
-| `github.issue_labels`               | Github issue labels related to tasks    | *See lines below*        |
-| `github.issue_labels.bugfix`        | List of labels related to bugfixes      | `["kind/bug]`            |
-| `github.issue_labels.feature`       | List of labels related to features      | `["kind/feature"]`       |
-| `github.issue_labels.refactoring`   | List of labels related to refactoring   | `["kind/refactoring"]`   |
-| `github.issue_labels.documentation` | List of labels related to documentation | `["kind/documentation"]` |
-| `github.issue_labels.improvement`   | List of labels related to improvements  | `["kind/improvement"]`   |
-
-### Branches configuration
-
-| Parameter           | Description                             | Default value |
-| ------------------- | --------------------------------------- | ------------- |
-| `branches.prefixes` | Branch prefix related to the issue type | `{}`          |
-
->NOTE: By default it will match the issue type name with the branch prefix. For example, if the issue type name is `bugfix` it will match the branch prefix `bugfix`.
+If no configuration file is found, the first time you run a command it will ask you to configure your Jira credentials (if you want to use Jira integration) and then proceed to create the configuration file with the provided Jira credentials.
 
 ## Contribute
 

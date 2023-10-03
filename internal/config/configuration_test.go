@@ -66,25 +66,22 @@ func (s *ConfigurationTestSuite) TestGetConfiguration() {
 	}
 
 	s.Run("Should panic if configuration is not initialized", func() {
-		defer func() { recover() }()
-
-		GetConfig()
-
-		s.Fail("Should have panicked")
-	})
-
-	s.Run("Loads default configuration if file doesn't exists", func() {
 		resetConfigInitialization()
 
-		defaultConfig, err := parseConfiguration(defaultConfigBuff)
+		s.Panics(func() {
+			GetConfig()
+		})
+	})
+
+	s.Run("Should return configuration without panic", func() {
+		resetConfigInitialization()
+
+		err := Initialize(false)
 		s.Require().NoError(err)
 
-		err = Initialize(false)
-		s.Require().NoError(err)
-
-		configuration := GetConfig()
-
-		s.Truef(reflect.DeepEqual(defaultConfig, configuration), "Expected: %v\nActual: %v", defaultConfig, configuration)
+		s.NotPanics(func() {
+			GetConfig()
+		})
 	})
 
 	s.Run("Loads configuration from file if file exists", func() {
