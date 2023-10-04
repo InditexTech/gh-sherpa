@@ -13,7 +13,7 @@ const fallbackErrMessage = "Field validation for '%s' failed on the '%s' tag"
 var validationErrorMessages = map[string]string{
 	"required":           "Required field",
 	"url":                "Must be a valid URL",
-	"validIssueTypeKeys": "Key must be a valid issue type. Check the documentation for the list of valid issue types",
+	"validIssueTypeKeys": "Keys must be a valid issue type. Check the documentation for the list of valid issue types",
 	"uniqueMapValues":    "Values must be unique across all keys. Check the default values for possible collisions",
 }
 
@@ -32,7 +32,7 @@ func getPrettyErrors(validationErrors validator.ValidationErrors) string {
 	return buffer.String()
 }
 
-// formatErrorKey formats the error key to remove the "configuration." prefix and lowercase it
+// formatErrorKey formats the error key to remove the "Configuration." prefix
 func formatErrorKey(key string) string {
-	return strings.Join(strings.Split(strings.ToLower(key), "configuration.")[1:], "")
+	return strings.Join(strings.Split(key, "Configuration.")[1:], "")
 }
