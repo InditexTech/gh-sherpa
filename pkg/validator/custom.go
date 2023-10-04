@@ -23,7 +23,8 @@ func uniqueMapValues(fl govalidator.FieldLevel) bool {
 	seen := make(map[any]bool)
 	for _, k := range mapKeys {
 		v := fieldValue.MapIndex(k)
-		if v.Kind() == reflect.Slice {
+		switch v.Kind() {
+		case reflect.Slice:
 			for i := 0; i < v.Len(); i++ {
 				s := v.Index(i).Interface()
 				if _, ok := seen[s]; ok {
@@ -31,7 +32,7 @@ func uniqueMapValues(fl govalidator.FieldLevel) bool {
 				}
 				seen[s] = true
 			}
-		} else {
+		default:
 			s := v.Interface()
 			if _, ok := seen[s]; ok {
 				return false
