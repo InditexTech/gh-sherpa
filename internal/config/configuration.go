@@ -24,6 +24,11 @@ const (
 //go:embed default-config.yml
 var defaultConfigBuff []byte
 
+var (
+	cfg *Configuration
+	vip *viper.Viper
+)
+
 type Configuration struct {
 	Jira     Jira
 	Github   Github `validate:"required"`
@@ -34,18 +39,12 @@ type Configuration struct {
 func (c Configuration) Validate() error {
 	if err := validator.Struct(c); err != nil {
 		validationErrors := err.(validator.ValidationErrors)
-		translatedErrors := validator.TranslateError(validationErrors)
-		prettyErrors := translatedErrors.PrettyPrint()
-		return fmt.Errorf("configuration is invalid:\n%s", prettyErrors)
+		errorsToPrint := getPrettyErrors(validationErrors)
+		return fmt.Errorf("configuration is invalid:\n%s", errorsToPrint)
 	}
 
 	return validator.Struct(c)
 }
-
-var (
-	cfg *Configuration
-	vip *viper.Viper
-)
 
 // GetConfig returns the configuration
 func GetConfig() Configuration {
