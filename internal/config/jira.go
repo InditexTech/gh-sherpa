@@ -13,12 +13,12 @@ import (
 // Jira configuration
 type Jira struct {
 	Auth       JiraAuth
-	IssueTypes JiraIssueTypes `mapstructure:"issue_types"`
+	IssueTypes JiraIssueTypes `mapstructure:"issue_types" validate:"required,uniqueMapValues,validIssueTypeKeys"`
 }
 
 // JiraAuth Jira authentication configuration
 type JiraAuth struct {
-	Host        string
+	Host        string `validate:"omitempty,url"`
 	Token       string
 	InsecureTLS bool `mapstructure:"skip_tls_verify"`
 }
