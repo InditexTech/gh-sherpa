@@ -12,7 +12,6 @@ import (
 // uniqueMapValues validates that the values of a map are unique across all keys.
 // It will only iterate over the second level of the map if the value is a slice.
 func uniqueMapValues(fl govalidator.FieldLevel) bool {
-
 	fieldType := fl.Field().Type()
 	fieldValue := fl.Field()
 	kind := fieldType.Kind()

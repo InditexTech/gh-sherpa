@@ -13,7 +13,7 @@ import (
 // Jira configuration
 type Jira struct {
 	Auth       JiraAuth
-	IssueTypes JiraIssueTypes `mapstructure:"issue_types" validate:"required,uniqueMapValues,validIssueTypeKeys"`
+	IssueTypes JiraIssueTypes `mapstructure:"issue_types" validate:"required,validIssueTypeKeys,uniqueMapValues"`
 }
 
 // JiraAuth Jira authentication configuration

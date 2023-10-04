@@ -32,6 +32,13 @@ type Configuration struct {
 
 // Validates the configuration
 func (c Configuration) Validate() error {
+	if err := validator.Struct(c); err != nil {
+		validationErrors := err.(validator.ValidationErrors)
+		translatedErrors := validator.TranslateError(validationErrors)
+		prettyErrors := translatedErrors.PrettyPrint()
+		return fmt.Errorf("configuration is invalid:\n%s", prettyErrors)
+	}
+
 	return validator.Struct(c)
 }
 
