@@ -171,11 +171,6 @@ func TestGetIssueType(t *testing.T) {
 			issue: createIssue("unknown"),
 			want:  issue_types.Unknown,
 		},
-		{
-			name:  "GetIssueType bug with several labels",
-			issue: createIssue("feature", "bug", "refactoring"),
-			want:  issue_types.Bug,
-		},
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {

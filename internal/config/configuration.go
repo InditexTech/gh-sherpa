@@ -38,12 +38,10 @@ type Configuration struct {
 // Validates the configuration
 func (c Configuration) Validate() error {
 	if err := validator.Struct(c); err != nil {
-		validationErrors := err.(validator.ValidationErrors)
-		errorsToPrint := getPrettyErrors(validationErrors)
-		return fmt.Errorf("configuration is invalid:\n%s", errorsToPrint)
+		return fmt.Errorf("configuration is invalid:\n%w", err)
 	}
 
-	return validator.Struct(c)
+	return nil
 }
 
 // GetConfig returns the configuration

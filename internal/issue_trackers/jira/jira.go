@@ -33,7 +33,7 @@ func New(cfg Configuration) (jira *Jira, err error) {
 
 	jira = &Jira{cfg: cfg}
 
-	gojiraClient, err := createBearerClient(cfg.Auth.Token, cfg.Auth.Host, cfg.Auth.InsecureTLS)
+	gojiraClient, err := createBearerClient(cfg.Auth.Token, cfg.Auth.Host, cfg.Auth.SkipTLSVerify)
 	if err != nil {
 		return nil, fmt.Errorf("could not create a Jira client: %s", err)
 	}
@@ -102,9 +102,9 @@ func (j *Jira) GetIssueTrackerType() domain.IssueTrackerType {
 	return domain.IssueTrackerTypeJira
 }
 
-func createBearerClient(token string, host string, insecureTLS bool) (client *JiraClient, err error) {
+func createBearerClient(token string, host string, skipTLSVerify bool) (client *JiraClient, err error) {
 	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: insecureTLS}
+	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: skipTLSVerify}
 
 	tp := gojira.BearerAuthTransport{
 		Token:     token,

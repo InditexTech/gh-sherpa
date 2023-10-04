@@ -1,11 +1,10 @@
-package config
+package validator
 
 import (
 	"bytes"
 	"fmt"
-	"strings"
 
-	"github.com/InditexTech/gh-sherpa/pkg/validator"
+	govalidator "github.com/go-playground/validator/v10"
 )
 
 const fallbackErrMessage = "Field validation for '%s' failed on the '%s' tag"
@@ -17,11 +16,11 @@ var validationErrorMessages = map[string]string{
 	"uniqueMapValues":    "Values must be unique across all keys. Check the default values for possible collisions",
 }
 
-func getPrettyErrors(validationErrors validator.ValidationErrors) string {
+func getPrettyErrors(validationErrors govalidator.ValidationErrors) string {
 	var buffer bytes.Buffer
 
-	for _, fieldErr := range validationErrors.ValidationErrors {
-		errKey := formatErrorKey(fieldErr.Namespace())
+	for _, fieldErr := range validationErrors {
+		errKey := fieldErr.Namespace()
 		errMsg, ok := validationErrorMessages[fieldErr.Tag()]
 		if !ok {
 			errMsg = fmt.Sprintf(fallbackErrMessage, fieldErr.Field(), fieldErr.Tag())
@@ -30,9 +29,4 @@ func getPrettyErrors(validationErrors validator.ValidationErrors) string {
 	}
 
 	return buffer.String()
-}
-
-// formatErrorKey formats the error key to remove the "Configuration." prefix
-func formatErrorKey(key string) string {
-	return strings.Join(strings.Split(key, "Configuration.")[1:], "")
 }

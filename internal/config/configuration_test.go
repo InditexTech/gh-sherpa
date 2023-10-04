@@ -154,9 +154,9 @@ func (s *ValidateConfigTestSuite) getValidConfig() Configuration {
 	return Configuration{
 		Jira: Jira{
 			Auth: JiraAuth{
-				Host:        "https://jira.example.com",
-				Token:       "token",
-				InsecureTLS: false,
+				Host:          "https://jira.example.com",
+				Token:         "token",
+				SkipTLSVerify: false,
 			},
 			IssueTypes: JiraIssueTypes{
 				"bugfix":  {"2"},

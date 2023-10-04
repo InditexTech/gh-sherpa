@@ -1,8 +1,7 @@
 package validator
 
 import (
-	"bytes"
-	"fmt"
+	"errors"
 
 	govalidator "github.com/go-playground/validator/v10"
 )
@@ -14,22 +13,6 @@ func init() {
 	validate.RegisterValidation("uniqueMapValues", uniqueMapValues)
 	validate.RegisterValidation("validIssueTypeKeys", validIssueTypeKeys)
 
-}
-
-type ValidationErrors struct {
-	govalidator.ValidationErrors
-}
-
-type ValidationErrorsTranslations struct {
-	govalidator.ValidationErrorsTranslations
-}
-
-func (vet ValidationErrorsTranslations) PrettyPrint() string {
-	var buffer bytes.Buffer
-	for k, v := range vet.ValidationErrorsTranslations {
-		buffer.WriteString(fmt.Sprintf("- %s: %s\n", k, v))
-	}
-	return buffer.String()
 }
 
 var (
@@ -46,10 +29,8 @@ func handleValidationError(err error) error {
 		return nil
 	}
 
-	switch err := err.(type) {
-	case govalidator.ValidationErrors:
-		return ValidationErrors{err}
-	default:
-		return err
-	}
+	// https://github.com/go-playground/validator#error-return-value
+	validationErrors := err.(govalidator.ValidationErrors)
+
+	return errors.New(getPrettyErrors(validationErrors))
 }
