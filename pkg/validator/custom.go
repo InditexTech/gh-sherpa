@@ -12,32 +12,30 @@ import (
 // uniqueMapValues validates that the values of a map are unique across all keys.
 // It will only iterate over the second level of the map if the value is a slice.
 func uniqueMapValues(fl govalidator.FieldLevel) bool {
-	fieldType := fl.Field().Type()
-	fieldValue := fl.Field()
-	kind := fieldType.Kind()
-	if kind != reflect.Map {
-		panic(fmt.Sprintf("Invalid type %T. uniqueMapValues only works with map", fieldValue.Interface()))
+	field := fl.Field()
+	if field.Type().Kind() != reflect.Map {
+		panic(fmt.Sprintf("Invalid type %T. uniqueMapValues only works with map", field.Interface()))
 	}
 
-	mapKeys := fieldValue.MapKeys()
+	mapKeys := field.MapKeys()
 	seen := make(map[any]bool)
-	for _, k := range mapKeys {
-		v := fieldValue.MapIndex(k)
-		switch v.Kind() {
+	for _, key := range mapKeys {
+		value := field.MapIndex(key)
+		switch value.Kind() {
 		case reflect.Slice:
-			for i := 0; i < v.Len(); i++ {
-				s := v.Index(i).Interface()
-				if _, ok := seen[s]; ok {
+			for i := 0; i < value.Len(); i++ {
+				element := value.Index(i).Interface()
+				if _, ok := seen[element]; ok {
 					return false
 				}
-				seen[s] = true
+				seen[element] = true
 			}
 		default:
-			s := v.Interface()
-			if _, ok := seen[s]; ok {
+			element := value.Interface()
+			if _, ok := seen[element]; ok {
 				return false
 			}
-			seen[s] = true
+			seen[element] = true
 		}
 	}
 
@@ -46,21 +44,19 @@ func uniqueMapValues(fl govalidator.FieldLevel) bool {
 
 // validIssueTypeKeys validates that the keys of a map are valid issue types.
 func validIssueTypeKeys(fl govalidator.FieldLevel) bool {
-	fieldType := fl.Field().Type()
-	fieldValue := fl.Field()
-	kind := fieldType.Kind()
-	if kind != reflect.Map {
-		panic(fmt.Sprintf("Invalid type %T. uniqueMapValues only works with map", fieldValue.Interface()))
+	field := fl.Field()
+	if field.Type().Kind() != reflect.Map {
+		panic(fmt.Sprintf("Invalid type %T. uniqueMapValues only works with map", field.Interface()))
 	}
 
 	validIssueTypes := issue_types.GetValidIssueTypes()
-	mapKeys := fieldValue.MapKeys()
-	for _, k := range mapKeys {
-		it, ok := k.Interface().(issue_types.IssueType)
+	mapKeys := field.MapKeys()
+	for _, key := range mapKeys {
+		issueType, ok := key.Interface().(issue_types.IssueType)
 		if !ok {
 			return false
 		}
-		if !slices.Contains(validIssueTypes, it) {
+		if !slices.Contains(validIssueTypes, issueType) {
 			return false
 		}
 	}
