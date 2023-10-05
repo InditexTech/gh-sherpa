@@ -54,9 +54,9 @@ func TestJiraTemplateConfiguration(t *testing.T) {
 		jiraData := JiraTemplateConfiguration{
 			Jira: Jira{
 				Auth: JiraAuth{
-					Host:        "https://jira.example.com",
-					Token:       "jira-pat",
-					InsecureTLS: true,
+					Host:          "https://jira.example.com",
+					Token:         "jira-pat",
+					SkipTLSVerify: true,
 				},
 			},
 		}

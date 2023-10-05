@@ -11,6 +11,7 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 	"github.com/InditexTech/gh-sherpa/pkg/metadata"
+	"github.com/InditexTech/gh-sherpa/pkg/validator"
 	"github.com/spf13/viper"
 )
 
@@ -23,14 +24,25 @@ const (
 //go:embed default-config.yml
 var defaultConfigBuff []byte
 
+var (
+	cfg *Configuration
+	vip *viper.Viper
+)
+
 type Configuration struct {
 	Jira     Jira
-	Github   Github
+	Github   Github `validate:"required"`
 	Branches Branches
 }
 
-var cfg *Configuration
-var vip *viper.Viper
+// Validates the configuration
+func (c Configuration) Validate() error {
+	if err := validator.Struct(c); err != nil {
+		return fmt.Errorf("configuration is invalid:\n%w", err)
+	}
+
+	return nil
+}
 
 // GetConfig returns the configuration
 func GetConfig() Configuration {
@@ -103,7 +115,7 @@ func Initialize(isInteractive bool) error {
 		return err
 	}
 
-	return nil
+	return cfg.Validate()
 }
 
 func generateConfigurationFile(cfgFile ConfigFile, isInteractive bool) error {
@@ -155,6 +167,10 @@ func writeConfigurationFile(cfgFile ConfigFile) error {
 	defer f.Close()
 
 	if err := vip.Unmarshal(&cfg); err != nil {
+		return err
+	}
+
+	if err := cfg.Validate(); err != nil {
 		return err
 	}
 
