@@ -1,9 +1,14 @@
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_gh-sherpa&metric=bugs)](https://sonarcloud.io/summary/new_code?id=InditexTech_gh-sherpa)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_gh-sherpa&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=InditexTech_gh-sherpa)[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_gh-sherpa&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=InditexTech_gh-sherpa)
+
 # Sherpa extension for GitHub CLI
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_gh-sherpa&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=InditexTech_gh-sherpa)
+Sherpa for [GitHub CLI](https://github.com/cli/cli) makes it easy for you to **create branches** and **pull requests**
+associated with any **GitHub or Jira issue**.
 
-**Sherpa** extension for [GitHub CLI](https://github.com/cli/cli) helps you to **automate certain operations of the
-development life cycle of a task**.
+This extension retrieves the type of issue (_User Story_, _Bug_, _Technical Improvement_ etc) and creates a branch or 
+pull request associated with that issue, following the contribution model you define in a 
+[configuration file](#configuration).
 
 ![Create PR](docs/images/create-pr.svg)
 
@@ -11,8 +16,8 @@ development life cycle of a task**.
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Usage](#usage)
 - [Configuration](#configuration)
+- [Usage](#usage)
 - [Contribute](#contribute)
 
 ## Prerequisites
@@ -47,10 +52,6 @@ To **remove** this extension just run:
 gh extension remove sherpa
 ```
 
-## Usage
-
-After installing this extension in your development environment, you can know the available commands in the [`USAGE.md`](docs/USAGE.md) file.
-
 ## Configuration
 
 Check the [`internal/config/default-config.yml`](internal/config/default-config.yml) file to see the available configuration parameters as well as the default values and some examples.
@@ -59,6 +60,10 @@ You can also find here the available GH Sherpa issue types. These values will be
 In order to override the default values, you can use your own configuration file located in `$HOME/.config/sherpa/config.yml` for this.
 
 If no configuration file is found, the first time you run a command it will ask you to configure your Jira credentials (if you want to use Jira integration) and then proceed to create the configuration file with the provided Jira credentials.
+
+## Usage
+
+After installing this extension in your development environment, you can know the available commands in the [`USAGE.md`](docs/USAGE.md) file.
 
 ## Contribute
 
