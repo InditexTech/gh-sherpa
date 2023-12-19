@@ -16,8 +16,8 @@ pull request associated with that issue, following the contribution model you de
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-- [Usage](#usage)
 - [Configuration](#configuration)
+- [Usage](#usage)
 - [Contribute](#contribute)
 
 ## Prerequisites
