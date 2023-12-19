@@ -3,7 +3,7 @@
 
 # Sherpa extension for GitHub CLI
 
-**Sherpa** for [GitHub CLI](https://github.com/cli/cli) makes it easy for you to **create branches** and **pull requests**
+Sherpa for [GitHub CLI](https://github.com/cli/cli) makes it easy for you to **create branches** and **pull requests**
 associated with any **GitHub or Jira issue**.
 
 This extension retrieves the type of issue (_User Story_, _Bug_, _Technical Improvement_ etc) and creates a branch or 
