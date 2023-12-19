@@ -1,5 +1,7 @@
 # Sherpa extension for GitHub CLI
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=InditexTech_gh-sherpa&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=InditexTech_gh-sherpa)
+
 **Sherpa** extension for [GitHub CLI](https://github.com/cli/cli) helps you to **automate certain operations of the
 development life cycle of a task**.
 
