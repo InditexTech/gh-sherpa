@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2023 INDITEX S.A
+//
+// SPDX-License-Identifier: Apache-2.0
+
 package domain
 
 import "github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
