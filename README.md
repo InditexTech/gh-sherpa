@@ -23,7 +23,7 @@ pull request associated with that issue, following the contribution model you de
 ## Prerequisites
 
 - An available GitHub account.
-- [**GitHub CLI**](https://github.com/cli/cli) configured (and [authenticated](https://cli.github.com/manual/gh_auth_login)) in your development environment (version `2.0.0` or higher).
+- [**GitHub CLI**](https://github.com/cli/cli) (version `2.0.0` or higher) configured and [authenticated](https://cli.github.com/manual/gh_auth_login) in your development environment.
 - **Bash**: Supports Linux, MacOS and Windows (for the latter, we recommend using [`WSL2`](https://learn.microsoft.com/en-us/windows/wsl/install)).
 
 ## Installation
@@ -54,12 +54,20 @@ gh extension remove sherpa
 
 ## Configuration
 
-Check the [`internal/config/default-config.yml`](internal/config/default-config.yml) file to see the available configuration parameters as well as the default values and some examples.
-You can also find here the available GH Sherpa issue types. These values will be set if no other configuration override those values.
+Sherpa uses different issue types (`feature`, `bugfix`, `hotfix`, `refactoring`, etc) when mapping an issue with its
+corresponding branch prefix.
 
-In order to override the default values, you can use your own configuration file located in `$HOME/.config/sherpa/config.yml` for this.
+### Default configuration
 
-If no configuration file is found, the first time you run a command it will ask you to configure your Jira credentials (if you want to use Jira integration) and then proceed to create the configuration file with the provided Jira credentials.
+By default, it will use the [`internal/config/default-config.yml`](internal/config/default-config.yml) configuration
+file to perform these mappings.
+
+### Custom configuration
+
+Otherwise, if you wish customize the different issue types, branch prefixes, etc, so, you can **create your own configuration
+file** localed in `$HOME/.config/sherpa/config.yml` from the [default config file](internal/config/default-config.yml).
+
+> If you are **using Jira as issue tracker**, so, the first time you run a command it will ask you to configure Jira credentials and then proceed to create the configuration file with the provided Jira credentials.
 
 ## Usage
 
