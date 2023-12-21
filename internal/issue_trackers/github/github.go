@@ -10,11 +10,12 @@ import (
 	"strconv"
 	"strings"
 
+	"slices"
+
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
-	"golang.org/x/exp/slices"
 )
 
 var issuePattern = regexp.MustCompile(`^(?i:GH-)?(?P<issue_num>\d+)$`)
