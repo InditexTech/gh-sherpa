@@ -9,7 +9,7 @@ require (
 	github.com/go-playground/validator/v10 v10.15.5
 	github.com/jwalton/gchalk v1.3.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v3 v3.0.1
