@@ -7,10 +7,9 @@ package github
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
-
-	"slices"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
