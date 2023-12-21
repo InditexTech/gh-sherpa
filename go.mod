@@ -1,6 +1,6 @@
 module github.com/InditexTech/gh-sherpa
 
-go 1.20
+go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
@@ -12,7 +12,6 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 	gopkg.in/yaml.v3 v3.0.1
 )
 
