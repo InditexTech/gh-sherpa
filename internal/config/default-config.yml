@@ -57,6 +57,7 @@ github:
   # Sherpa issue types.
   issue_labels:
     bugfix: ["kind/bug"]
+    dependency: ["kind/dependency"]
     documentation: ["kind/documentation"]
     feature: ["kind/feature"]
     improvement: ["kind/improvement"]

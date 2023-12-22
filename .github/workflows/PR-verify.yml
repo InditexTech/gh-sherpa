@@ -26,7 +26,7 @@ jobs:
       - name: Verify
         run: |
           make verify
-          
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
