@@ -19,7 +19,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Go version
-        uses: actions/setup-go@4
+        uses: actions/setup-go@v4
         with:
           go-version: ${{ env.GO_VERSION }}
 
