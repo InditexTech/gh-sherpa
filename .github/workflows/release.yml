@@ -2,12 +2,10 @@
 name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      VERSION:
-        description: "Version to release (semver)"
-        required: true
-        type: number
+  pull_request:
+    types: [closed]
+    branches: ['main']
+    paths: ['version']
 
 env:
   GO_VERSION: 1.21.5
@@ -19,12 +17,12 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Go tools
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
 
