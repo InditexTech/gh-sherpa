@@ -1,0 +1,51 @@
+---
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: "Version to release (semver)"
+        required: true
+        type: number
+
+env:
+  GO_VERSION: 1.21.5
+  DIST_DIR: dist
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go tools
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Generate distributables
+        shell: bash
+        run: ./dist.sh
+
+      - name: Create Git Tag
+        run: |
+          git config user.email "ghbot@github.com"
+          git config user.name "GitHub Bot"
+
+          git tag -a "${{ github.event.inputs.VERSION }}" -m "Version ${{ github.event.inputs.VERSION }}"
+          git push origin "${{ github.event.inputs.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Github Release
+        uses: ncipollo/release-action@a2e71bdd4e7dab70ca26a852f29600c98b33153e
+        with:
+          name: ${{ github.event.inputs.VERSION }}
+          tag: ${{ github.event.inputs.VERSION }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: ${{ env.DIST_DIR }}/*
