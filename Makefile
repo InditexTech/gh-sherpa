@@ -13,7 +13,7 @@ TEST_REPORT_OUTPUT = ".local/test_report.ndjson"
 all: verify
 
 .PHONY: verify
-verify: tidy checkfmt lint vet build test 
+verify: tidy checkfmt lint vet build test coverage
 
 # -----------------------------------------------------------------------------
 # Build
