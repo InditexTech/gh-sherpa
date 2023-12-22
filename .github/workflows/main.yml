@@ -1,0 +1,36 @@
+---
+name: main
+
+on:
+  pull_request:
+    types: [closed]
+    branches: ['main']
+
+env:
+  GO_VERSION: 1.21.5
+
+jobs:
+  verify:
+    if: github.event.pull_request.merged == true
+    name: Verify
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go version
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Verify
+        run: |
+          make verify
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
