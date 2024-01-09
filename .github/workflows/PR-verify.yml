@@ -6,6 +6,7 @@ on:
 
 env:
   GO_VERSION: 1.21.5
+  NODE_VERSION: 18.x
 
 jobs:
   verify:
@@ -27,8 +28,40 @@ jobs:
         run: |
           make verify
 
+      - name: Set version
+        run: |
+          echo "VERSION=$(cat version)" >> $GITHUB_ENV
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectVersion="${{ env.VERSION }}"
+
+  lint-repo:
+    name: Lint Repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node version
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Execute repolinter
+        run: |
+          echo "Installing repolinter"
+          npm install -g repolinter@v0.11.2
+
+          echo "Executing repolinter"
+          repolinter --rulesetFile repolinter.json --dryRun .
+
+          echo "Repolinter execution completed"
