@@ -37,7 +37,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.branch.name="main"
+            -Dsonar.branch.name=main
 
   lint-repo:
     name: Lint Repository
