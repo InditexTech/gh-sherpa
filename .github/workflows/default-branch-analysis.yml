@@ -30,10 +30,6 @@ jobs:
         run: |
           make verify
 
-      - name: Set version
-        run: |
-          echo "VERSION=$(cat version)" >> $GITHUB_ENV
-
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
@@ -41,7 +37,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectVersion="${{ env.VERSION }}"
             -Dsonar.branch.name="main"
 
   lint-repo:
