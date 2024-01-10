@@ -1,0 +1,14 @@
+version: "3.2"
+issue-tracking:
+  - github
+endpoints:
+  github:
+    labels:
+      IGNORE:
+        - release-type/current
+        - release-type/major
+        - release-type/minor
+        - release-type/patch
+        - release-type/multi-hotfix
+repo-type: github
+master-branch: main
