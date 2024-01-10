@@ -1,0 +1,7 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: GH Sherpa
+Source: https://github.com/InditexTech/gh-sherpa
+
+Copyright: 2024 INDITEX S.A
+License: Apache-2.0
+Files: *
