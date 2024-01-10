@@ -4,8 +4,8 @@ name: Release
 on:
   pull_request:
     types: [closed]
-    branches: ['main']
-    paths: ['version']
+    branches: ["main"]
+    paths: ["version"]
 
 env:
   GO_VERSION: 1.21.5
@@ -52,3 +52,4 @@ jobs:
           tag: ${{ env.VERSION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           artifacts: ${{ env.DIST_DIR }}/*
+          generateReleaseNotes: true
