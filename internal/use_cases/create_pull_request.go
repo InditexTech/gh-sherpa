@@ -169,9 +169,10 @@ func (cpr CreatePullRequest) Execute() error {
 	if err != nil {
 		return err
 	}
+	labels := []string{}
 
 	//16. CREATE PULL REQUEST
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR)
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)
 	if err != nil {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
