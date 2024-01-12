@@ -28,6 +28,7 @@ type CreatePullRequestExecutionTestSuite struct {
 	issueTracker            *domainMocks.MockIssueTracker
 	branchProvider          *domainMocks.MockBranchProvider
 	repositoryProvider      *domainMocks.MockRepositoryProvider
+	labelProvider           *domainMocks.MockLabelProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
@@ -50,6 +51,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = s.initializeRepositoryProvider()
+	s.labelProvider = s.initializeLabelProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -68,6 +70,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 		PullRequestProvider:     s.pullRequestProvider,
 		BranchProvider:          s.branchProvider,
 		RepositoryProvider:      s.repositoryProvider,
+		LabelProvider:           s.labelProvider,
 	}
 }
 
@@ -332,7 +335,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 	s.Run("should create pull request with no close issue flag", func() {
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest("Sample issue", "Related to #1", "main", "feature/GH-1-sample-issue", true, []string{}).Return("https://example.com", nil).Once()
+		s.pullRequestProvider.EXPECT().CreatePullRequest("Sample issue", "Related to #1", "main", "feature/GH-1-sample-issue", true, []string{"kind/feature"}).Return("https://example.com", nil).Once()
 
 		s.expectNoPrFound()
 
@@ -355,7 +358,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) assertCreatePullRequestNotCa
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) assertCreatePullRequestCalled() {
-	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "Sample issue", "Closes #1", "main", "feature/GH-1-sample-issue", true, []string{})
+	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "Sample issue", "Closes #1", "main", "feature/GH-1-sample-issue", true, []string{"kind/feature"})
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) expectNoPrFound() {
@@ -429,6 +432,14 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeRepositoryProvider
 	return repositoryProvider
 }
 
+func (s *CreateGithubPullRequestExecutionTestSuite) initializeLabelProvider() *domainMocks.MockLabelProvider {
+	labelProvider := &domainMocks.MockLabelProvider{}
+
+	labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature", nil).Maybe()
+
+	return labelProvider
+}
+
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
 	issueTracker := &domainMocks.MockIssueTracker{}
 
@@ -493,6 +504,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = s.initializeRepositoryProvider()
+	s.labelProvider = s.initializeLabelProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -511,6 +523,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 		PullRequestProvider:     s.pullRequestProvider,
 		BranchProvider:          s.branchProvider,
 		RepositoryProvider:      s.repositoryProvider,
+		LabelProvider:           s.labelProvider,
 	}
 }
 
@@ -777,7 +790,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 	s.Run("should create pull request with no close issue flag", func() {
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest("[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true, []string{}).Return("https://example.com", nil).Once()
+		s.pullRequestProvider.EXPECT().CreatePullRequest("[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true, []string{"kind/feature"}).Return("https://example.com", nil).Once()
 
 		s.expectNoPrFound()
 
@@ -800,7 +813,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) assertCreatePullRequestNotCall
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) assertCreatePullRequestCalled() {
-	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true, []string{})
+	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true, []string{"kind/feature"})
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) expectNoPrFound() {
@@ -872,6 +885,14 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeRepositoryProvider()
 	}, nil).Maybe()
 
 	return repositoryProvider
+}
+
+func (s *CreateJiraPullRequestExecutionTestSuite) initializeLabelProvider() *domainMocks.MockLabelProvider {
+	labelProvider := &domainMocks.MockLabelProvider{}
+
+	labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature", nil).Maybe()
+
+	return labelProvider
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {

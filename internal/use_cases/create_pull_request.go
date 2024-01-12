@@ -26,6 +26,7 @@ type CreatePullRequest struct {
 	UserInteractionProvider domain.UserInteractionProvider
 	PullRequestProvider     domain.PullRequestProvider
 	BranchProvider          domain.BranchProvider
+	LabelProvider           domain.LabelProvider
 }
 
 // Execute executes the create pull request use case
@@ -161,11 +162,10 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	//15. GET ISSUE INFO
-	title, body, err := cpr.getPullRequestInfo(issueID)
+	title, body, labels, err := cpr.getPullRequestInfo(issueID)
 	if err != nil {
 		return err
 	}
-	labels := []string{}
 
 	//16. CREATE PULL REQUEST
 	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)
@@ -286,13 +286,25 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	return nil
 }
 
-func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, body string, err error) {
+func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, body string, labels []string, err error) {
+	labels = []string{}
+
 	issue, err := cpr.getIssueFromIssueID(issueID)
 	if err != nil {
 		return
 	}
 
 	title, body, err = cpr.getPullRequestTitleAndBody(issue)
+	if err != nil {
+		return
+	}
+
+	typeLabel, err := cpr.LabelProvider.GetIssueTypeLabel(issue)
+	if err != nil {
+		return
+	}
+
+	labels = append(labels, typeLabel)
 
 	return
 }

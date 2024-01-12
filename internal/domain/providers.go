@@ -35,3 +35,7 @@ type GitProvider interface {
 type BranchProvider interface {
 	GetBranchName(issueTracker IssueTracker, issueIdentifier string, repo Repository) (branchName string, err error)
 }
+
+type LabelProvider interface {
+	GetIssueTypeLabel(issue Issue) (label string, err error)
+}
