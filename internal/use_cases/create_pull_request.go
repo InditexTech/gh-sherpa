@@ -304,7 +304,11 @@ func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, 
 		return
 	}
 
-	labels = append(labels, typeLabel)
+	if typeLabel != "" {
+		labels = append(labels, typeLabel)
+	} else {
+		logging.PrintWarn("Could not determine the type label to use for the generated pull requests")
+	}
 
 	return
 }

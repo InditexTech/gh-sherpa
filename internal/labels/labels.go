@@ -12,20 +12,39 @@ type Configuration struct {
 }
 
 type LabelsProvider struct {
-	cfg Configuration
+	cfg                  Configuration
+	issueTrackerProvider domain.IssueTrackerProvider
 }
 
 var _ domain.LabelProvider = (*LabelsProvider)(nil)
 
 // New returns a new labels provider
-func New(cfg Configuration) (*LabelsProvider, error) {
+func New(cfg Configuration, issueTrackerProvider domain.IssueTrackerProvider) (*LabelsProvider, error) {
 	return &LabelsProvider{
-		cfg: cfg,
+		cfg:                  cfg,
+		issueTrackerProvider: issueTrackerProvider,
 	}, nil
 }
 
 // GetIssueTypeLabel returns the label for the issue type
-func (p LabelsProvider) GetIssueTypeLabel(issue domain.Issue) (string, error) {
-	//TODO: Implement method
-	return "kind/feature", nil
+func (p LabelsProvider) GetIssueTypeLabel(issue domain.Issue) (issueTypeLabel string, err error) {
+	issueTracker, err := p.issueTrackerProvider.GetIssueTracker(issue.ID)
+	if err != nil {
+		return
+	}
+
+	issueType, err := issueTracker.GetIssueType(issue)
+	if err != nil {
+		return
+	}
+
+	for mappedIssueType, labels := range p.cfg.IssueLabels {
+		if issueType == mappedIssueType {
+			if len(labels) > 0 {
+				return labels[0], nil
+			}
+		}
+	}
+
+	return
 }

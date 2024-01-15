@@ -79,7 +79,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		IssueLabels: labels.IssueLabelsMap(cfg.Github.IssueLabels),
 	}
 
-	labelProvider, err := labels.New(labelProviderCfg)
+	labelProvider, err := labels.New(labelProviderCfg, issueTrackers)
 	if err != nil {
 		return err
 	}
