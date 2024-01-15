@@ -5,6 +5,7 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
@@ -49,6 +50,8 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	issueID := cpr.Cfg.IssueID
+	branchType := issue_types.Unknown.String()
+
 	//1. FLAG ISSUE IS USED
 	if issueID != "" {
 		issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
@@ -106,6 +109,11 @@ func (cpr CreatePullRequest) Execute() error {
 				return err
 			}
 			currentBranch = branchName
+			branchNameInfo := branches.ParseBranchName(currentBranch)
+			if branchNameInfo != nil {
+				branchType = branchNameInfo.BranchType
+			}
+
 			if canceled {
 				return nil
 			}
@@ -120,6 +128,7 @@ func (cpr CreatePullRequest) Execute() error {
 			//3. EXIT
 			return fmt.Errorf("could not find an issue identifier in the current branch named %s", logging.PaintWarning(currentBranch))
 		}
+		branchType = branchNameInfo.BranchType
 
 		logging.PrintInfo(fmt.Sprintf("The current branch named %s is available to create a pull request", logging.PaintWarning(currentBranch)))
 
@@ -165,6 +174,20 @@ func (cpr CreatePullRequest) Execute() error {
 	title, body, labels, err := cpr.getPullRequestInfo(issueID)
 	if err != nil {
 		return err
+	}
+
+	if len(labels) == 0 {
+		label, err := cpr.LabelProvider.GetLabelFromBranchType(branchType)
+		if err != nil {
+			return err
+		}
+
+		if label != "" {
+			labels = append(labels, label)
+		} else {
+			logging.PrintWarn("Could not determine the type label to use for the generated pull requests")
+		}
+
 	}
 
 	//16. CREATE PULL REQUEST
@@ -306,8 +329,6 @@ func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, 
 
 	if typeLabel != "" {
 		labels = append(labels, typeLabel)
-	} else {
-		logging.PrintWarn("Could not determine the type label to use for the generated pull requests")
 	}
 
 	return

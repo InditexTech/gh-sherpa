@@ -72,6 +72,58 @@ func (_c *MockLabelProvider_GetIssueTypeLabel_Call) RunAndReturn(run func(domain
 	return _c
 }
 
+// GetLabelFromBranchType provides a mock function with given fields: branchType
+func (_m *MockLabelProvider) GetLabelFromBranchType(branchType string) (string, error) {
+	ret := _m.Called(branchType)
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(branchType)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(branchType)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(branchType)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockLabelProvider_GetLabelFromBranchType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLabelFromBranchType'
+type MockLabelProvider_GetLabelFromBranchType_Call struct {
+	*mock.Call
+}
+
+// GetLabelFromBranchType is a helper method to define mock.On call
+//   - branchType string
+func (_e *MockLabelProvider_Expecter) GetLabelFromBranchType(branchType interface{}) *MockLabelProvider_GetLabelFromBranchType_Call {
+	return &MockLabelProvider_GetLabelFromBranchType_Call{Call: _e.mock.On("GetLabelFromBranchType", branchType)}
+}
+
+func (_c *MockLabelProvider_GetLabelFromBranchType_Call) Run(run func(branchType string)) *MockLabelProvider_GetLabelFromBranchType_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockLabelProvider_GetLabelFromBranchType_Call) Return(label string, err error) *MockLabelProvider_GetLabelFromBranchType_Call {
+	_c.Call.Return(label, err)
+	return _c
+}
+
+func (_c *MockLabelProvider_GetLabelFromBranchType_Call) RunAndReturn(run func(string) (string, error)) *MockLabelProvider_GetLabelFromBranchType_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockLabelProvider creates a new instance of MockLabelProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockLabelProvider(t interface {

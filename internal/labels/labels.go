@@ -48,3 +48,16 @@ func (p LabelsProvider) GetIssueTypeLabel(issue domain.Issue) (issueTypeLabel st
 
 	return
 }
+
+// GetLabelFromBranchType returns the label from the branch type
+func (p LabelsProvider) GetLabelFromBranchType(branchType string) (label string, err error) {
+	for issueType, labels := range p.cfg.IssueLabels {
+		if issueType.String() == branchType {
+			if len(labels) > 0 {
+				return labels[0], nil
+			}
+		}
+	}
+
+	return
+}

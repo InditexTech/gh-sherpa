@@ -38,4 +38,5 @@ type BranchProvider interface {
 
 type LabelProvider interface {
 	GetIssueTypeLabel(issue Issue) (label string, err error)
+	GetLabelFromBranchType(branchType string) (label string, err error)
 }

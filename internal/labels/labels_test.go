@@ -73,6 +73,44 @@ func TestGetIssueTypeLabel(t *testing.T) {
 	})
 }
 
+func TestGetLabelFromBranchType(t *testing.T) {
+	t.Run("Returns the label for the branch type", func(t *testing.T) {
+
+		labelName := "kind/feat"
+
+		cfg := Configuration{
+			IssueLabels: IssueLabelsMap{
+				issue_types.Feature: {labelName},
+			},
+		}
+
+		issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
+
+		provider, err := New(cfg, issueTrackerProvider)
+		require.NoError(t, err)
+
+		label, err := provider.GetLabelFromBranchType("feature")
+		require.NoError(t, err)
+
+		assert.Equal(t, labelName, label)
+	})
+
+	t.Run("Returns an empty label if the branch type could not be determined", func(t *testing.T) {
+
+		cfg := Configuration{}
+
+		issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
+
+		provider, err := New(cfg, issueTrackerProvider)
+		require.NoError(t, err)
+
+		label, err := provider.GetLabelFromBranchType("unknown")
+
+		require.NoError(t, err)
+		assert.Empty(t, label)
+	})
+}
+
 func TestNew(t *testing.T) {
 	t.Run("Creates a labels provider from configuration", func(t *testing.T) {
 		cfg := Configuration{}
