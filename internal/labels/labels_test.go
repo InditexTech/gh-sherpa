@@ -71,6 +71,41 @@ func TestGetIssueTypeLabel(t *testing.T) {
 		require.NoError(t, err)
 		assert.Empty(t, label)
 	})
+
+	t.Run("Return an error if the issue tracker could not be determined", func(t *testing.T) {
+
+		cfg := Configuration{}
+		issue := newGHIssue()
+
+		issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
+		issueTrackerProvider.EXPECT().GetIssueTracker("GH-1").Return(nil, assert.AnError)
+
+		provider, err := New(cfg, issueTrackerProvider)
+		require.NoError(t, err)
+
+		_, err = provider.GetIssueTypeLabel(issue)
+
+		require.Error(t, err)
+	})
+
+	t.Run("Return an error if the issue type could not be determined", func(t *testing.T) {
+
+		cfg := Configuration{}
+		issue := newGHIssue()
+
+		issueTracker := &domainMocks.MockIssueTracker{}
+		issueTracker.EXPECT().GetIssueType(issue).Return(issue_types.Unknown, assert.AnError)
+
+		issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
+		issueTrackerProvider.EXPECT().GetIssueTracker("GH-1").Return(issueTracker, nil)
+
+		provider, err := New(cfg, issueTrackerProvider)
+		require.NoError(t, err)
+
+		_, err = provider.GetIssueTypeLabel(issue)
+
+		require.Error(t, err)
+	})
 }
 
 func TestGetLabelFromBranchType(t *testing.T) {
