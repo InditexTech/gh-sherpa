@@ -1,7 +1,13 @@
 # Contributing
 
-Thank you for your interest in contributing to this project! We value and appreciate any contributions you can make. To maintain a
-collaborative and respectful environment, please consider the following guidelines when contributing to this project.
+Thank you for your interest in contributing to this project! We value and appreciate any contributions you can make.
+To maintain a collaborative and respectful environment, please consider the following guidelines when contributing to
+this project.
+
+## Prerequisites
+
+- Before starting to contribute to the code, you must first sign the
+[Contributor License Agreement (CLA)](https://forms.office.com/pages/responsepage.aspx?id=tr3oyHyO1UG8QTf_88M7dUcieUMXXWlMt4DQ48jCBMZUM1FCMUFZNFRPWVpSV1hUREIzVzlSN0E4Qy4u).
 
 ## How to Contribute
 
@@ -19,12 +25,17 @@ collaborative and respectful environment, please consider the following guidelin
 
 ## Contribution Guidelines
 
-- All contributors are expected to follow the project's [code of conduct](CODE_OF_CONDUCT.md). Please be respectful and considerate towards other contributors.
-- Before starting work on a new feature or fix, check existing [issues](../../issues) and [pull requests](../../pulls) to avoid duplications and unnecessary discussions.
-- If you wish to work on an existing issue, comment on the issue to inform other contributors that you are working on it. This will help coordinate efforts and prevent conflicts.
-- It is always advisable to discuss and gather feedback from the community before making significant changes to the project's structure or architecture.
+- All contributors are expected to follow the project's [code of conduct](CODE_OF_CONDUCT.md). Please be respectful and
+considerate towards other contributors.
+- Before starting work on a new feature or fix, check existing [issues](../../issues) and [pull requests](../../pulls)
+to avoid duplications and unnecessary discussions.
+- If you wish to work on an existing issue, comment on the issue to inform other contributors that you are working on it.
+This will help coordinate efforts and prevent conflicts.
+- It is always advisable to discuss and gather feedback from the community before making significant changes to the
+project's structure or architecture.
 - Ensure a clean and organized commit history. Divide your changes into logical and descriptive commits.
-- Document any new changes or features you add. This will help other contributors and project users understand your work and its purpose.
+- Document any new changes or features you add. This will help other contributors and project users understand your work
+and its purpose.
 - Be sure to link the corresponding issue in your pull request to maintain proper tracking of contributions.
 
 ## Development
@@ -51,7 +62,8 @@ cd gh-sherpa
 gh extension remove sherpa && gh extension install .
 ```
 
->NOTE: You can also use `make install` to install the extension as a binary in your `$GOPATH/bin` or just run the generated binary after a `make build` execution with `./bin/gh-sherpa`.
+>NOTE: You can also use `make install` to install the extension as a binary in your `$GOPATH/bin` or just run the
+generated binary after a `make build` execution with `./bin/gh-sherpa`.
 
 ## Testing the application
 
@@ -63,19 +75,24 @@ make test
 
 ### Writing tests
 
-We use [stretchr/testify suite package](https://github.com/stretchr/testify#suite-package) for testing when needed. You can also write regular tests without using the suite package.
+We use [stretchr/testify suite package](https://github.com/stretchr/testify#suite-package) for testing when needed. You
+can also write regular tests without using the suite package.
 
 ### Mocking interfaces
 
-We use [vektra/mockery](https://github.com/vektra/mockery) for mocking interfaces. You can generate the mocks with the following command:
+We use [vektra/mockery](https://github.com/vektra/mockery) for mocking interfaces. You can generate the mocks with the
+following command:
 
 ```sh
 make generate-mocks
 ```
 
-This command will generate the mocks in the `internal/mocks` directory, as configured in the [`.mockery.yaml`](.mockery.yaml) file.
+This command will generate the mocks in the `internal/mocks` directory, as configured in the [`.mockery.yaml`](.mockery.yaml)
+file.
 
->NOTE: Please, refrain from using the generated `NewMockXXXX` constructors. Instead, instantiate the mocks using `&MockXXXX{}`. This is needed because the generated constructors will always execute `mock.AssertExpectation(t)` on cleanup, which will fail if the test does not expect a call to the mock.
+>NOTE: Please, refrain from using the generated `NewMockXXXX` constructors. Instead, instantiate the mocks using
+`&MockXXXX{}`. This is needed because the generated constructors will always execute `mock.AssertExpectation(t)` on
+cleanup, which will fail if the test does not expect a call to the mock.
 
 ### Coverage report
 
@@ -85,7 +102,8 @@ You can also run the tests with coverage with the following command:
 make coverage
 ```
 
-It will generate a `coverage.out` file in the `.local` directory. You can see the coverage report running the following command:
+It will generate a `coverage.out` file in the `.local` directory. You can see the coverage report running the following
+command:
 
 ```sh
 go tool cover -html=.local/coverage.out
@@ -93,7 +111,8 @@ go tool cover -html=.local/coverage.out
 
 It will generate an HTML file with the coverage report that you can open in your browser.
 
->NOTE: For Windows WSL users, you may need to convert the `coverage.out` file to a Windows-compatible path. You can do it with the following command:
+>NOTE: For Windows WSL users, you may need to convert the `coverage.out` file to a Windows-compatible path. You can do
+it with the following command:
 > ```sh
 > wslpath -w PATH/TO/GENERATED/HTML/FILE
 > ```
@@ -118,13 +137,17 @@ This command will do the following:
 
 It's recommended to run this command before pushing your changes to the repository.
 
->NOTE: Since we are using `go run` to execute the required dependencies while verifying, you don't have to install them in your development environment.
+>NOTE: Since we are using `go run` to execute the required dependencies while verifying, you don't have to install them
+in your development environment.
 
 ## Helpful Resources
 
-- [Project documentation](README.md): Refer to our documentation for more information on the project structure and how to contribute.
+- [Project documentation](README.md): Refer to our documentation for more information on the project structure and how
+to contribute.
 - [Use cases](docs/USAGE.md): Check out the available use cases and examples to learn how to use this extension.
 - [Architecture](docs/ARCHITECTURE.md): Learn more about the project's architecture and how it works.
-- [Issues](../../issues): Check open issues and look for opportunities to contribute. Make sure to open an issue before starting work on a new feature or fix.
+- [Issues](../../issues): Check open issues and look for opportunities to contribute. Make sure to open an issue before
+starting work on a new feature or fix.
 
-Thank you for your time and contribution! Your work helps to grow and improve this project. If you have any questions, feel free to reach out to us.
+Thank you for your time and contribution! Your work helps to grow and improve this project. If you have any questions,
+feel free to reach out to us.
