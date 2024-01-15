@@ -5,7 +5,6 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
-	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
@@ -27,7 +26,6 @@ type CreatePullRequest struct {
 	UserInteractionProvider domain.UserInteractionProvider
 	PullRequestProvider     domain.PullRequestProvider
 	BranchProvider          domain.BranchProvider
-	LabelProvider           domain.LabelProvider
 }
 
 // Execute executes the create pull request use case
@@ -50,7 +48,6 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	issueID := cpr.Cfg.IssueID
-	branchType := issue_types.Unknown.String()
 
 	//1. FLAG ISSUE IS USED
 	if issueID != "" {
@@ -109,10 +106,6 @@ func (cpr CreatePullRequest) Execute() error {
 				return err
 			}
 			currentBranch = branchName
-			branchNameInfo := branches.ParseBranchName(currentBranch)
-			if branchNameInfo != nil {
-				branchType = branchNameInfo.BranchType
-			}
 
 			if canceled {
 				return nil
@@ -128,7 +121,6 @@ func (cpr CreatePullRequest) Execute() error {
 			//3. EXIT
 			return fmt.Errorf("could not find an issue identifier in the current branch named %s", logging.PaintWarning(currentBranch))
 		}
-		branchType = branchNameInfo.BranchType
 
 		logging.PrintInfo(fmt.Sprintf("The current branch named %s is available to create a pull request", logging.PaintWarning(currentBranch)))
 
@@ -170,25 +162,20 @@ func (cpr CreatePullRequest) Execute() error {
 		return nil
 	}
 
-	//15. GET ISSUE INFO
-	title, body, labels, err := cpr.getPullRequestInfo(issueID)
+	//15. GET INFO FROM ISSUE
+	issue, err := cpr.getIssueFromIssueID(issueID)
 	if err != nil {
 		return err
 	}
-
-	if len(labels) == 0 {
-		label, err := cpr.LabelProvider.GetLabelFromBranchType(branchType)
-		if err != nil {
-			return err
-		}
-
-		if label != "" {
-			labels = append(labels, label)
-		} else {
-			logging.PrintWarn("Could not determine the type label to use for the generated pull requests")
-		}
-
+	title, body, err := cpr.getPullRequestTitleAndBody(issue)
+	if err != nil {
+		return err
 	}
+	typeLabel, err := cpr.getIssueTypeLabel(issue)
+	if err != nil {
+		return err
+	}
+	labels := []string{typeLabel}
 
 	//16. CREATE PULL REQUEST
 	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)
@@ -309,31 +296,6 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	return nil
 }
 
-func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, body string, labels []string, err error) {
-	labels = []string{}
-
-	issue, err := cpr.getIssueFromIssueID(issueID)
-	if err != nil {
-		return
-	}
-
-	title, body, err = cpr.getPullRequestTitleAndBody(issue)
-	if err != nil {
-		return
-	}
-
-	typeLabel, err := cpr.LabelProvider.GetIssueTypeLabel(issue)
-	if err != nil {
-		return
-	}
-
-	if typeLabel != "" {
-		labels = append(labels, typeLabel)
-	}
-
-	return
-}
-
 func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {
 	branchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
 	if err != nil {
@@ -361,4 +323,13 @@ func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issu
 	}
 
 	return branchName, false, nil
+}
+
+func (cpr *CreatePullRequest) getIssueTypeLabel(issue domain.Issue) (string, error) {
+	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issue.ID)
+	if err != nil {
+		return "", err
+	}
+
+	return issueTracker.GetIssueTypeLabel(issue)
 }

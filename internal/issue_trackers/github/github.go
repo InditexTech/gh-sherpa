@@ -122,3 +122,31 @@ func (g *Github) ParseRawIssueId(identifier string) (issueId string) {
 func (g *Github) GetIssueTrackerType() domain.IssueTrackerType {
 	return domain.IssueTrackerTypeGithub
 }
+
+func (g *Github) GetIssueTypeLabel(issue domain.Issue) (string, error) {
+	issueType, err := g.GetIssueType(issue)
+	if err != nil {
+		return "", err
+	}
+
+	for mappedIssueType, labels := range g.cfg.IssueLabels {
+		if issueType == mappedIssueType {
+			for _, label := range labels {
+				containsLabel := slices.ContainsFunc(issue.Labels, func(l domain.Label) bool {
+					return l.Name == label
+				})
+
+				if containsLabel {
+					return label, nil
+				}
+			}
+
+			// returns the first label if no label is found
+			if len(labels) > 0 {
+				return labels[0], nil
+			}
+		}
+	}
+
+	return "", nil
+}

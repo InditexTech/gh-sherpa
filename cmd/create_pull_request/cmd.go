@@ -9,7 +9,6 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/git"
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/issue_trackers"
-	"github.com/InditexTech/gh-sherpa/internal/labels"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 	"github.com/InditexTech/gh-sherpa/internal/use_cases"
 	"github.com/spf13/cobra"
@@ -75,15 +74,6 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	labelProviderCfg := labels.Configuration{
-		IssueLabels: labels.IssueLabelsMap(cfg.Github.IssueLabels),
-	}
-
-	labelProvider, err := labels.New(labelProviderCfg, issueTrackers)
-	if err != nil {
-		return err
-	}
-
 	ghCliProvider := &gh.Cli{}
 
 	createPullRequestConfig := use_cases.CreatePullRequestConfiguration{
@@ -102,7 +92,6 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		UserInteractionProvider: userInteraction,
 		PullRequestProvider:     ghCliProvider,
 		BranchProvider:          branchProvider,
-		LabelProvider:           labelProvider,
 	}
 
 	return createPullRequestUseCase.Execute()

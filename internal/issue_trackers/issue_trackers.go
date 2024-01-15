@@ -46,7 +46,8 @@ func New(cfg Configuration) (*Provider, error) {
 func NewFromConfiguration(globalConfig config.Configuration) (*Provider, error) {
 	return New(Configuration{
 		Jira: jira.Configuration{
-			Jira: globalConfig.Jira,
+			Jira:        globalConfig.Jira,
+			IssueLabels: globalConfig.Github.IssueLabels,
 		},
 		Github: github.Configuration{
 			Github: globalConfig.Github,

@@ -209,6 +209,58 @@ func (_c *MockIssueTracker_GetIssueType_Call) RunAndReturn(run func(domain.Issue
 	return _c
 }
 
+// GetIssueTypeLabel provides a mock function with given fields: issue
+func (_m *MockIssueTracker) GetIssueTypeLabel(issue domain.Issue) (string, error) {
+	ret := _m.Called(issue)
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(domain.Issue) (string, error)); ok {
+		return rf(issue)
+	}
+	if rf, ok := ret.Get(0).(func(domain.Issue) string); ok {
+		r0 = rf(issue)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(domain.Issue) error); ok {
+		r1 = rf(issue)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockIssueTracker_GetIssueTypeLabel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetIssueTypeLabel'
+type MockIssueTracker_GetIssueTypeLabel_Call struct {
+	*mock.Call
+}
+
+// GetIssueTypeLabel is a helper method to define mock.On call
+//   - issue domain.Issue
+func (_e *MockIssueTracker_Expecter) GetIssueTypeLabel(issue interface{}) *MockIssueTracker_GetIssueTypeLabel_Call {
+	return &MockIssueTracker_GetIssueTypeLabel_Call{Call: _e.mock.On("GetIssueTypeLabel", issue)}
+}
+
+func (_c *MockIssueTracker_GetIssueTypeLabel_Call) Run(run func(issue domain.Issue)) *MockIssueTracker_GetIssueTypeLabel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(domain.Issue))
+	})
+	return _c
+}
+
+func (_c *MockIssueTracker_GetIssueTypeLabel_Call) Return(_a0 string, _a1 error) *MockIssueTracker_GetIssueTypeLabel_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockIssueTracker_GetIssueTypeLabel_Call) RunAndReturn(run func(domain.Issue) (string, error)) *MockIssueTracker_GetIssueTypeLabel_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IdentifyIssue provides a mock function with given fields: identifier
 func (_m *MockIssueTracker) IdentifyIssue(identifier string) bool {
 	ret := _m.Called(identifier)

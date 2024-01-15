@@ -26,6 +26,8 @@ type IssueTracker interface {
 	ParseRawIssueId(identifier string) (issueId string)
 	// GetIssueTrackerType returns the issue tracker type
 	GetIssueTrackerType() IssueTrackerType
+	// GetIssueTypeLabel returns the associated label for the issue type
+	GetIssueTypeLabel(issue Issue) (string, error)
 }
 
 type IssueTrackerProvider interface {

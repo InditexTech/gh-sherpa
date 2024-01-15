@@ -28,7 +28,6 @@ type CreatePullRequestExecutionTestSuite struct {
 	issueTracker            *domainMocks.MockIssueTracker
 	branchProvider          *domainMocks.MockBranchProvider
 	repositoryProvider      *domainMocks.MockRepositoryProvider
-	labelProvider           *domainMocks.MockLabelProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
@@ -51,7 +50,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = s.initializeRepositoryProvider()
-	s.labelProvider = s.initializeLabelProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -70,7 +68,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 		PullRequestProvider:     s.pullRequestProvider,
 		BranchProvider:          s.branchProvider,
 		RepositoryProvider:      s.repositoryProvider,
-		LabelProvider:           s.labelProvider,
 	}
 }
 
@@ -347,76 +344,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.pullRequestProvider.AssertExpectations(s.T())
 	})
 
-	s.Run("should create pull request with label from branch type", func() {
-		mocks.UnsetExpectedCall(&s.labelProvider.Mock, s.labelProvider.GetIssueTypeLabel)
-		s.labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("", nil).Once()
-
-		mocks.UnsetExpectedCall(&s.labelProvider.Mock, s.labelProvider.GetLabelFromBranchType)
-		s.labelProvider.EXPECT().GetLabelFromBranchType(mock.Anything).Return("kind/feature", nil).Once()
-
-		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest("Sample issue", "Closes #1", "main", "feature/GH-1-sample-issue", true, []string{"kind/feature"}).Return("https://example.com", nil).Once()
-
-		s.expectNoPrFound()
-
-		err := s.uc.Execute()
-
-		s.NoError(err)
-		s.pullRequestProvider.AssertExpectations(s.T())
-	})
-
-	s.Run("should create pull request without label if could not get issue type label", func() {
-		mocks.UnsetExpectedCall(&s.labelProvider.Mock, s.labelProvider.GetIssueTypeLabel)
-		s.labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("", nil).Once()
-		mocks.UnsetExpectedCall(&s.labelProvider.Mock, s.labelProvider.GetLabelFromBranchType)
-		s.labelProvider.EXPECT().GetLabelFromBranchType(mock.Anything).Return("", nil).Once()
-
-		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest("Sample issue", "Closes #1", "main", "feature/GH-1-sample-issue", true, []string{}).Return("https://example.com", nil).Once()
-
-		s.expectNoPrFound()
-
-		err := s.uc.Execute()
-
-		s.NoError(err)
-		s.pullRequestProvider.AssertExpectations(s.T())
-	})
-
-	s.Run("should error if could not get issue type label with error", func() {
-		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
-		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
-
-		mocks.UnsetExpectedCall(&s.labelProvider.Mock, s.labelProvider.GetIssueTypeLabel)
-		s.labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("", assert.AnError).Once()
-
-		s.expectCreatePullRequestNotCalled()
-
-		err := s.uc.Execute()
-
-		s.Error(err)
-		s.labelProvider.AssertExpectations(s.T())
-		s.assertCreatePullRequestNotCalled()
-	})
-
-	s.Run("should error if could not get label from branch type with error", func() {
-		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
-		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
-
-		mocks.UnsetExpectedCall(&s.labelProvider.Mock, s.labelProvider.GetIssueTypeLabel)
-		s.labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("", nil).Once()
-
-		mocks.UnsetExpectedCall(&s.labelProvider.Mock, s.labelProvider.GetLabelFromBranchType)
-		s.labelProvider.EXPECT().GetLabelFromBranchType(mock.Anything).Return("", assert.AnError).Once()
-
-		s.expectCreatePullRequestNotCalled()
-
-		err := s.uc.Execute()
-
-		s.Error(err)
-		s.labelProvider.AssertExpectations(s.T())
-		s.assertCreatePullRequestNotCalled()
-	})
-
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) expectCreatePullRequestNotCalled() {
@@ -503,15 +430,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeRepositoryProvider
 	return repositoryProvider
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeLabelProvider() *domainMocks.MockLabelProvider {
-	labelProvider := &domainMocks.MockLabelProvider{}
-
-	labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature", nil).Maybe()
-	labelProvider.EXPECT().GetLabelFromBranchType(mock.Anything).Return("kind/feature", nil).Maybe()
-
-	return labelProvider
-}
-
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
 	issueTracker := &domainMocks.MockIssueTracker{}
 
@@ -526,6 +444,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *do
 	}, nil).Maybe()
 	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature, nil).Maybe()
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeGithub).Maybe()
+	issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature", nil).Maybe()
 
 	return issueTracker
 }
@@ -576,7 +495,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = s.initializeRepositoryProvider()
-	s.labelProvider = s.initializeLabelProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -595,7 +513,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 		PullRequestProvider:     s.pullRequestProvider,
 		BranchProvider:          s.branchProvider,
 		RepositoryProvider:      s.repositoryProvider,
-		LabelProvider:           s.labelProvider,
 	}
 }
 
@@ -959,14 +876,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeRepositoryProvider()
 	return repositoryProvider
 }
 
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeLabelProvider() *domainMocks.MockLabelProvider {
-	labelProvider := &domainMocks.MockLabelProvider{}
-
-	labelProvider.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature", nil).Maybe()
-
-	return labelProvider
-}
-
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
 	issueTracker := &domainMocks.MockIssueTracker{}
 
@@ -986,6 +895,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *doma
 	}, nil).Maybe()
 	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature, nil).Maybe()
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
+	issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature", nil).Maybe()
 
 	return issueTracker
 }
