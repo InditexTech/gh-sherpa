@@ -15,6 +15,9 @@ fi
 rm -rf "${DIST_DIR}"
 echo "==> Building distributables for the supported architectures..."
 
+# Disable CGO when building.
+export CGO_ENABLED=0
+
 # MacOS
 echo "-> MacOS x86_64"
 GOOS=darwin GOARCH=amd64  go build -o "dist/${NAME}-darwin-x86_64-${VERSION}"
