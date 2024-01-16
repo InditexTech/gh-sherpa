@@ -123,6 +123,7 @@ func (g *Github) GetIssueTrackerType() domain.IssueTrackerType {
 	return domain.IssueTrackerTypeGithub
 }
 
+// GetIssueTypeLabel returns the type label related to the issue or empty string if not found
 func (g *Github) GetIssueTypeLabel(issue domain.Issue) (string, error) {
 	issueType, err := g.GetIssueType(issue)
 	if err != nil {
@@ -130,21 +131,19 @@ func (g *Github) GetIssueTypeLabel(issue domain.Issue) (string, error) {
 	}
 
 	for mappedIssueType, labels := range g.cfg.IssueLabels {
-		if issueType == mappedIssueType {
-			for _, label := range labels {
-				containsLabel := slices.ContainsFunc(issue.Labels, func(l domain.Label) bool {
-					return l.Name == label
-				})
+		if issueType != mappedIssueType {
+			continue
+		}
 
-				if containsLabel {
-					return label, nil
-				}
+		for _, label := range labels {
+			hasLabel := slices.ContainsFunc(issue.Labels, func(l domain.Label) bool {
+				return l.Name == label
+			})
+
+			if hasLabel {
+				return label, nil
 			}
 
-			// returns the first label if no label is found
-			if len(labels) > 0 {
-				return labels[0], nil
-			}
 		}
 	}
 

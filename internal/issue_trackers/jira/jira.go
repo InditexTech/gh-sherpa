@@ -26,7 +26,7 @@ type JiraClient struct {
 
 type Configuration struct {
 	config.Jira
-	IssueLabels map[issue_types.IssueType][]string
+	IssueTypeLabels map[issue_types.IssueType][]string
 }
 
 // New returns a new Jira issue tracker with the given configuration
@@ -148,7 +148,7 @@ func (j *Jira) GetIssueTypeLabel(issue domain.Issue) (string, error) {
 		return "", err
 	}
 
-	for mappedIssueType, labels := range j.cfg.IssueLabels {
+	for mappedIssueType, labels := range j.cfg.IssueTypeLabels {
 		if issueType == mappedIssueType && len(labels) > 0 {
 			return labels[0], nil
 		}
