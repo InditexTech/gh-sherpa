@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2024-01-16
+
+### Added
+
+- [#58](https://github.com/InditexTech/gh-sherpa/issues/58) Add `kind/internal` label to `internal` issue label in default config
+- [#51](https://github.com/InditexTech/gh-sherpa/issues/51) Add GitHub issue type label to the generated pull request
+
+### Documentation
+
+- [#57](https://github.com/InditexTech/gh-sherpa/issues/57) Add CLA signature requirement to contribute in CONTRIBUTING.md file
+
 ### Fixed
 
 - [#43](https://github.com/InditexTech/gh-sherpa/issues/43) 404 when accessing configuration link
@@ -37,5 +48,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.0.0...develop
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.1.0...main
+[1.1.0]: https://github.com/InditexTech/gh-sherpa/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/InditexTech/gh-sherpa/commits/1.0.0
