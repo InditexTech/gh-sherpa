@@ -344,6 +344,38 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.pullRequestProvider.AssertExpectations(s.T())
 	})
 
+	s.Run("should error if could not get issue type label", func() {
+		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
+		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssueTypeLabel)
+		s.issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("", assert.AnError).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.issueTracker.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
+	s.Run("should error if could not get issue", func() {
+		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
+		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssue)
+		s.issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{}, assert.AnError).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.issueTracker.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) expectCreatePullRequestNotCalled() {
@@ -790,6 +822,39 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
 	})
+
+	s.Run("should error if could not get issue type label", func() {
+		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
+		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssueTypeLabel)
+		s.issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("", assert.AnError).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.issueTracker.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
+	s.Run("should error if could not get issue", func() {
+		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
+		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssue)
+		s.issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{}, assert.AnError).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.issueTracker.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) expectCreatePullRequestNotCalled() {

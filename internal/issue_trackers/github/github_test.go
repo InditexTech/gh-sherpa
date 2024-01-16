@@ -239,3 +239,61 @@ func TestGithub_FormatIssueId(t *testing.T) {
 		})
 	}
 }
+
+func TestGetIssueTypeLabel(t *testing.T) {
+
+	createIssue := func(labelNames ...string) domain.Issue {
+		labels := make([]domain.Label, len(labelNames))
+		for i, labelName := range labelNames {
+			labels[i] = domain.Label{Name: labelName}
+		}
+		return domain.Issue{Labels: labels}
+	}
+
+	cfg := Configuration{
+		Github: config.Github{
+			IssueLabels: config.GithubIssueLabels{
+				issue_types.Bug:         {"kind/bug", "kind/bugfix"},
+				issue_types.Feature:     {"kind/feat"},
+				issue_types.Refactoring: {},
+			},
+		},
+	}
+
+	g, err := New(cfg)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name  string
+		issue domain.Issue
+		want  string
+	}{
+		{
+			name:  "Get issue type with single mapped label",
+			issue: createIssue("kind/feat"),
+			want:  "kind/feat",
+		},
+		{
+			name:  "Get issue type with multiple mapped labels",
+			issue: createIssue("kind/bugfix"),
+			want:  "kind/bugfix",
+		},
+		{
+			name:  "Get issue type with multiple labels",
+			issue: createIssue("kind/documentation", "kind/bugfix", "non-related-label"),
+			want:  "kind/bugfix",
+		},
+		{
+			name:  "Get issue type with no labels",
+			issue: createIssue(),
+			want:  "",
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := g.GetIssueTypeLabel(tc.issue)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}

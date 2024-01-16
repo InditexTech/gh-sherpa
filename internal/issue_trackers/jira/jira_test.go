@@ -119,3 +119,55 @@ func TestGetIssueType(t *testing.T) {
 		})
 	}
 }
+
+func TestGetIssueTypeLabel(t *testing.T) {
+	createIssue := func(issueTypeId string) domain.Issue {
+		return domain.Issue{Type: domain.IssueType{Id: issueTypeId}}
+	}
+
+	cfg := Configuration{
+		Jira: config.Jira{
+			IssueTypes: config.JiraIssueTypes{
+				issue_types.Bug:         {"1"},
+				issue_types.Feature:     {"3", "5"},
+				issue_types.Improvement: {},
+			},
+		},
+		IssueTypeLabels: map[issue_types.IssueType][]string{
+			issue_types.Bug:     {"kind/bug", "kind/bugfix"},
+			issue_types.Feature: {"kind/feat"},
+		},
+	}
+
+	j, err := New(cfg)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name  string
+		issue domain.Issue
+		want  string
+	}{
+		{
+			name:  "Get issue type with single mapped label",
+			issue: createIssue("5"),
+			want:  "kind/feat",
+		},
+		{
+			name:  "Get issue type with multiple mapped labels",
+			issue: createIssue("1"),
+			want:  "kind/bug",
+		},
+		{
+			name:  "Get issue with  no labels",
+			issue: createIssue("-1"),
+			want:  "",
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := j.GetIssueTypeLabel(tc.issue)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
