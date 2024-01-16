@@ -20,7 +20,7 @@ type Provider struct{}
 var _ domain.GitProvider = (*Provider)(nil)
 
 var runGitCommand = func(args ...string) (out string, err error) {
-	logging.Debug("Running git command: %s %v", gitBin, strings.Join(args, " "))
+	logging.Debugf("Running git command: %s %v", gitBin, strings.Join(args, " "))
 
 	if os.Getenv(DRY_RUN_ENV) != "" {
 		fmt.Printf("DRY RUN: \"%s %v\"\n", gitBin, strings.Join(args, " "))

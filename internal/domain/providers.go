@@ -10,7 +10,7 @@ type RepositoryProvider interface {
 
 type PullRequestProvider interface {
 	GetPullRequestForBranch(string) (pullRequest *PullRequest, err error)
-	CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool) (prUrl string, err error)
+	CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prUrl string, err error)
 }
 
 type UserInteractionProvider interface {

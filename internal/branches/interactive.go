@@ -17,10 +17,7 @@ func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIde
 		return "", err
 	}
 
-	issueType, err := issueTracker.GetIssueType(issue)
-	if err != nil {
-		return "", err
-	}
+	issueType := issueTracker.GetIssueType(issue)
 	branchType := issueType.String()
 
 	issueID := issueTracker.FormatIssueId(issue.ID)

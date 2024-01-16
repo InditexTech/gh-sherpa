@@ -174,8 +174,7 @@ func TestGetIssueType(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := g.GetIssueType(tc.issue)
-			require.NoError(t, err)
+			got := g.GetIssueType(tc.issue)
 			assert.Equal(t, tc.want, got)
 		})
 	}
@@ -236,6 +235,68 @@ func TestGithub_FormatIssueId(t *testing.T) {
 				cli: tt.fields.Cli,
 			}
 			assert.Equalf(t, tt.wantIssueId, g.FormatIssueId(tt.args.issue.ID), "FormatIssueId(%v)", tt.args.issue)
+		})
+	}
+}
+
+func TestGetIssueTypeLabel(t *testing.T) {
+
+	createIssue := func(labelNames ...string) domain.Issue {
+		labels := make([]domain.Label, len(labelNames))
+		for i, labelName := range labelNames {
+			labels[i] = domain.Label{Name: labelName}
+		}
+		return domain.Issue{Labels: labels}
+	}
+
+	cfg := Configuration{
+		Github: config.Github{
+			IssueLabels: config.GithubIssueLabels{
+				issue_types.Bug:         {"kind/bug", "kind/bugfix"},
+				issue_types.Feature:     {"kind/feat"},
+				issue_types.Refactoring: {},
+			},
+		},
+	}
+
+	g, err := New(cfg)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name  string
+		issue domain.Issue
+		want  string
+	}{
+		{
+			name:  "Get issue type label with single mapped label",
+			issue: createIssue("kind/feat"),
+			want:  "kind/feat",
+		},
+		{
+			name:  "Returns the same label in the issue if issue labels contains several mapped labels",
+			issue: createIssue("kind/bugfix"),
+			want:  "kind/bugfix",
+		},
+		{
+			name:  "Get issue type label with multiple labels",
+			issue: createIssue("not-a-label-kind", "kind/bugfix", "non-related-label"),
+			want:  "kind/bugfix",
+		},
+		{
+			name:  "Returns empty string if no label is present in the issue",
+			issue: createIssue(),
+			want:  "",
+		},
+		{
+			name:  "Returns empty string if no kind label is present in the issue",
+			issue: createIssue("not-a-label-kind", "non-related-label", "another-non-related-label"),
+			want:  "",
+		},
+	} {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			got := g.GetIssueTypeLabel(tc.issue)
+			assert.Equal(t, tc.want, got)
 		})
 	}
 }

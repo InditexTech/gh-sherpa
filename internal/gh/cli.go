@@ -86,7 +86,7 @@ var ExecuteStringResult = func(args []string) (result string, err error) {
 	return
 }
 
-func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool) (prURL string, err error) {
+func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prURL string, err error) {
 	args := []string{"pr", "create"}
 
 	if baseBranch != "" {
@@ -106,6 +106,10 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 	} else {
 		args = append(args, "-t", title)
 		args = append(args, "-b", body)
+	}
+
+	for _, label := range labels {
+		args = append(args, "-l", label)
 	}
 
 	result, err := ExecuteStringResult(args)

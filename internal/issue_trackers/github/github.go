@@ -84,16 +84,16 @@ func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
 	}, nil
 }
 
-func (g *Github) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType, err error) {
+func (g *Github) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType) {
+	issueTypeLabel := g.GetIssueTypeLabel(issue)
+
 	for issueType, cfgLabels := range g.cfg.Github.IssueLabels {
-		for _, label := range issue.Labels {
-			if slices.Contains(cfgLabels, label.Name) {
-				return issueType, nil
-			}
+		if slices.Contains(cfgLabels, issueTypeLabel) {
+			return issueType
 		}
 	}
 
-	return issue_types.Unknown, nil
+	return issue_types.Unknown
 }
 
 func (g *Github) IdentifyIssue(identifier string) bool {
@@ -121,4 +121,17 @@ func (g *Github) ParseRawIssueId(identifier string) (issueId string) {
 
 func (g *Github) GetIssueTrackerType() domain.IssueTrackerType {
 	return domain.IssueTrackerTypeGithub
+}
+
+// GetIssueTypeLabel returns the type label related to the issue or empty string if not found
+func (g *Github) GetIssueTypeLabel(issue domain.Issue) string {
+	for _, cfgLabels := range g.cfg.Github.IssueLabels {
+		for _, label := range issue.Labels {
+			if slices.Contains(cfgLabels, label.Name) {
+				return label.Name
+			}
+		}
+	}
+
+	return ""
 }

@@ -48,6 +48,7 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	issueID := cpr.Cfg.IssueID
+
 	//1. FLAG ISSUE IS USED
 	if issueID != "" {
 		issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
@@ -105,6 +106,7 @@ func (cpr CreatePullRequest) Execute() error {
 				return err
 			}
 			currentBranch = branchName
+
 			if canceled {
 				return nil
 			}
@@ -160,14 +162,30 @@ func (cpr CreatePullRequest) Execute() error {
 		return nil
 	}
 
-	//15. GET ISSUE INFO
-	title, body, err := cpr.getPullRequestInfo(issueID)
+	//15. GET INFO FROM ISSUE
+	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
 	if err != nil {
 		return err
 	}
 
+	issue, err := issueTracker.GetIssue(issueID)
+	if err != nil {
+		return err
+	}
+
+	title, body, err := cpr.getPullRequestTitleAndBody(issue)
+	if err != nil {
+		return err
+	}
+
+	labels := []string{}
+	typeLabel := issueTracker.GetIssueTypeLabel(issue)
+	if typeLabel != "" {
+		labels = append(labels, typeLabel)
+	}
+
 	//16. CREATE PULL REQUEST
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR)
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)
 	if err != nil {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
@@ -260,15 +278,6 @@ func (cpr *CreatePullRequest) pendingCommits(currentBranch string) (canceled boo
 	return false, nil
 }
 
-func (cpr *CreatePullRequest) getIssueFromIssueID(issueID string) (issue domain.Issue, err error) {
-	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
-	if err != nil {
-		return
-	}
-
-	return issueTracker.GetIssue(issueID)
-}
-
 func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string) error {
 	// Check if the base branch will be fetched before the new branch is created
 	if cpr.Cfg.FetchFromOrigin {
@@ -283,17 +292,6 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	}
 
 	return nil
-}
-
-func (cpr *CreatePullRequest) getPullRequestInfo(issueID string) (title string, body string, err error) {
-	issue, err := cpr.getIssueFromIssueID(issueID)
-	if err != nil {
-		return
-	}
-
-	title, body, err = cpr.getPullRequestTitleAndBody(issue)
-
-	return
 }
 
 func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {

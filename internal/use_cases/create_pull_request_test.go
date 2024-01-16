@@ -212,7 +212,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
+		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
 
 		err := s.uc.Execute()
 
@@ -332,7 +332,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 	s.Run("should create pull request with no close issue flag", func() {
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest("Sample issue", "Related to #1", "main", "feature/GH-1-sample-issue", true).Return("https://example.com", nil).Once()
+		s.pullRequestProvider.EXPECT().CreatePullRequest("Sample issue", "Related to #1", "main", "feature/GH-1-sample-issue", true, []string{"kind/feature"}).Return("https://example.com", nil).Once()
 
 		s.expectNoPrFound()
 
@@ -343,11 +343,28 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
 	})
+
+	s.Run("should error if could not get issue", func() {
+		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
+		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssue)
+		s.issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{}, assert.AnError).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.issueTracker.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) expectCreatePullRequestNotCalled() {
 	mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-	s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Times(0)
+	s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Times(0)
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) assertCreatePullRequestNotCalled() {
@@ -355,7 +372,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) assertCreatePullRequestNotCa
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) assertCreatePullRequestCalled() {
-	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "Sample issue", "Closes #1", "main", "feature/GH-1-sample-issue", true)
+	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "Sample issue", "Closes #1", "main", "feature/GH-1-sample-issue", true, []string{"kind/feature"})
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) expectNoPrFound() {
@@ -402,7 +419,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializePullRequestProvide
 		Labels: []domain.Label{},
 	}, nil).Maybe()
 
-	pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("https://example.com", nil).Maybe()
+	pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("https://example.com", nil).Maybe()
 
 	return pullRequestProvider
 }
@@ -441,8 +458,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *do
 		IssueTracker: domain.IssueTrackerTypeGithub,
 		Url:          "https://github.com/InditexTech/gh-sherpa/issues/1",
 	}, nil).Maybe()
-	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature, nil).Maybe()
+	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature).Maybe()
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeGithub).Maybe()
+	issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature").Maybe()
 
 	return issueTracker
 }
@@ -657,7 +675,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
 
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
+		s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("", assert.AnError).Once()
 
 		err := s.uc.Execute()
 
@@ -777,7 +795,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 	s.Run("should create pull request with no close issue flag", func() {
 		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-		s.pullRequestProvider.EXPECT().CreatePullRequest("[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true).Return("https://example.com", nil).Once()
+		s.pullRequestProvider.EXPECT().CreatePullRequest("[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true, []string{"kind/feature"}).Return("https://example.com", nil).Once()
 
 		s.expectNoPrFound()
 
@@ -788,11 +806,28 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.NoError(err)
 		s.pullRequestProvider.AssertExpectations(s.T())
 	})
+
+	s.Run("should error if could not get issue", func() {
+		mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.GetPullRequestForBranch)
+		s.pullRequestProvider.EXPECT().GetPullRequestForBranch(mock.Anything).Return(nil, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssue)
+		s.issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{}, assert.AnError).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.issueTracker.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) expectCreatePullRequestNotCalled() {
 	mocks.UnsetExpectedCall(&s.pullRequestProvider.Mock, s.pullRequestProvider.CreatePullRequest)
-	s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Times(0)
+	s.pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Times(0)
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) assertCreatePullRequestNotCalled() {
@@ -800,7 +835,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) assertCreatePullRequestNotCall
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) assertCreatePullRequestCalled() {
-	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true)
+	s.pullRequestProvider.AssertCalled(s.T(), "CreatePullRequest", "[PROJECTKEY-1] Sample issue", "Relates to [PROJECTKEY-1](https://jira.example.com/browse/PROJECTKEY-1)", "main", "feature/PROJECTKEY-1-sample-issue", true, []string{"kind/feature"})
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) expectNoPrFound() {
@@ -847,7 +882,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializePullRequestProvider(
 		Labels: []domain.Label{},
 	}, nil).Maybe()
 
-	pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("https://example.com", nil).Maybe()
+	pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("https://example.com", nil).Maybe()
 
 	return pullRequestProvider
 }
@@ -891,8 +926,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *doma
 		},
 		Url: "https://jira.example.com/browse/PROJECTKEY-1",
 	}, nil).Maybe()
-	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature, nil).Maybe()
+	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature).Maybe()
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
+	issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature").Maybe()
 
 	return issueTracker
 }
