@@ -148,17 +148,17 @@ func TestGetIssueTypeLabel(t *testing.T) {
 		want  string
 	}{
 		{
-			name:  "Get issue type with single mapped label",
+			name:  "Get issue type label with single mapped label",
 			issue: createIssue("5"),
 			want:  "kind/feat",
 		},
 		{
-			name:  "Get issue type with multiple mapped labels",
+			name:  "Returns first issue label if multiple labels are mapped to the same issue type",
 			issue: createIssue("1"),
 			want:  "kind/bug",
 		},
 		{
-			name:  "Get issue with  no labels",
+			name:  "Returns empty string if no kind is present in the issue",
 			issue: createIssue("-1"),
 			want:  "",
 		},
