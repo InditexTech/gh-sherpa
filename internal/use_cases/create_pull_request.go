@@ -163,15 +163,21 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	//15. GET INFO FROM ISSUE
-	issue, err := cpr.getIssueFromIssueID(issueID)
+	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
 	if err != nil {
 		return err
 	}
+
+	issue, err := issueTracker.GetIssue(issueID)
+	if err != nil {
+		return err
+	}
+
 	title, body, err := cpr.getPullRequestTitleAndBody(issue)
 	if err != nil {
 		return err
 	}
-	typeLabel, err := cpr.getIssueTypeLabel(issue)
+	typeLabel, err := issueTracker.GetIssueTypeLabel(issue)
 	if err != nil {
 		return err
 	}
@@ -271,15 +277,6 @@ func (cpr *CreatePullRequest) pendingCommits(currentBranch string) (canceled boo
 	return false, nil
 }
 
-func (cpr *CreatePullRequest) getIssueFromIssueID(issueID string) (issue domain.Issue, err error) {
-	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
-	if err != nil {
-		return
-	}
-
-	return issueTracker.GetIssue(issueID)
-}
-
 func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string) error {
 	// Check if the base branch will be fetched before the new branch is created
 	if cpr.Cfg.FetchFromOrigin {
@@ -323,13 +320,4 @@ func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issu
 	}
 
 	return branchName, false, nil
-}
-
-func (cpr *CreatePullRequest) getIssueTypeLabel(issue domain.Issue) (string, error) {
-	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issue.ID)
-	if err != nil {
-		return "", err
-	}
-
-	return issueTracker.GetIssueTypeLabel(issue)
 }
