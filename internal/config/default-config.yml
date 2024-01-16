@@ -61,6 +61,7 @@ github:
     documentation: ["kind/documentation"]
     feature: ["kind/feature"]
     improvement: ["kind/improvement"]
+    internal: ["kind/internal"]
     refactoring: ["kind/refactoring"]
     # You can map here other issue types.
 
