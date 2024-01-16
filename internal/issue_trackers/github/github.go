@@ -85,11 +85,14 @@ func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
 }
 
 func (g *Github) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType, err error) {
+	issueTypeLabel, err := g.GetIssueTypeLabel(issue)
+	if err != nil {
+		return issue_types.Unknown, err
+	}
+
 	for issueType, cfgLabels := range g.cfg.Github.IssueLabels {
-		for _, label := range issue.Labels {
-			if slices.Contains(cfgLabels, label.Name) {
-				return issueType, nil
-			}
+		if slices.Contains(cfgLabels, issueTypeLabel) {
+			return issueType, nil
 		}
 	}
 
@@ -125,25 +128,11 @@ func (g *Github) GetIssueTrackerType() domain.IssueTrackerType {
 
 // GetIssueTypeLabel returns the type label related to the issue or empty string if not found
 func (g *Github) GetIssueTypeLabel(issue domain.Issue) (string, error) {
-	issueType, err := g.GetIssueType(issue)
-	if err != nil {
-		return "", err
-	}
-
-	for mappedIssueType, labels := range g.cfg.IssueLabels {
-		if issueType != mappedIssueType {
-			continue
-		}
-
-		for _, label := range labels {
-			hasLabel := slices.ContainsFunc(issue.Labels, func(l domain.Label) bool {
-				return l.Name == label
-			})
-
-			if hasLabel {
-				return label, nil
+	for _, cfgLabels := range g.cfg.Github.IssueLabels {
+		for _, label := range issue.Labels {
+			if slices.Contains(cfgLabels, label.Name) {
+				return label.Name, nil
 			}
-
 		}
 	}
 
