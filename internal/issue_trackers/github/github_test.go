@@ -174,8 +174,7 @@ func TestGetIssueType(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := g.GetIssueType(tc.issue)
-			require.NoError(t, err)
+			got := g.GetIssueType(tc.issue)
 			assert.Equal(t, tc.want, got)
 		})
 	}
@@ -296,8 +295,7 @@ func TestGetIssueTypeLabel(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := g.GetIssueTypeLabel(tc.issue)
-			require.NoError(t, err)
+			got := g.GetIssueTypeLabel(tc.issue)
 			assert.Equal(t, tc.want, got)
 		})
 	}

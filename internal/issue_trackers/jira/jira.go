@@ -74,16 +74,16 @@ func (j *Jira) GetIssue(identifier string) (issue domain.Issue, err error) {
 	return
 }
 
-func (j *Jira) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType, err error) {
+func (j *Jira) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType) {
 	for issueType, ids := range j.cfg.Jira.IssueTypes {
 		for _, id := range ids {
 			if id == issue.Type.Id {
-				return issueType, nil
+				return issueType
 			}
 		}
 	}
 
-	return issue_types.Unknown, nil
+	return issue_types.Unknown
 }
 
 func (j *Jira) IdentifyIssue(identifier string) bool {
@@ -142,17 +142,14 @@ func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
 	}
 }
 
-func (j *Jira) GetIssueTypeLabel(issue domain.Issue) (string, error) {
-	issueType, err := j.GetIssueType(issue)
-	if err != nil {
-		return "", err
-	}
+func (j *Jira) GetIssueTypeLabel(issue domain.Issue) string {
+	issueType := j.GetIssueType(issue)
 
 	for mappedIssueType, labels := range j.cfg.IssueTypeLabels {
 		if issueType == mappedIssueType && len(labels) > 0 {
-			return labels[0], nil
+			return labels[0]
 		}
 	}
 
-	return "", nil
+	return ""
 }

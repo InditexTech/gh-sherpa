@@ -17,7 +17,9 @@ type IssueTracker interface {
 	// GetIssue returns the issue information
 	GetIssue(identifier string) (issue Issue, err error)
 	// GetIssueType returns the issue type
-	GetIssueType(issue Issue) (issueType issue_types.IssueType, err error)
+	GetIssueType(issue Issue) (issueType issue_types.IssueType)
+	// GetIssueTypeLabel returns the associated label for the issue type
+	GetIssueTypeLabel(issue Issue) string
 	// IdentifyIssue checks if the identifier is a valid issue identifier
 	IdentifyIssue(identifier string) bool
 	// FormatIssueId formats the issue identifier
@@ -26,8 +28,6 @@ type IssueTracker interface {
 	ParseRawIssueId(identifier string) (issueId string)
 	// GetIssueTrackerType returns the issue tracker type
 	GetIssueTrackerType() IssueTrackerType
-	// GetIssueTypeLabel returns the associated label for the issue type
-	GetIssueTypeLabel(issue Issue) (string, error)
 }
 
 type IssueTrackerProvider interface {

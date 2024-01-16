@@ -158,27 +158,17 @@ func (_c *MockIssueTracker_GetIssueTrackerType_Call) RunAndReturn(run func() dom
 }
 
 // GetIssueType provides a mock function with given fields: issue
-func (_m *MockIssueTracker) GetIssueType(issue domain.Issue) (issue_types.IssueType, error) {
+func (_m *MockIssueTracker) GetIssueType(issue domain.Issue) issue_types.IssueType {
 	ret := _m.Called(issue)
 
 	var r0 issue_types.IssueType
-	var r1 error
-	if rf, ok := ret.Get(0).(func(domain.Issue) (issue_types.IssueType, error)); ok {
-		return rf(issue)
-	}
 	if rf, ok := ret.Get(0).(func(domain.Issue) issue_types.IssueType); ok {
 		r0 = rf(issue)
 	} else {
 		r0 = ret.Get(0).(issue_types.IssueType)
 	}
 
-	if rf, ok := ret.Get(1).(func(domain.Issue) error); ok {
-		r1 = rf(issue)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockIssueTracker_GetIssueType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetIssueType'
@@ -199,38 +189,28 @@ func (_c *MockIssueTracker_GetIssueType_Call) Run(run func(issue domain.Issue)) 
 	return _c
 }
 
-func (_c *MockIssueTracker_GetIssueType_Call) Return(issueType issue_types.IssueType, err error) *MockIssueTracker_GetIssueType_Call {
-	_c.Call.Return(issueType, err)
+func (_c *MockIssueTracker_GetIssueType_Call) Return(issueType issue_types.IssueType) *MockIssueTracker_GetIssueType_Call {
+	_c.Call.Return(issueType)
 	return _c
 }
 
-func (_c *MockIssueTracker_GetIssueType_Call) RunAndReturn(run func(domain.Issue) (issue_types.IssueType, error)) *MockIssueTracker_GetIssueType_Call {
+func (_c *MockIssueTracker_GetIssueType_Call) RunAndReturn(run func(domain.Issue) issue_types.IssueType) *MockIssueTracker_GetIssueType_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetIssueTypeLabel provides a mock function with given fields: issue
-func (_m *MockIssueTracker) GetIssueTypeLabel(issue domain.Issue) (string, error) {
+func (_m *MockIssueTracker) GetIssueTypeLabel(issue domain.Issue) string {
 	ret := _m.Called(issue)
 
 	var r0 string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(domain.Issue) (string, error)); ok {
-		return rf(issue)
-	}
 	if rf, ok := ret.Get(0).(func(domain.Issue) string); ok {
 		r0 = rf(issue)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(domain.Issue) error); ok {
-		r1 = rf(issue)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // MockIssueTracker_GetIssueTypeLabel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetIssueTypeLabel'
@@ -251,12 +231,12 @@ func (_c *MockIssueTracker_GetIssueTypeLabel_Call) Run(run func(issue domain.Iss
 	return _c
 }
 
-func (_c *MockIssueTracker_GetIssueTypeLabel_Call) Return(_a0 string, _a1 error) *MockIssueTracker_GetIssueTypeLabel_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *MockIssueTracker_GetIssueTypeLabel_Call) Return(_a0 string) *MockIssueTracker_GetIssueTypeLabel_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockIssueTracker_GetIssueTypeLabel_Call) RunAndReturn(run func(domain.Issue) (string, error)) *MockIssueTracker_GetIssueTypeLabel_Call {
+func (_c *MockIssueTracker_GetIssueTypeLabel_Call) RunAndReturn(run func(domain.Issue) string) *MockIssueTracker_GetIssueTypeLabel_Call {
 	_c.Call.Return(run)
 	return _c
 }

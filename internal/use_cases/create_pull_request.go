@@ -177,11 +177,12 @@ func (cpr CreatePullRequest) Execute() error {
 	if err != nil {
 		return err
 	}
-	typeLabel, err := issueTracker.GetIssueTypeLabel(issue)
-	if err != nil {
-		return err
+
+	labels := []string{}
+	typeLabel := issueTracker.GetIssueTypeLabel(issue)
+	if typeLabel != "" {
+		labels = append(labels, typeLabel)
 	}
-	labels := []string{typeLabel}
 
 	//16. CREATE PULL REQUEST
 	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)

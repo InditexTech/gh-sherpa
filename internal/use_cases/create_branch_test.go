@@ -248,7 +248,7 @@ func (s *CreateGithubBranchExecutionTestSuite) initializeIssueTracker() *domainM
 		Labels:       []domain.Label{},
 		IssueTracker: domain.IssueTrackerTypeGithub,
 	}, nil).Maybe()
-	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature, nil).Maybe()
+	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature).Maybe()
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeGithub).Maybe()
 
 	return issueTracker
@@ -449,7 +449,7 @@ func (s *CreateJiraBranchExecutionTestSuite) initializeIssueTracker() *domainMoc
 			Description: "A new feature of the product, which has to be developed and tested.",
 		},
 	}, nil).Maybe()
-	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature, nil).Maybe()
+	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature).Maybe()
 	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
 
 	return issueTracker
