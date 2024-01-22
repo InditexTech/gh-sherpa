@@ -62,7 +62,7 @@
       }
     },
     "security-file-exists": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-existence",
         "options": {
