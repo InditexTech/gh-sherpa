@@ -7,9 +7,10 @@ If you believe you have found a security vulnerability in any Inditex repository
 security vulnerability, please report it to us as described below. We appreciate the hard work maintainers put into
 fixing vulnerabilities and understand that sometimes more time is required to properly address an issue.
 
-## Reporting Security issues
+## Reporting security issues
 
-> IMPORTANT: Do not file public issues on GitHub for security vulnerabilities
+> [!CAUTION]
+> Do not file public issues on GitHub for security vulnerabilities
 
 * Let us know by submitting the finding through our [disclosure submission program](https://inditex.responsibledisclosure.com/)
 as soon as possible, upon discovery of a potential security issue.
