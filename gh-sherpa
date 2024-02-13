@@ -28,30 +28,30 @@ fi
 # Match the architecture with the the binary name
 if uname -a | grep Msys > /dev/null; then
   if [ "${ARCH}" = "x86_64" ]; then
-    BIN="${NAME}-windows-x86_64-${VERSION}.exe"
+    BIN="${NAME}-windows-amd64.exe"
   elif [ "${ARCH}" = "i686" ]; then
-    BIN="${NAME}-windows-i386-${VERSION}.exe"
+    BIN="${NAME}-windows-386.exe"
   elif [ "${ARCH}" = "i386" ]; then
-    BIN="${NAME}-windows-i386-${VERSION}.exe"
+    BIN="${NAME}-windows-386.exe"
   elif [ "${ARCH}" = "arm64" ]; then
-    BIN="${NAME}-windows-arm64-${VERSION}.exe"
+    BIN="${NAME}-windows-arm64.exe"
   fi
 elif uname -a | grep Darwin > /dev/null; then
   if [ "${ARCH}" = "x86_64" ]; then
-    BIN="${NAME}-darwin-x86_64-${VERSION}"
+    BIN="${NAME}-darwin-amd64"
   elif
     [ "${ARCH}" = "arm64" ]; then
-    BIN="${NAME}-darwin-arm64-${VERSION}"
+    BIN="${NAME}-darwin-arm64"
   fi
 elif uname -a | grep Linux > /dev/null; then
   if [ "${ARCH}" = "x86_64" ]; then
-    BIN="${NAME}-linux-x86_64-${VERSION}"
+    BIN="${NAME}-linux-amd64"
   elif [ "${ARCH}" = "i686" ]; then
-    BIN="${NAME}-linux-i386-${VERSION}"
+    BIN="${NAME}-linux-386"
   elif [ "${ARCH}" = "i386" ]; then
-    BIN="${NAME}-linux-i386-${VERSION}"
+    BIN="${NAME}-linux-386"
   elif [ "${ARCH}" = "arm64" ]; then
-    BIN="${NAME}-linux-arm64-${VERSION}"
+    BIN="${NAME}-linux-arm64"
   fi
 fi
 
