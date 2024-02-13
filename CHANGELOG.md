@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2024-02-13
+
+### Documentation
+
+- [#64](https://github.com/InditexTech/gh-sherpa/issues/64) Add `SECURITY.md` file
+
+### Fixed
+
+- [#68](https://github.com/InditexTech/gh-sherpa/issues/68) Version is not shown when gh extension list
+
 ## [1.1.0] - 2024-01-16
 
 ### Added
@@ -48,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.1.0...main
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.1.1...release/1.1.1
+[1.1.1]: https://github.com/InditexTech/gh-sherpa/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/InditexTech/gh-sherpa/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/InditexTech/gh-sherpa/commits/1.0.0
