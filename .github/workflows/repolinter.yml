@@ -1,3 +1,4 @@
+
 name: 'Validate master branch with Repolinter'
 
 on:
