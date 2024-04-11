@@ -4,7 +4,7 @@ name: 'Validate master branch with Repolinter'
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   repolinter-action:
