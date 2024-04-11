@@ -1,24 +1,16 @@
-# SPDX-FileCopyrightText: Copyright (c) 2020 Koninklijke Philips N.V, https://www.philips.com
-# Source: https://github.com/marketplace/actions/repolinter
-# SPDX-License-Identifier: MIT
+name: 'Validate master branch with Repolinter'
 
-name: Lint repository
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
-  repo-lint:
-    name: "repolint"
+  repolinter-action:
     runs-on: ubuntu-latest
     steps:
-      - name: "checkout repo"
-        uses: actions/checkout@v2.0.0
-        with:
-          fetch-depth: 0
-      - name: "Update node"
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Test repolinter
-        uses: philips-labs/github-action-repolinter@master
-        env:
-          CUSTOM_REPOLINT_FILE: repolinter_rules.json
+      - name: Checkout Repo
+        uses: actions/checkout@v2
+      - name: 'Run Repolinter'
+        uses: newrelic/repolinter-action@v1
+
