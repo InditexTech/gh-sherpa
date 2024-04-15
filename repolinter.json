@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/todogroup/repolinter/master/rulesets/schema.json",
+  "$schema": "./schema.json",
   "version": 2,
   "axioms": {
     "linguist": "language",
@@ -13,16 +13,6 @@
         "type": "file-existence",
         "options": {
           "globsAny": ["LICENSE*", "COPYING*"],
-          "nocase": true
-        }
-      }
-    },
-    "readme-file-exists": {
-      "level": "error",
-      "rule": {
-        "type": "file-existence",
-        "options": {
-          "globsAny": ["README*"],
           "nocase": true
         }
       }
@@ -71,7 +61,7 @@
       }
     },
     "support-file-exists": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-existence",
         "options": {
@@ -80,32 +70,21 @@
         }
       }
     },
-    "readme-references-license": {
-      "level": "off",
-      "rule": {
-        "type": "file-contents",
-        "options": {
-          "globsAll": ["README*"],
-          "content": "license",
-          "flags": "i"
-        }
-      }
-    },
     "binaries-not-present": {
       "level": "error",
       "rule": {
         "type": "file-type-exclusion",
         "options": {
-          "type": ["/*.exe", "/.dll", "!node_modules/"]
+          "type": ["**/*.exe", "**/*.dll", "!node_modules/**"]
         }
       }
     },
     "test-directory-exists": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "directory-existence",
         "options": {
-          "globsAny": ["/test", "/specs"],
+          "globsAny": ["**/test*", "**/specs"],
           "nocase": true
         }
       }
@@ -124,40 +103,38 @@
             ".circleci/config.yml",
             "Jenkinsfile",
             ".drone.yml",
-            ".github/workflows/",
+            ".github/workflows/*",
             "azure-pipelines.yml"
           ]
         }
       }
     },
     "code-of-conduct-file-contains-email": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-contents",
         "options": {
           "globsAll": [
-            "CODEOFCONDUCT",
+            "CODEOFCONDUCT*",
             "CODE-OF-CONDUCT*",
             "CODE_OF_CONDUCT*",
             ".github/CODEOFCONDUCT*",
             ".github/CODE-OF-CONDUCT*",
             ".github/CODE_OF_CONDUCT*"
           ],
-          "content": ".+@.+..+",
+          "content": ".+@.+\\..+",
           "flags": "i",
           "human-readable-content": "email address"
         }
       }
     },
-    "source-license-headers-exist": {
-      "level": "warning",
+    "Reuse github action exists": {
+      "level": "error",
       "rule": {
-        "type": "file-starts-with",
+        "type": "file-existence",
         "options": {
-          "globsAll": ["./**/*.go"],
-          "lineCount": 5,
-          "patterns": ["Copyright", "License"],
-          "flags": "i"
+          "globsAny": [".github/workflows/reuse_lint.yml"],
+          "nocase": true
         }
       }
     },
@@ -167,12 +144,12 @@
         "type": "file-existence",
         "options": {
           "dirs": true,
-          "globsAny": ["ISSUE_TEMPLATE", ".github/ISSUE_TEMPLATE*"]
+          "globsAny": ["ISSUE_TEMPLATE*", ".github/ISSUE_TEMPLATE*"]
         }
       }
     },
     "github-pull-request-template-exists": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-existence",
         "options": {
@@ -230,7 +207,7 @@
       "rule": {
         "type": "file-existence",
         "options": {
-          "globsAny": ["Cartfile", "Podfile", ".podspec"]
+          "globsAny": ["Cartfile", "Podfile", "*.podspec"]
         }
       }
     },
@@ -266,7 +243,7 @@
     },
     "license-detectable-by-licensee": {
       "level": "off",
-      "where": ["license="],
+      "where": ["license=*"],
       "rule": {
         "type": "license-detectable-by-licensee",
         "options": {}
@@ -289,8 +266,8 @@
         "type": "best-practices-badge-present"
       }
     },
-    "internal-file-not-exists": {
-      "level": "off",
+    "Use of internal files": {
+      "level": "error",
       "rule": {
         "type": "file-not-exists",
         "options": {
@@ -298,14 +275,13 @@
             ".secrets.baseline",
             "sherpa-config.yml",
             ".snyk",
-            "sonar-project.properties",
             ".drafterconfig.yml",
             "application-configmap.yml",
             "application-secret.yml"
           ],
-          "nocase": true
+	  "nocase": true
         }
       }
     }
-  }
+   }
 }
