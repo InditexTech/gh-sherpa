@@ -87,4 +87,4 @@ there the steps to contribute along with development and testing guidelines.
 ## Security
 
 If you find a security vulnerability in this project, please, check the [`SECURITY.md`](SECURITY.md) file to know how to
-report it.
+report it. 
