@@ -159,7 +159,8 @@ func (cpr CreatePullRequest) Execute() error {
 
 	if pr != nil && !pr.Closed {
 		//14. EXIT
-		logging.PrintInfo(fmt.Sprintf("\nA pull request %s for this branch already exists", logging.PaintWarning(pr.Url)))
+		logging.PrintInfo(fmt.Sprintf("A pull request %s for this branch already exists", logging.PaintWarning(pr.Url)))
+		logging.PrintWarn("Make sure your local and remote branches are in sync")
 		return nil
 	}
 
@@ -300,7 +301,7 @@ func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issu
 	}
 
 	if cpr.Git.RemoteBranchExists(branchName) {
-		logging.PrintWarn(fmt.Sprintf("there is already a remote branch named %s for this issue. Please checkout that branch instead", logging.PaintInfo(branchName)))
+		logging.PrintInfo(fmt.Sprintf("There is already a remote branch named %s for this issue. Please checkout that branch instead", logging.PaintWarning(branchName)))
 		return "", true, nil
 	}
 
