@@ -159,8 +159,7 @@ func (cpr CreatePullRequest) Execute() error {
 
 	if pr != nil && !pr.Closed {
 		//14. EXIT
-		logging.PrintInfo(fmt.Sprintf("A pull request %s for this branch already exists", logging.PaintWarning(pr.Url)))
-		logging.PrintWarn("Make sure your local and remote branches are in sync")
+		logging.PrintInfo(fmt.Sprintf("A pull request %s for this branch already exists. Make sure your local and remote branches are in sync", logging.PaintWarning(pr.Url)))
 		return nil
 	}
 
