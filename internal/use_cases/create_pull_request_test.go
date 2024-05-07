@@ -163,6 +163,19 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.assertCreatePullRequestNotCalled()
 	})
 
+	s.Run("should exit if remote branch already exists", func() {
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists(s.defaultBranchName).Return(true).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.gitProvider.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
 	s.Run("should exit if user does not confirm the commit push when default flag is not used", func() {
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.GetCommitsToPush)
 		s.gitProvider.EXPECT().GetCommitsToPush(s.defaultBranchName).Return([]string{"chore: update docs", "refactor: method"}, nil).Once()
@@ -612,6 +625,19 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.NoError(err)
 		s.gitProvider.AssertExpectations(s.T())
 		s.userInteractionProvider.AssertNotCalled(s.T(), "AskUserForConfirmation")
+	})
+
+	s.Run("should exit if remote branch already exists", func() {
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists(s.defaultBranchName).Return(true).Once()
+
+		s.expectCreatePullRequestNotCalled()
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.gitProvider.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
 	})
 
 	s.Run("should create and push empty commit if remote branch does not exists", func() {
