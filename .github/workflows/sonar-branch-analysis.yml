@@ -1,5 +1,5 @@
 ---
-name: main
+name: sonar-branch-analysis
 
 on:
   pull_request:
@@ -38,28 +38,3 @@ jobs:
         with:
           args: >
             -Dsonar.branch.name=main
-
-  lint-repo:
-    name: Lint Repository
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Setup Node version
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Execute repolinter
-        run: |
-          echo "Installing repolinter"
-          npm install -g repolinter@v0.11.2
-
-          echo "Executing repolinter"
-          repolinter --rulesetFile repolinter.json --dryRun .
-
-          echo "Repolinter execution completed"
