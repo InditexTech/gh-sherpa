@@ -257,6 +257,23 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.ErrorContains(err, "the branch feature/GH-1-sample-issue already exists")
 	})
 
+	s.Run("should abort execution if remote branch already exists when using issue flags", func() {
+		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
+		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/GH-1-sample-issue").Return(true).Once()
+
+		s.uc.Cfg.IssueID = "1"
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.userInteractionProvider.AssertExpectations(s.T())
+		s.gitProvider.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
+	})
+
 	s.Run("should create new branch name if user doesn't confirm default branch name when using issue flags", func() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
@@ -738,6 +755,23 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.ErrorContains(err, "the branch feature/PROJECTKEY-1-sample-issue already exists")
+	})
+
+	s.Run("should abort execution if remote branch already exists when using issue flags", func() {
+		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
+		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/PROJECTKEY-1-sample-issue").Return(true).Once()
+
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.userInteractionProvider.AssertExpectations(s.T())
+		s.gitProvider.AssertExpectations(s.T())
+		s.assertCreatePullRequestNotCalled()
 	})
 
 	s.Run("should create new branch name if user doesn't confirm default branch name when using issue flags", func() {
