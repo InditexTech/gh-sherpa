@@ -253,6 +253,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Once()
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/GH-1-sample-issue").Return(false).Once()
 
 		s.uc.Cfg.IssueID = "1"
 
@@ -267,6 +269,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(false, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/GH-1-sample-issue").Return(false).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
@@ -310,6 +315,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExistsContains)
 		s.gitProvider.EXPECT().BranchExistsContains("/GH-1-").Return("", false)
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/GH-1-sample-issue").Return(false).Once()
 
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInputPrompt)
 		s.userInteractionProvider.EXPECT().SelectOrInputPrompt("Label 'kind/feature' found. What type of branch name do you want to create?", []string{"feature", "other"}, mock.Anything, true).Return(nil).Once()
@@ -716,6 +723,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Once()
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Once()
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Once()
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
@@ -730,6 +739,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(false, nil).Once()
+
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
@@ -773,6 +785,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExistsContains)
 		s.gitProvider.EXPECT().BranchExistsContains("/PROJECTKEY-1-").Return("", false)
+		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.RemoteBranchExists)
+		s.gitProvider.EXPECT().RemoteBranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Once()
 
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInputPrompt)
 		s.userInteractionProvider.EXPECT().SelectOrInputPrompt("Issue type 'feature' found. What type of branch name do you want to create?", []string{"feature", "other"}, mock.Anything, true).Return(nil).Once()

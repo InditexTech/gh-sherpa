@@ -89,15 +89,16 @@ func (cpr CreatePullRequest) Execute() error {
 				if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
 					return fmt.Errorf("could not switch to the branch because %w", err)
 				}
-			}
 
-			//11. CHECK IF BRANCH HAS PENDING COMMITS
-			canceled, err := cpr.pendingCommits(currentBranch)
-			if err != nil {
-				return err
-			}
-			if canceled {
-				return nil
+				// 11. CHECK IF BRANCH HAS PENDING COMMITS
+				canceled, err := cpr.pendingCommits(currentBranch)
+				if err != nil {
+					return err
+				}
+				if canceled {
+					return nil
+				}
+
 			}
 
 		} else {
@@ -296,6 +297,11 @@ func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issu
 	branchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
 	if err != nil {
 		return "", false, err
+	}
+
+	if cpr.Git.RemoteBranchExists(branchName) {
+		logging.PrintWarn(fmt.Sprintf("there is already a remote branch named %s for this issue. Please checkout that branch instead", logging.PaintInfo(branchName)))
+		return "", true, nil
 	}
 
 	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n", logging.PaintInfo(branchName), logging.PaintInfo(baseBranch))
