@@ -270,8 +270,6 @@ func (cpr *CreatePullRequest) pendingCommits(currentBranch string) (canceled boo
 			if err := cpr.createEmptyCommitAndPush(currentBranch); err != nil {
 				return false, err
 			}
-		} else {
-			logging.Info("The remote branch already exists, skipping creation...")
 		}
 	}
 
