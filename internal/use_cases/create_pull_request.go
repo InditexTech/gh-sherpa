@@ -8,7 +8,8 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
-func ErrBranchAlreadyExists(branchName string) error {
+// ErrRemoteBranchAlreadyExists is returned when the remote branch already exists
+func ErrRemoteBranchAlreadyExists(branchName string) error {
 	return fmt.Errorf("there is already a remote branch named %s for this issue. Please checkout that branch", branchName)
 }
 
@@ -145,7 +146,7 @@ func (cpr CreatePullRequest) Execute() error {
 		}
 
 		if cpr.Git.RemoteBranchExists(currentBranch) {
-			return ErrBranchAlreadyExists(currentBranch)
+			return ErrRemoteBranchAlreadyExists(currentBranch)
 		}
 
 		// 11. CHECK IF BRANCH HAS PENDING COMMITS
@@ -306,7 +307,7 @@ func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issu
 	}
 
 	if cpr.Git.RemoteBranchExists(branchName) {
-		return "", true, ErrBranchAlreadyExists(branchName)
+		return "", true, ErrRemoteBranchAlreadyExists(branchName)
 	}
 
 	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n", logging.PaintInfo(branchName), logging.PaintInfo(baseBranch))

@@ -181,7 +181,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, use_cases.ErrBranchAlreadyExists(s.defaultBranchName).Error())
+		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(s.defaultBranchName).Error())
 		s.gitProvider.AssertExpectations(s.T())
 		s.assertCreatePullRequestNotCalled()
 	})
@@ -287,7 +287,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, use_cases.ErrBranchAlreadyExists("feature/GH-1-sample-issue").Error())
+		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists("feature/GH-1-sample-issue").Error())
 		s.userInteractionProvider.AssertExpectations(s.T())
 		s.gitProvider.AssertExpectations(s.T())
 		s.assertCreatePullRequestNotCalled()
@@ -660,7 +660,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, use_cases.ErrBranchAlreadyExists(s.defaultBranchName).Error())
+		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(s.defaultBranchName).Error())
 		s.assertCreatePullRequestNotCalled()
 	})
 
@@ -688,7 +688,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, use_cases.ErrBranchAlreadyExists(s.defaultBranchName).Error())
+		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(s.defaultBranchName).Error())
 		s.gitProvider.AssertExpectations(s.T())
 		s.assertCreatePullRequestNotCalled()
 	})
@@ -811,7 +811,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, use_cases.ErrBranchAlreadyExists("feature/PROJECTKEY-1-sample-issue").Error())
+		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists("feature/PROJECTKEY-1-sample-issue").Error())
 		s.userInteractionProvider.AssertExpectations(s.T())
 		s.gitProvider.AssertExpectations(s.T())
 		s.assertCreatePullRequestNotCalled()
