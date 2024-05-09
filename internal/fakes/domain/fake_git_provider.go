@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -17,12 +18,19 @@ type FakeGitProvider struct {
 
 var _ domain.GitProvider = (*FakeGitProvider)(nil)
 
-func NewFakeGitProvider() FakeGitProvider {
-	return FakeGitProvider{
+func NewFakeGitProvider() *FakeGitProvider {
+	return &FakeGitProvider{
 		RemoteBranches: []string{"main", "develop", "feature/GH-1-sample-issue", "feature/GH-2-remote-branch", "feature/PROJECTKEY-1-jira-sample-issue", "feature/PROJECTKEY-2-jira-remote-branch"},
-		LocalBranches:  []string{"main", "develop", "feature/GH-1-sample-issue", "feature/PROJECTKEY-1-jira-sample-issue"},
-		CommitsToPush:  map[string][]string{},
-		CurrentBranch:  "main",
+		LocalBranches:  []string{"main", "develop", "feature/GH-1-sample-issue", "feature/PROJECTKEY-1-jira-sample-issue", "feature/GH-3-local-branch", "feature/PROJECTKEY-3-local-branch"},
+		CommitsToPush: map[string][]string{
+			"main":                                   {},
+			"develop":                                {},
+			"feature/GH-1-sample-issue":              {},
+			"feature/PROJECTKEY-1-jira-sample-issue": {},
+			"feature/GH-3-local-branch":              {},
+			"feature/PROJECTKEY-3-local-branch":      {},
+		},
+		CurrentBranch: "main",
 	}
 }
 
@@ -48,8 +56,14 @@ func (f *FakeGitProvider) CheckoutNewBranchFromOrigin(branch string, base string
 	return nil
 }
 
+var ErrGetCurrentBranch = errors.New("no current branch")
+
 func (f *FakeGitProvider) GetCurrentBranch() (branch string, err error) {
-	return f.CurrentBranch, nil
+	if f.CurrentBranch != "" {
+		return f.CurrentBranch, nil
+	}
+
+	return "", ErrGetCurrentBranch
 }
 
 func (f *FakeGitProvider) BranchExistsContains(branch string) (name string, exists bool) {
@@ -74,10 +88,12 @@ func (f *FakeGitProvider) CheckoutBranch(branch string) (err error) {
 	return nil
 }
 
+var ErrGetCommitsToPush = errors.New("error getting commits to push")
+
 func (f *FakeGitProvider) GetCommitsToPush(branch string) (commits []string, err error) {
 	commits, ok := f.CommitsToPush[branch]
 	if !ok {
-		return []string{}, nil
+		return []string{}, ErrGetCommitsToPush
 	}
 	return commits, nil
 }
