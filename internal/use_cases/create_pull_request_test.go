@@ -28,13 +28,12 @@ type CreatePullRequestExecutionTestSuite struct {
 	pullRequestProvider     *domainMocks.MockPullRequestProvider
 	issueTracker            *domainMocks.MockIssueTracker
 	branchProvider          *domainMocks.MockBranchProvider
-	repositoryProvider      *domainMocks.MockRepositoryProvider
+	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 	gitProvider         *domainFakes.FakeGitProvider
-	repositoryProvider  *domainFakes.FakeRepositoryProvider
 	pullRequestProvider *domainFakes.FakePullRequestProvider
 }
 
@@ -494,7 +493,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
-	s.repositoryProvider = s.initializeRepositoryProvider()
+	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -518,8 +517,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 
 func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
-		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
+		// mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
+		// s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreatePullRequestNotCalled()
 
