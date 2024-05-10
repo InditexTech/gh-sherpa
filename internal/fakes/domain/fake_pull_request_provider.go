@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"fmt"
+
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 )
 
@@ -10,8 +12,8 @@ type FakePullRequestProvider struct {
 
 var _ domain.PullRequestProvider = (*FakePullRequestProvider)(nil)
 
-func NewFakePullRequestProvider() FakePullRequestProvider {
-	return FakePullRequestProvider{
+func NewFakePullRequestProvider() *FakePullRequestProvider {
+	return &FakePullRequestProvider{
 		PullRequests: map[string]*domain.PullRequest{
 			"feature/GH-3-pull-request-sample": {
 				Title:       "GH-3-pull-request-sample",
@@ -56,7 +58,23 @@ func (f *FakePullRequestProvider) GetPullRequestForBranch(branch string) (pullRe
 	return pr, nil
 }
 
+func ErrPrAlreadyExists(branch string) error {
+	return fmt.Errorf("pr already exists for branch %s", branch)
+}
+
+func ErrBranchNotDefined(branch string) error {
+	return fmt.Errorf("branch %s is not defined in the pull request map", branch)
+}
+
 func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prUrl string, err error) {
+	pr, ok := f.PullRequests[headBranch]
+	if pr != nil {
+		return "", ErrPrAlreadyExists(headBranch)
+	}
+	if !ok {
+		return "", ErrBranchNotDefined(headBranch)
+	}
+
 	prLabels := make([]domain.Label, len(labels))
 	for i, label := range labels {
 		prLabels[i] = domain.Label{
@@ -64,7 +82,7 @@ func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, b
 			Name: label,
 		}
 	}
-	pr := domain.PullRequest{
+	pr = &domain.PullRequest{
 		Title:       title,
 		Number:      5,
 		State:       "OPEN",
@@ -75,7 +93,7 @@ func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, b
 		Labels:      prLabels,
 	}
 
-	f.PullRequests[headBranch] = &pr
+	f.PullRequests[headBranch] = pr
 
 	return pr.Url, nil
 }
