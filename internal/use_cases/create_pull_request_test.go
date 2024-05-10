@@ -361,23 +361,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) expectNoPrFound() {
 	}
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeGitProvider() *domainMocks.MockGitProvider {
-	gitProvider := &domainMocks.MockGitProvider{}
-
-	gitProvider.EXPECT().GetCurrentBranch().Return(s.defaultBranchName, nil).Maybe()
-	gitProvider.EXPECT().GetCommitsToPush(s.defaultBranchName).Return([]string{}, nil).Maybe()
-	gitProvider.EXPECT().RemoteBranchExists(s.defaultBranchName).Return(true).Maybe()
-	gitProvider.EXPECT().BranchExistsContains("/GH-1-").Return("feature/GH-1-sample-issue", true).Maybe()
-	gitProvider.EXPECT().BranchExists("/GH-1-").Return(true).Maybe()
-
-	gitProvider.EXPECT().CommitEmpty(mock.Anything).Return(nil).Maybe()
-	gitProvider.EXPECT().PushBranch(mock.Anything).Return(nil).Maybe()
-	gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Maybe()
-	gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
-
-	return gitProvider
-}
-
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeUserInteractionProvider() *domainMocks.MockUserInteractionProvider {
 	userInteractionProvider := &domainMocks.MockUserInteractionProvider{}
 
@@ -388,23 +371,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeUserInteractionPro
 	return userInteractionProvider
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) initializePullRequestProvider() *domainMocks.MockPullRequestProvider {
-	pullRequestProvider := &domainMocks.MockPullRequestProvider{}
-
-	pullRequestProvider.EXPECT().GetPullRequestForBranch(s.defaultBranchName).Return(&domain.PullRequest{
-		Title:  "Sample issue",
-		Number: 1,
-		State:  "OPEN",
-		Closed: false,
-		Url:    "https://example.com",
-		Labels: []domain.Label{},
-	}, nil).Maybe()
-
-	pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("https://example.com", nil).Maybe()
-
-	return pullRequestProvider
-}
-
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTrackerProvider() *domainMocks.MockIssueTrackerProvider {
 	issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
 
@@ -412,19 +378,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTrackerProvid
 	issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("1").Maybe()
 
 	return issueTrackerProvider
-}
-
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
-	repositoryProvider := &domainMocks.MockRepositoryProvider{}
-
-	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
-		Owner:            "inditex",
-		Name:             "gh-sherpa",
-		NameWithOwner:    "InditexTech/gh-sherpa",
-		DefaultBranchRef: "main",
-	}, nil).Maybe()
-
-	return repositoryProvider
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
@@ -801,23 +754,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) expectNoPrFound() {
 	}
 }
 
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeGitProvider() *domainMocks.MockGitProvider {
-	gitProvider := &domainMocks.MockGitProvider{}
-
-	gitProvider.EXPECT().GetCurrentBranch().Return(s.defaultBranchName, nil).Maybe()
-	gitProvider.EXPECT().GetCommitsToPush(s.defaultBranchName).Return([]string{}, nil).Maybe()
-	gitProvider.EXPECT().RemoteBranchExists(s.defaultBranchName).Return(true).Maybe()
-	gitProvider.EXPECT().BranchExistsContains("/PROJECTKEY-1-").Return("feature/PROJECTKEY-1-sample-issue", true).Maybe()
-	gitProvider.EXPECT().BranchExists("/PROJECTKEY-1-").Return(true).Maybe()
-
-	gitProvider.EXPECT().CommitEmpty(mock.Anything).Return(nil).Maybe()
-	gitProvider.EXPECT().PushBranch(mock.Anything).Return(nil).Maybe()
-	gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Maybe()
-	gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Maybe()
-
-	return gitProvider
-}
-
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeUserInteractionProvider() *domainMocks.MockUserInteractionProvider {
 	userInteractionProvider := &domainMocks.MockUserInteractionProvider{}
 
@@ -828,23 +764,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeUserInteractionProvi
 	return userInteractionProvider
 }
 
-func (s *CreateJiraPullRequestExecutionTestSuite) initializePullRequestProvider() *domainMocks.MockPullRequestProvider {
-	pullRequestProvider := &domainMocks.MockPullRequestProvider{}
-
-	pullRequestProvider.EXPECT().GetPullRequestForBranch(s.defaultBranchName).Return(&domain.PullRequest{
-		Title:  "Sample issue",
-		Number: 1,
-		State:  "OPEN",
-		Closed: false,
-		Url:    "https://example.com",
-		Labels: []domain.Label{},
-	}, nil).Maybe()
-
-	pullRequestProvider.EXPECT().CreatePullRequest(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return("https://example.com", nil).Maybe()
-
-	return pullRequestProvider
-}
-
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTrackerProvider() *domainMocks.MockIssueTrackerProvider {
 	issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
 
@@ -852,19 +771,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTrackerProvider
 	issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("1").Maybe()
 
 	return issueTrackerProvider
-}
-
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeRepositoryProvider() *domainMocks.MockRepositoryProvider {
-	repositoryProvider := &domainMocks.MockRepositoryProvider{}
-
-	repositoryProvider.EXPECT().GetRepository().Return(&domain.Repository{
-		Owner:            "inditex",
-		Name:             "gh-sherpa",
-		NameWithOwner:    "InditexTech/gh-sherpa",
-		DefaultBranchRef: "main",
-	}, nil).Maybe()
-
-	return repositoryProvider
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
