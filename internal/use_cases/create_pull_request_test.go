@@ -146,6 +146,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, "feature/GH-99-sample-issue")
 		s.gitProvider.CurrentBranch = "feature/GH-99-sample-issue"
 		s.gitProvider.CommitsToPush["feature/GH-99-sample-issue"] = []string{}
+		s.pullRequestProvider.PullRequests["feature/GH-99-sample-issue"] = nil
 
 		err := s.uc.Execute()
 
@@ -314,6 +315,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, "feature/GH-99-sample-issue")
 		s.gitProvider.CurrentBranch = "feature/GH-99-sample-issue"
 		s.gitProvider.CommitsToPush["feature/GH-99-sample-issue"] = []string{}
+		s.pullRequestProvider.PullRequests["feature/GH-99-sample-issue"] = nil
 
 		s.expectNoPrFound()
 
@@ -343,7 +345,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 func (s *CreateGithubPullRequestExecutionTestSuite) assertCreatePullRequestNotCalled() {
 	branch := s.gitProvider.CurrentBranch
-	if _, ok := s.pullRequestProvider.PullRequests[branch]; ok {
+	if pr := s.pullRequestProvider.PullRequests[branch]; pr != nil {
 		s.Failf("pull request exists for branch %s", branch)
 	}
 }
@@ -357,7 +359,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) assertCreatePullRequestCalle
 
 func (s *CreateGithubPullRequestExecutionTestSuite) expectNoPrFound() {
 	branch := s.gitProvider.CurrentBranch
-	if _, ok := s.pullRequestProvider.PullRequests[branch]; ok {
+	if pr := s.pullRequestProvider.PullRequests[branch]; pr != nil {
 		s.Failf("pull request exists for branch %s", branch)
 	}
 }

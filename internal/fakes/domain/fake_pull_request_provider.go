@@ -45,6 +45,10 @@ func NewFakePullRequestProvider() *FakePullRequestProvider {
 					},
 				},
 			},
+			"feature/GH-1-sample-issue":              nil,
+			"feature/PROJECTKEY-1-jira-sample-issue": nil,
+			"feature/GH-3-local-branch":              nil,
+			"feature/PROJECTKEY-3-local-branch":      nil,
 		},
 	}
 }
