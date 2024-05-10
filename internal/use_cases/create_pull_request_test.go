@@ -33,7 +33,8 @@ type CreatePullRequestExecutionTestSuite struct {
 
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
-	gitProvider *domainFakes.FakeGitProvider
+	gitProvider        *domainFakes.FakeGitProvider
+	repositoryProvider *domainFakes.FakeRepositoryProvider
 }
 
 func TestCreatePullRequestExecutionTestSuite(t *testing.T) {
@@ -51,7 +52,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.pullRequestProvider = s.initializePullRequestProvider()
 	s.issueTracker = s.initializeIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
-	s.repositoryProvider = s.initializeRepositoryProvider()
+	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 
 	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
 	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
@@ -75,8 +76,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 
 func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 	s.Run("should error if could not get git repository", func() {
-		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
-		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
+		s.repositoryProvider.Repository = nil
 
 		s.expectCreatePullRequestNotCalled()
 

@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"errors"
+
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 )
 
@@ -10,8 +12,8 @@ type FakeRepositoryProvider struct {
 
 var _ domain.RepositoryProvider = (*FakeRepositoryProvider)(nil)
 
-func NewFakeRepositoryProvider() FakeRepositoryProvider {
-	return FakeRepositoryProvider{
+func NewFakeRepositoryProvider() *FakeRepositoryProvider {
+	return &FakeRepositoryProvider{
 		Repository: &domain.Repository{
 			Name:             "gh-sherpa-test-repo",
 			Owner:            "inditextech",
@@ -21,6 +23,11 @@ func NewFakeRepositoryProvider() FakeRepositoryProvider {
 	}
 }
 
-func (f FakeRepositoryProvider) GetRepository() (repo *domain.Repository, err error) {
-	return f.Repository, nil
+var ErrRepositoryNotFound = errors.New("repository not found")
+
+func (f *FakeRepositoryProvider) GetRepository() (repo *domain.Repository, err error) {
+	if f.Repository != nil {
+		return f.Repository, nil
+	}
+	return nil, ErrRepositoryNotFound
 }
