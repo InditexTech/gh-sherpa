@@ -139,10 +139,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should create and push empty commit if remote branch nor pull request exists", func() {
-		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, "feature/GH-99-sample-issue")
-		s.gitProvider.CurrentBranch = "feature/GH-99-sample-issue"
-		s.gitProvider.CommitsToPush["feature/GH-99-sample-issue"] = []string{}
-		s.pullRequestProvider.PullRequests["feature/GH-99-sample-issue"] = nil
+		s.gitProvider.CurrentBranch = "feature/GH-3-local-branch"
 
 		err := s.uc.Execute()
 
@@ -303,10 +300,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should create pull request with no close issue flag", func() {
-		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, "feature/GH-99-sample-issue")
-		s.gitProvider.CurrentBranch = "feature/GH-99-sample-issue"
-		s.gitProvider.CommitsToPush["feature/GH-99-sample-issue"] = []string{}
-		s.pullRequestProvider.PullRequests["feature/GH-99-sample-issue"] = nil
+		s.gitProvider.CurrentBranch = "feature/GH-3-local-branch"
 
 		s.expectNoPrFound()
 

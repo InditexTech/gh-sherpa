@@ -20,8 +20,22 @@ var _ domain.GitProvider = (*FakeGitProvider)(nil)
 
 func NewFakeGitProvider() *FakeGitProvider {
 	return &FakeGitProvider{
-		RemoteBranches: []string{"main", "develop", "feature/GH-1-sample-issue", "feature/GH-2-remote-branch", "feature/PROJECTKEY-1-sample-issue", "feature/PROJECTKEY-2-remote-branch"},
-		LocalBranches:  []string{"main", "develop", "feature/GH-1-sample-issue", "feature/PROJECTKEY-1-sample-issue", "feature/GH-3-local-branch", "feature/PROJECTKEY-3-local-branch"},
+		RemoteBranches: []string{
+			"main",
+			"develop",
+			"feature/GH-1-sample-issue",
+			"feature/GH-2-remote-branch",
+			"feature/PROJECTKEY-1-sample-issue",
+			"feature/PROJECTKEY-2-remote-branch",
+		},
+		LocalBranches: []string{
+			"main",
+			"develop",
+			"feature/GH-1-sample-issue",
+			"feature/PROJECTKEY-1-sample-issue",
+			"feature/GH-3-local-branch",
+			"feature/PROJECTKEY-3-local-branch",
+		},
 		CommitsToPush: map[string][]string{
 			"main":                              {},
 			"develop":                           {},
