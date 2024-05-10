@@ -30,12 +30,12 @@ func NewFakePullRequestProvider() *FakePullRequestProvider {
 					},
 				},
 			},
-			"feature/PROJECTKEY-4-pull-request-sample": {
+			"feature/PROJECTKEY-3-pull-request-sample": {
 				Title:       "PROJECTKEY-4-pull-request-sample",
-				Number:      4,
+				Number:      3,
 				State:       "OPEN",
 				Closed:      false,
-				Url:         "https://github.com/inditextech/gh-sherpa-test-repo/pulls/4",
+				Url:         "https://github.com/inditextech/gh-sherpa-test-repo/pulls/3",
 				HeadRefName: "feature/PROJECTKEY-3-pull-request-sample",
 				BaseRefName: "main",
 				Labels: []domain.Label{
@@ -45,10 +45,10 @@ func NewFakePullRequestProvider() *FakePullRequestProvider {
 					},
 				},
 			},
-			"feature/GH-1-sample-issue":              nil,
-			"feature/PROJECTKEY-1-jira-sample-issue": nil,
-			"feature/GH-3-local-branch":              nil,
-			"feature/PROJECTKEY-3-local-branch":      nil,
+			"feature/GH-1-sample-issue":         nil,
+			"feature/PROJECTKEY-1-sample-issue": nil,
+			"feature/GH-3-local-branch":         nil,
+			"feature/PROJECTKEY-3-local-branch": nil,
 		},
 	}
 }
