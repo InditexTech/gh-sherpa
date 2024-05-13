@@ -7,8 +7,6 @@ import (
 	"testing"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
-	"github.com/InditexTech/gh-sherpa/internal/domain"
-	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	domainFakes "github.com/InditexTech/gh-sherpa/internal/fakes/domain"
 	"github.com/InditexTech/gh-sherpa/internal/mocks"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
@@ -357,25 +355,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTrackerProvid
 	issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("1").Maybe()
 
 	return issueTrackerProvider
-}
-
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
-	issueTracker := &domainMocks.MockIssueTracker{}
-
-	issueTracker.EXPECT().FormatIssueId(mock.Anything).Return("GH-1").Maybe()
-	issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{
-		ID:           "1",
-		Title:        "Sample issue",
-		Body:         "Sample issue body",
-		Labels:       []domain.Label{},
-		IssueTracker: domain.IssueTrackerTypeGithub,
-		Url:          "https://github.com/InditexTech/gh-sherpa/issues/1",
-	}, nil).Maybe()
-	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature).Maybe()
-	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeGithub).Maybe()
-	issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature").Maybe()
-
-	return issueTracker
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
@@ -727,30 +706,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTrackerProvider
 	issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("1").Maybe()
 
 	return issueTrackerProvider
-}
-
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTracker() *domainMocks.MockIssueTracker {
-	issueTracker := &domainMocks.MockIssueTracker{}
-
-	issueTracker.EXPECT().FormatIssueId(mock.Anything).Return("PROJECTKEY-1").Maybe()
-	issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{
-		ID:           "PROJECTKEY-1",
-		Title:        "Sample issue",
-		Body:         "Sample issue body",
-		Labels:       []domain.Label{},
-		IssueTracker: domain.IssueTrackerTypeJira,
-		Type: domain.IssueType{
-			Id:          "3",
-			Name:        "feature",
-			Description: "A new feature of the product, which has to be developed and tested.",
-		},
-		Url: "https://jira.example.com/browse/PROJECTKEY-1",
-	}, nil).Maybe()
-	issueTracker.EXPECT().GetIssueType(mock.Anything).Return(issue_types.Feature).Maybe()
-	issueTracker.EXPECT().GetIssueTrackerType().Return(domain.IssueTrackerTypeJira).Maybe()
-	issueTracker.EXPECT().GetIssueTypeLabel(mock.Anything).Return("kind/feature").Maybe()
-
-	return issueTracker
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
