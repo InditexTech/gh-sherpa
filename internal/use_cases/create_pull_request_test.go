@@ -20,7 +20,7 @@ type CreatePullRequestExecutionTestSuite struct {
 	defaultBranchName       string
 	uc                      use_cases.CreatePullRequest
 	gitProvider             *domainFakes.FakeGitProvider
-	issueTrackerProvider    *domainMocks.MockIssueTrackerProvider
+	issueTrackerProvider    *domainFakes.FakeIssueTrackerProvider
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	pullRequestProvider     *domainFakes.FakePullRequestProvider
 	issueTracker            *domainFakes.FakeIssueTracker
@@ -32,7 +32,7 @@ type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 }
 
-func TestCreatePullRequestExecutionTestSuite(t *testing.T) {
+func TestCreateGitHubPullRequestExecutionTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateGithubPullRequestExecutionTestSuite))
 }
 
@@ -42,15 +42,12 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
-	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.issueTracker = domainFakes.NewFakeGitHubIssueTracker()
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
-
-	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
-	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
 		IsInteractive:   true,
@@ -210,7 +207,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.ErrorContains(err, "the branch feature/GH-1-sample-issue already exists")
 	})
 
-	s.Run("should abort execution if remote branch already exists when using issue flags", func() {
+	s.Run("should return error if remote branch already exists when using issue flags", func() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(false, nil).Once()
 
@@ -238,7 +235,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.userInteractionProvider.AssertExpectations(s.T())
 	})
 
-	s.Run("should abort execution if user doesn't confirm branch name when using issue flags", func() {
+	s.Run("should return error if user doesn't confirm branch name when using issue flags", func() {
 		s.gitProvider.LocalBranches = []string{"main", "develop"}
 		s.gitProvider.RemoteBranches = []string{"main", "develop"}
 
@@ -305,10 +302,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should error if could not get issue", func() {
-		s.gitProvider.CurrentBranch = "feature/GH-3-local-branch"
-
-		mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.ParseIssueId)
-		s.issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("3").Once()
+		s.gitProvider.CurrentBranch = "feature/GH-6-with-no-remote-branch"
 
 		err := s.uc.Execute()
 
@@ -397,15 +391,12 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
-	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.issueTracker = domainFakes.NewFakeJiraIssueTracker()
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
-
-	mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.GetIssueTracker)
-	s.issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(s.issueTracker, nil).Maybe()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
 		IsInteractive:   true,
