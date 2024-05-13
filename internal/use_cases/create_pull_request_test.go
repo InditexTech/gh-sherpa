@@ -33,6 +33,7 @@ type CreatePullRequestExecutionTestSuite struct {
 
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
+	issueTracker *domainFakes.FakeIssueTracker
 }
 
 func TestCreatePullRequestExecutionTestSuite(t *testing.T) {
@@ -48,7 +49,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
-	s.issueTracker = s.initializeIssueTracker()
+	s.issueTracker = domainFakes.NewFakeGitHubIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 
@@ -310,13 +311,12 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should error if could not get issue", func() {
 		s.gitProvider.CurrentBranch = "feature/GH-3-local-branch"
 
-		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssue)
-		s.issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{}, assert.AnError).Once()
+		mocks.UnsetExpectedCall(&s.issueTrackerProvider.Mock, s.issueTrackerProvider.ParseIssueId)
+		s.issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("3").Once()
 
 		err := s.uc.Execute()
 
 		s.Error(err)
-		s.issueTracker.AssertExpectations(s.T())
 		s.assertCreatePullRequestNotCalled()
 	})
 }

@@ -9,58 +9,91 @@ import (
 )
 
 type FakeIssueTracker struct {
-	IssueTrackerType       domain.IssueTrackerType
-	IssueTrackerIdentifier map[string]string
-	IssueTypes             map[string]issue_types.IssueType
-	IssueTypesLabel        map[string]string
-	Issues                 map[string]domain.Issue
+	IssueTrackerType domain.IssueTrackerType
+	Configurations   map[string]fakeIssueTrackerConfiguration
+	// IssueTrackerIdentifier map[string]string
+	// IssueTypes             map[string]issue_types.IssueType
+	// IssueTypesLabel        map[string]string
+	// Issues                 map[string]domain.Issue
+}
+
+type fakeIssueTrackerConfiguration struct {
+	IssueTrackerIdentifier string
+	IssueType              issue_types.IssueType
+	IssueTypeLabel         string
+	Issue                  domain.Issue
 }
 
 var _ domain.IssueTracker = (*FakeIssueTracker)(nil)
 
+func newFakeIssueTracker(issueTrackerType domain.IssueTrackerType) *FakeIssueTracker {
+	return &FakeIssueTracker{
+		Configurations: map[string]fakeIssueTrackerConfiguration{
+			"1": {
+				IssueTrackerIdentifier: issueTrackerType.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/feature",
+				Issue: domain.Issue{
+					ID:           "1",
+					IssueTracker: issueTrackerType,
+					Title:        "Sample issue",
+					Body:         "Sample issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/feature",
+							Name: "kind/feature",
+						},
+					},
+					Url: "https://github.com/InditexTech/gh-sherpa/issues/1",
+				},
+			},
+		},
+	}
+}
+
 func NewFakeGitHubIssueTracker() *FakeIssueTracker {
-	// TODO: IMPLEMENT THIS METHOD
-	return &FakeIssueTracker{}
+	issueTracker := newFakeIssueTracker(domain.IssueTrackerTypeGithub)
+	issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
+	return issueTracker
 }
 
 func NewFakeJiraIssueTracker() *FakeIssueTracker {
-	// TODO: IMPLEMENTE THIS METHOD
-	return &FakeIssueTracker{}
+	issueTracker := newFakeIssueTracker(domain.IssueTrackerTypeJira)
+	issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
+	return issueTracker
 }
 
 func ErrIssueNotInitializedInMap(identifier string) error {
 	return fmt.Errorf("issue %s not initialized in map", identifier)
 }
 
-func (f *FakeIssueTracker) GetIssue(identifier string) (issue domain.Issue, err error) {
-	issue, ok := f.Issues[identifier]
+func (f *FakeIssueTracker) GetIssue(issueId string) (issue domain.Issue, err error) {
+	config, ok := f.Configurations[issueId]
 	if !ok {
-		return domain.Issue{}, ErrIssueNotInitializedInMap(identifier)
+		return domain.Issue{}, ErrIssueNotInitializedInMap(issueId)
 	}
-	return issue, nil
+	return config.Issue, nil
 }
 
 func (f *FakeIssueTracker) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType) {
-	return f.IssueTypes[issue.ID]
+	return f.Configurations[issue.ID].IssueType
 }
 
 func (f *FakeIssueTracker) GetIssueTypeLabel(issue domain.Issue) string {
-	return f.IssueTypesLabel[issue.ID]
+	return f.Configurations[issue.ID].IssueTypeLabel
 }
 
-func (f *FakeIssueTracker) IdentifyIssue(identifier string) bool {
-	return f.IssueTrackerIdentifier[identifier] == string(f.IssueTrackerType)
+func (f *FakeIssueTracker) IdentifyIssue(issueId string) bool {
+	return f.Configurations[issueId].IssueTrackerIdentifier == string(f.IssueTrackerType)
 }
 
 func (f *FakeIssueTracker) FormatIssueId(issueId string) (formattedIssueId string) {
-	issue, _ := f.GetIssue(issueId)
-	issueType := f.GetIssueType(issue)
 	issueTrackerType := f.GetIssueTrackerType()
 	issueTracker := "GH"
 	if issueTrackerType == domain.IssueTrackerTypeJira {
 		issueTracker = "PROJECTKEY"
 	}
-	return fmt.Sprintf("%s/%s-%s-generated-from-issue-tracker", issueType, issueTracker, issueId)
+	return fmt.Sprintf("%s-%s", issueTracker, issueId)
 }
 
 func (f *FakeIssueTracker) ParseRawIssueId(identifier string) (issueId string) {
