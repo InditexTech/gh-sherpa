@@ -17,7 +17,6 @@ import (
 
 type CreatePullRequestExecutionTestSuite struct {
 	suite.Suite
-	defaultBranchName       string
 	uc                      use_cases.CreatePullRequest
 	gitProvider             *domainFakes.FakeGitProvider
 	issueTrackerProvider    *domainFakes.FakeIssueTrackerProvider
@@ -28,16 +27,16 @@ type CreatePullRequestExecutionTestSuite struct {
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
+func (s *CreatePullRequestExecutionTestSuite) setGetBranchName(branchName string) {
+	s.branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return(branchName, nil).Once()
+}
+
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 }
 
 func TestCreateGitHubPullRequestExecutionTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateGithubPullRequestExecutionTestSuite))
-}
-
-func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
-	s.defaultBranchName = "feature/GH-1-sample-issue"
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
@@ -158,7 +157,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(s.defaultBranchName).Error())
+		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(branchName).Error())
 		s.assertCreatePullRequestNotCalled()
 	})
 
@@ -380,10 +379,6 @@ func TestCreateJiraPullRequestExecutionTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateJiraPullRequestExecutionTestSuite))
 }
 
-func (s *CreateJiraPullRequestExecutionTestSuite) SetupSuite() {
-	s.defaultBranchName = "feature/PROJECTKEY-1-sample-issue"
-}
-
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupTest() {
 	s.getConfigFile = config.GetConfigFile
 	dir, _ := os.Getwd()
@@ -515,7 +510,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(s.defaultBranchName).Error())
+		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(branchName).Error())
 		s.assertCreatePullRequestNotCalled()
 	})
 
