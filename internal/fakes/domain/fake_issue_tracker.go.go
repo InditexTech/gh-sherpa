@@ -26,16 +26,16 @@ type fakeIssueTrackerConfiguration struct {
 
 var _ domain.IssueTracker = (*FakeIssueTracker)(nil)
 
-func newFakeIssueTracker(issueTrackerType domain.IssueTrackerType) *FakeIssueTracker {
+func newFakeIssueTracker() *FakeIssueTracker {
 	return &FakeIssueTracker{
 		Configurations: map[string]fakeIssueTrackerConfiguration{
 			"1": {
-				IssueTrackerIdentifier: issueTrackerType.String(),
+				IssueTrackerIdentifier: domain.IssueTrackerTypeGithub.String(),
 				IssueType:              issue_types.Feature,
 				IssueTypeLabel:         "kind/feature",
 				Issue: domain.Issue{
 					ID:           "1",
-					IssueTracker: issueTrackerType,
+					IssueTracker: domain.IssueTrackerTypeGithub,
 					Title:        "Sample issue",
 					Body:         "Sample issue body",
 					Labels: []domain.Label{
@@ -47,18 +47,36 @@ func newFakeIssueTracker(issueTrackerType domain.IssueTrackerType) *FakeIssueTra
 					Url: "https://github.com/InditexTech/gh-sherpa/issues/1",
 				},
 			},
+			"PROJECTKEY-1": {
+				IssueTrackerIdentifier: domain.IssueTrackerTypeJira.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/feature",
+				Issue: domain.Issue{
+					ID:           "PROJECTKEY-1",
+					IssueTracker: domain.IssueTrackerTypeJira,
+					Title:        "Sample issue",
+					Body:         "Sample issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/feature",
+							Name: "kind/feature",
+						},
+					},
+					Url: "https://sample.jira.com/PROJECTKEY-1",
+				},
+			},
 		},
 	}
 }
 
 func NewFakeGitHubIssueTracker() *FakeIssueTracker {
-	issueTracker := newFakeIssueTracker(domain.IssueTrackerTypeGithub)
+	issueTracker := newFakeIssueTracker()
 	issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
 	return issueTracker
 }
 
 func NewFakeJiraIssueTracker() *FakeIssueTracker {
-	issueTracker := newFakeIssueTracker(domain.IssueTrackerTypeJira)
+	issueTracker := newFakeIssueTracker()
 	issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
 	return issueTracker
 }
@@ -89,11 +107,11 @@ func (f *FakeIssueTracker) IdentifyIssue(issueId string) bool {
 
 func (f *FakeIssueTracker) FormatIssueId(issueId string) (formattedIssueId string) {
 	issueTrackerType := f.GetIssueTrackerType()
-	issueTracker := "GH"
-	if issueTrackerType == domain.IssueTrackerTypeJira {
-		issueTracker = "PROJECTKEY"
+	if issueTrackerType == domain.IssueTrackerTypeGithub {
+		return fmt.Sprintf("GH-%s", issueId)
 	}
-	return fmt.Sprintf("%s-%s", issueTracker, issueId)
+
+	return issueId
 }
 
 func (f *FakeIssueTracker) ParseRawIssueId(identifier string) (issueId string) {

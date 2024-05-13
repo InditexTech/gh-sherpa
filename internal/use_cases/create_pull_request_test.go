@@ -13,7 +13,6 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/mocks"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/InditexTech/gh-sherpa/internal/use_cases"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -26,14 +25,13 @@ type CreatePullRequestExecutionTestSuite struct {
 	issueTrackerProvider    *domainMocks.MockIssueTrackerProvider
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	pullRequestProvider     *domainFakes.FakePullRequestProvider
-	issueTracker            *domainMocks.MockIssueTracker
+	issueTracker            *domainFakes.FakeIssueTracker
 	branchProvider          *domainMocks.MockBranchProvider
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
-	issueTracker *domainFakes.FakeIssueTracker
 }
 
 func TestCreatePullRequestExecutionTestSuite(t *testing.T) {
@@ -423,7 +421,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTrackerProvider = s.initializeIssueTrackerProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
-	s.issueTracker = s.initializeIssueTracker()
+	s.issueTracker = domainFakes.NewFakeJiraIssueTracker()
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 
@@ -579,7 +577,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	})
 
 	s.Run("should error if branch already exists when using default and issue flags", func() {
-		s.uc.Cfg.IssueID = "1"
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 		s.uc.Cfg.IsInteractive = false
 
 		err := s.uc.Execute()
@@ -684,13 +682,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should error if could not get issue", func() {
 		s.gitProvider.CurrentBranch = "feature/PROJECTKEY-6-with-no-remote-branch"
 
-		mocks.UnsetExpectedCall(&s.issueTracker.Mock, s.issueTracker.GetIssue)
-		s.issueTracker.EXPECT().GetIssue(mock.Anything).Return(domain.Issue{}, assert.AnError).Once()
-
 		err := s.uc.Execute()
 
 		s.Error(err)
-		s.issueTracker.AssertExpectations(s.T())
 		s.assertCreatePullRequestNotCalled()
 	})
 }
