@@ -342,15 +342,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeUserInteractionPro
 	return userInteractionProvider
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeIssueTrackerProvider() *domainMocks.MockIssueTrackerProvider {
-	issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
-
-	// issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(GetDefaultIssueTracker(), nil).Maybe()
-	issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("1").Maybe()
-
-	return issueTrackerProvider
-}
-
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
 	branchProvider := &domainMocks.MockBranchProvider{}
 
@@ -688,15 +679,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeUserInteractionProvi
 	userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	return userInteractionProvider
-}
-
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeIssueTrackerProvider() *domainMocks.MockIssueTrackerProvider {
-	issueTrackerProvider := &domainMocks.MockIssueTrackerProvider{}
-
-	// issueTrackerProvider.EXPECT().GetIssueTracker(mock.Anything).Return(GetDefaultIssueTracker(), nil).Maybe()
-	issueTrackerProvider.EXPECT().ParseIssueId(mock.Anything).Return("1").Maybe()
-
-	return issueTrackerProvider
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
