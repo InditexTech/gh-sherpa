@@ -3,16 +3,28 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 )
 
 type FakePullRequestProvider struct {
 	PullRequests           map[string]*domain.PullRequest
-	PullRequestsWithErrors map[string]error
+	PullRequestsWithErrors []string
 }
 
 var _ domain.PullRequestProvider = (*FakePullRequestProvider)(nil)
+
+func NewFakePullRequestProvider() *FakePullRequestProvider {
+	return &FakePullRequestProvider{
+		PullRequests:           map[string]*domain.PullRequest{},
+		PullRequestsWithErrors: []string{},
+	}
+}
+
+func (f *FakePullRequestProvider) AddPullRequest(branchName string, pr domain.PullRequest) {
+	f.PullRequests[branchName] = &pr
+}
 
 func (f *FakePullRequestProvider) HasPullRequestForBranch(branch string) bool {
 	pr := f.PullRequests[branch]
@@ -33,17 +45,12 @@ func ErrPrAlreadyExists(branch string) error {
 var ErrPullRequestWithError = errors.New("pull request with error")
 
 func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prUrl string, err error) {
-	prError, ok := f.PullRequestsWithErrors[headBranch]
-	if ok {
-		if prError == nil {
-			return "", ErrPullRequestWithError
-		}
-
-		return "", prError
+	if slices.Contains(f.PullRequestsWithErrors, headBranch) {
+		return "", ErrPullRequestWithError
 	}
 
 	pr := f.PullRequests[headBranch]
-	if pr != nil {
+	if pr != nil && !pr.Closed {
 		return "", ErrPrAlreadyExists(headBranch)
 	}
 

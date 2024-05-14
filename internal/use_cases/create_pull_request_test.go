@@ -30,47 +30,6 @@ type CreatePullRequestExecutionTestSuite struct {
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
-func (*CreatePullRequestExecutionTestSuite) newFakePullRequestProvider() *domainFakes.FakePullRequestProvider {
-	return &domainFakes.FakePullRequestProvider{
-		PullRequests: map[string]*domain.PullRequest{
-			"feature/GH-3-pull-request-sample": {
-				Title:       "GH-3-pull-request-sample",
-				Number:      3,
-				State:       "OPEN",
-				Closed:      false,
-				Url:         "https://github.com/inditextech/gh-sherpa-test-repo/pulls/3",
-				HeadRefName: "feature/GH-3-pull-request-sample",
-				BaseRefName: "main",
-				Labels: []domain.Label{
-					{
-						Id:   "kind/feature",
-						Name: "kind/feature",
-					},
-				},
-			},
-			"feature/PROJECTKEY-3-pull-request-sample": {
-				Title:       "PROJECTKEY-4-pull-request-sample",
-				Number:      3,
-				State:       "OPEN",
-				Closed:      false,
-				Url:         "https://github.com/inditextech/gh-sherpa-test-repo/pulls/3",
-				HeadRefName: "feature/PROJECTKEY-3-pull-request-sample",
-				BaseRefName: "main",
-				Labels: []domain.Label{
-					{
-						Id:   "kind/feature",
-						Name: "kind/feature",
-					},
-				},
-			},
-		},
-		PullRequestsWithErrors: map[string]error{
-			"feature/GH-6-with-no-remote-branch":         domainFakes.ErrPullRequestWithError,
-			"feature/PROJECTKEY-6-with-no-remote-branch": domainFakes.ErrPullRequestWithError,
-		},
-	}
-}
-
 func (*CreatePullRequestExecutionTestSuite) newFakeIssueTracker() *domainFakes.FakeIssueTracker {
 	return &domainFakes.FakeIssueTracker{
 		Configurations: map[string]domainFakes.FakeIssueTrackerConfiguration{
@@ -231,7 +190,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = s.newFakePullRequestProvider()
+	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.issueTracker = s.newFakeGitHubIssueTracker()
 	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
@@ -303,10 +262,10 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		branchName := "feature/GH-3-pull-request-sample"
 		s.gitProvider.CurrentBranch = branchName
 		s.gitProvider.AddLocalBranches(branchName)
+		s.pullRequestProvider.AddPullRequest(branchName, domain.PullRequest{})
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
-
 		s.ErrorContains(err, "pull request")
 		s.ErrorContains(err, "already exists")
 	})
@@ -388,6 +347,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		branchName := "feature/GH-6-with-no-remote-branch"
 		s.gitProvider.CurrentBranch = branchName
 		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, branchName)
+		s.pullRequestProvider.PullRequestsWithErrors = []string{branchName}
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -595,7 +555,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = s.newFakePullRequestProvider()
+	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.issueTracker = s.newFakeJiraIssueTracker()
 	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
@@ -665,9 +625,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		branchName := "feature/PROJECTKEY-3-pull-request-sample"
 		s.gitProvider.CurrentBranch = branchName
 		s.gitProvider.AddLocalBranches(branchName)
+		s.pullRequestProvider.AddPullRequest(branchName, domain.PullRequest{})
 		s.setGetBranchName(branchName)
-		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, branchName)
-		s.gitProvider.CommitsToPush[branchName] = []string{}
 
 		err := s.uc.Execute()
 
@@ -751,6 +710,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		branchName := "feature/PROJECTKEY-6-with-no-remote-branch"
 		s.gitProvider.CurrentBranch = branchName
 		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, branchName)
+		s.pullRequestProvider.PullRequestsWithErrors = []string{branchName}
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
