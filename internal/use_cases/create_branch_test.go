@@ -279,12 +279,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should create branch if branch doesn't exists with default flag", func() {
-		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
-		// s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
-
-		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
-		// s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
-
 		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = "1"
@@ -300,9 +294,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
-		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
-		// s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
-
 		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = "1"
@@ -317,9 +308,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
-		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
-		// s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(true).Maybe()
-
 		branchName := "feature/GH-3-local-branch"
 		s.setGetBranchName(branchName)
 
@@ -329,23 +317,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.ErrorContains(err, fmt.Sprintf("a local branch with the name %s already exists", branchName))
 	})
-}
-
-func (s *CreateGithubBranchExecutionTestSuite) initializeGitProvider() *domainMocks.MockGitProvider {
-	gitProvider := &domainMocks.MockGitProvider{}
-
-	gitProvider.EXPECT().GetCurrentBranch().Return(s.defaultBranchName, nil).Maybe()
-	gitProvider.EXPECT().GetCommitsToPush(s.defaultBranchName).Return([]string{}, nil).Maybe()
-	gitProvider.EXPECT().RemoteBranchExists(s.defaultBranchName).Return(true).Maybe()
-	gitProvider.EXPECT().BranchExistsContains("/GH-1-").Return("feature/GH-1-sample-issue", true).Maybe()
-	gitProvider.EXPECT().BranchExists("/GH-1-").Return(true).Maybe()
-
-	gitProvider.EXPECT().CommitEmpty(mock.Anything).Return(nil).Maybe()
-	gitProvider.EXPECT().PushBranch(mock.Anything).Return(nil).Maybe()
-	gitProvider.EXPECT().FetchBranchFromOrigin("main").Return(nil).Maybe()
-	gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
-
-	return gitProvider
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) initializeUserInteractionProvider() *domainMocks.MockUserInteractionProvider {
