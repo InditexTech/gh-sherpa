@@ -144,3 +144,7 @@ func (f *FakeGitProvider) PushBranch(branch string) (err error) {
 	f.RemoteBranches = append(f.RemoteBranches, branch)
 	return nil
 }
+
+func (f *FakeGitProvider) IsCurrentBranch(branch string) bool {
+	return f.CurrentBranch == branch
+}

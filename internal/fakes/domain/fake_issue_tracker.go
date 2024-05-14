@@ -11,10 +11,6 @@ import (
 type FakeIssueTracker struct {
 	IssueTrackerType domain.IssueTrackerType
 	Configurations   map[string]fakeIssueTrackerConfiguration
-	// IssueTrackerIdentifier map[string]string
-	// IssueTypes             map[string]issue_types.IssueType
-	// IssueTypesLabel        map[string]string
-	// Issues                 map[string]domain.Issue
 }
 
 type fakeIssueTrackerConfiguration struct {
