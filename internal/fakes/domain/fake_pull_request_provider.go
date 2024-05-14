@@ -53,7 +53,7 @@ func NewFakePullRequestProvider() *FakePullRequestProvider {
 	}
 }
 
-func (f *FakePullRequestProvider) HasPullRequest(branch string) bool {
+func (f *FakePullRequestProvider) HasPullRequestForBranch(branch string) bool {
 	pr := f.PullRequests[branch]
 
 	return pr != nil
