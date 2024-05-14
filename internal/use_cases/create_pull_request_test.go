@@ -8,6 +8,7 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	domainFakes "github.com/InditexTech/gh-sherpa/internal/fakes/domain"
 	"github.com/InditexTech/gh-sherpa/internal/mocks"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
@@ -29,7 +30,7 @@ type CreatePullRequestExecutionTestSuite struct {
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
-func (*CreatePullRequestExecutionTestSuite) newFakeGitProvider() *domainFakes.FakeGitProvider {
+func (*CreatePullRequestExecutionTestSuite) NewFakeGitProvider() *domainFakes.FakeGitProvider {
 	return &domainFakes.FakeGitProvider{
 		CurrentBranch: "main",
 		RemoteBranches: []string{
@@ -58,7 +59,7 @@ func (*CreatePullRequestExecutionTestSuite) newFakeGitProvider() *domainFakes.Fa
 	}
 }
 
-func (*CreatePullRequestExecutionTestSuite) newFakePullRequestProvider() *domainFakes.FakePullRequestProvider {
+func (*CreatePullRequestExecutionTestSuite) NewFakePullRequestProvider() *domainFakes.FakePullRequestProvider {
 	return &domainFakes.FakePullRequestProvider{
 		PullRequests: map[string]*domain.PullRequest{
 			"feature/GH-3-pull-request-sample": {
@@ -99,8 +100,129 @@ func (*CreatePullRequestExecutionTestSuite) newFakePullRequestProvider() *domain
 	}
 }
 
+func (*CreatePullRequestExecutionTestSuite) NewFakeIssueTracker() *domainFakes.FakeIssueTracker {
+	return &domainFakes.FakeIssueTracker{
+		Configurations: map[string]domainFakes.FakeIssueTrackerConfiguration{
+			"1": {
+				IssueTrackerIdentifier: domain.IssueTrackerTypeGithub.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/feature",
+				Issue: domain.Issue{
+					ID:           "1",
+					IssueTracker: domain.IssueTrackerTypeGithub,
+					Title:        "Sample issue",
+					Body:         "Sample issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/feature",
+							Name: "kind/feature",
+						},
+					},
+					Url: "https://github.com/InditexTech/gh-sherpa-repo-test/issues/1",
+				},
+			},
+			"PROJECTKEY-1": {
+				IssueTrackerIdentifier: domain.IssueTrackerTypeJira.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/feature",
+				Issue: domain.Issue{
+					ID:           "PROJECTKEY-1",
+					IssueTracker: domain.IssueTrackerTypeJira,
+					Title:        "Sample issue",
+					Body:         "Sample issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/feature",
+							Name: "kind/feature",
+						},
+					},
+					Url: "https://sample.jira.com/PROJECTKEY-1",
+				},
+			},
+			"3": {
+				IssueTrackerIdentifier: domain.IssueTrackerTypeGithub.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/documentation",
+				Issue: domain.Issue{
+					ID:           "3",
+					IssueTracker: domain.IssueTrackerTypeGithub,
+					Title:        "Sample documentation issue",
+					Body:         "Sample documentation issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/documentation",
+							Name: "kind/documentation",
+						},
+					},
+					Url: "https://github.com/InditexTech/gh-sherpa-repo-test/issues/3",
+				},
+			},
+			"PROJECTKEY-3": {
+				IssueTrackerIdentifier: domain.IssueTrackerTypeJira.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/documentation",
+				Issue: domain.Issue{
+					ID:           "PROJECTKEY-3",
+					IssueTracker: domain.IssueTrackerTypeJira,
+					Title:        "Sample documentation issue",
+					Body:         "Sample documentation issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/documentation",
+							Name: "kind/documentation",
+						},
+					},
+					Url: "https://sample.jira.com/PROJECTKEY-3",
+				},
+			},
+			"6": {
+				IssueTrackerIdentifier: domain.IssueTrackerTypeGithub.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/refactoring",
+				Issue: domain.Issue{
+					ID:           "6",
+					IssueTracker: domain.IssueTrackerTypeJira,
+					Title:        "Sample refactoring issue",
+					Body:         "Sample refactoring issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/refactoring",
+							Name: "kind/refactoring",
+						},
+					},
+					Url: "https://github.com/InditexTech/gh-sherpa-repo-test/issues/6",
+				},
+			},
+			"PROJECTKEY-6": {
+				IssueTrackerIdentifier: domain.IssueTrackerTypeJira.String(),
+				IssueType:              issue_types.Feature,
+				IssueTypeLabel:         "kind/refactoring",
+				Issue: domain.Issue{
+					ID:           "PROJECTKEY-6",
+					IssueTracker: domain.IssueTrackerTypeJira,
+					Title:        "Sample refactoring issue",
+					Body:         "Sample refactoring issue body",
+					Labels: []domain.Label{
+						{
+							Id:   "kind/refactoring",
+							Name: "kind/refactoring",
+						},
+					},
+					Url: "https://sample.jira.com/PROJECTKEY-6",
+				},
+			},
+		},
+	}
+}
+
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
+}
+
+func (s *CreateGithubPullRequestExecutionTestSuite) NewFakeGitHubIssueTracker() *domainFakes.FakeIssueTracker {
+	issueTracker := s.NewFakeIssueTracker()
+	issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
+	return issueTracker
 }
 
 func (s *CreatePullRequestExecutionTestSuite) setGetBranchName(branchName string) {
@@ -116,10 +238,10 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = s.newFakeGitProvider()
+	s.gitProvider = s.NewFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = s.newFakePullRequestProvider()
-	s.issueTracker = domainFakes.NewFakeGitHubIssueTracker()
+	s.pullRequestProvider = s.NewFakePullRequestProvider()
+	s.issueTracker = s.NewFakeGitHubIssueTracker()
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
@@ -444,6 +566,12 @@ type CreateJiraPullRequestExecutionTestSuite struct {
 	getConfigFile func() (config.ConfigFile, error)
 }
 
+func (s *CreateJiraPullRequestExecutionTestSuite) NewFakeJiraIssueTracker() *domainFakes.FakeIssueTracker {
+	issueTracker := s.NewFakeIssueTracker()
+	issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
+	return issueTracker
+}
+
 func TestCreateJiraPullRequestExecutionTestSuite(t *testing.T) {
 	suite.Run(t, new(CreateJiraPullRequestExecutionTestSuite))
 }
@@ -470,10 +598,10 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = s.newFakeGitProvider()
+	s.gitProvider = s.NewFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = s.newFakePullRequestProvider()
-	s.issueTracker = domainFakes.NewFakeJiraIssueTracker()
+	s.pullRequestProvider = s.NewFakePullRequestProvider()
+	s.issueTracker = s.NewFakeJiraIssueTracker()
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
