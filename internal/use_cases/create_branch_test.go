@@ -25,6 +25,10 @@ type CreateBranchExecutionTestSuite struct {
 	repositoryProvider      *domainMocks.MockRepositoryProvider
 }
 
+func (s *CreateBranchExecutionTestSuite) setGetBranchName(branch string) {
+	s.branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return(branch, nil).Once()
+}
+
 func (s *CreateBranchExecutionTestSuite) expectCreateBranchNotCalled() {
 	mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 	// s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin(mock.Anything, mock.Anything).Times(0)
@@ -85,12 +89,13 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
-
 	s.Run("should error if could not get git repository", func() {
 		mocks.UnsetExpectedCall(&s.repositoryProvider.Mock, s.repositoryProvider.GetRepository)
 		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreateBranchNotCalled()
+
+		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = "1"
 
@@ -117,6 +122,8 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
+		s.setGetBranchName(s.defaultBranchName)
+
 		s.uc.Cfg.IssueID = "1"
 		s.uc.Cfg.IsInteractive = false
 
@@ -127,12 +134,13 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should create branch if branch doesn't exists with default flag", func() {
-
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
 
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
+
+		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = "1"
 		s.uc.Cfg.IsInteractive = false
@@ -145,12 +153,13 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should create branch if not exists without default flag", func() {
-
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
+
+		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = "1"
 
@@ -161,7 +170,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should error if branch already exists without default flag", func() {
-
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
@@ -170,6 +178,8 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
+		s.setGetBranchName(s.defaultBranchName)
+
 		s.uc.Cfg.IssueID = "1"
 
 		err := s.uc.Execute()
@@ -177,7 +187,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.ErrorContains(err, "a local branch with the name feature/GH-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
 	})
-
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) initializeGitProvider() *domainMocks.MockGitProvider {
@@ -218,8 +227,6 @@ func (s *CreateGithubBranchExecutionTestSuite) initializeIssueTrackerProvider() 
 
 func (s *CreateGithubBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
 	branchProvider := &domainMocks.MockBranchProvider{}
-
-	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return("feature/GH-1-sample-issue", nil).Maybe()
 
 	return branchProvider
 }
@@ -287,7 +294,6 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 }
 
 func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
-
 	issueID := "PROJECTKEY-1"
 
 	s.Run("should error if could not get git repository", func() {
@@ -295,6 +301,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.repositoryProvider.EXPECT().GetRepository().Return(nil, assert.AnError).Once()
 
 		s.expectCreateBranchNotCalled()
+
+		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = issueID
 
@@ -321,6 +329,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
+		s.setGetBranchName(s.defaultBranchName)
+
 		s.uc.Cfg.IssueID = issueID
 		s.uc.Cfg.IsInteractive = false
 
@@ -331,12 +341,13 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should create branch if branch doesn't exists with default flag", func() {
-
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Maybe()
 
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
 		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/PROJECTKEY-1-sample-issue", "main").Return(nil).Maybe()
+
+		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = issueID
 		s.uc.Cfg.IsInteractive = false
@@ -349,12 +360,13 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should create branch if not exists without default flag", func() {
-
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
 		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
 		s.gitProvider.EXPECT().BranchExists("feature/PROJECTKEY-1-sample-issue").Return(false).Maybe()
+
+		s.setGetBranchName(s.defaultBranchName)
 
 		s.uc.Cfg.IssueID = issueID
 
@@ -365,7 +377,6 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should error if branch already exists without default flag", func() {
-
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
@@ -374,6 +385,8 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.expectCreateBranchNotCalled()
 
+		s.setGetBranchName(s.defaultBranchName)
+
 		s.uc.Cfg.IssueID = issueID
 
 		err := s.uc.Execute()
@@ -381,7 +394,6 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.ErrorContains(err, "a local branch with the name feature/PROJECTKEY-1-sample-issue already exists")
 		s.assertCreateBranchNotCalled()
 	})
-
 }
 
 func (s *CreateJiraBranchExecutionTestSuite) initializeGitProvider() *domainMocks.MockGitProvider {
@@ -457,8 +469,6 @@ func (s *CreateJiraBranchExecutionTestSuite) initializeIssueTracker() *domainMoc
 
 func (s *CreateJiraBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
 	branchProvider := &domainMocks.MockBranchProvider{}
-
-	branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return("feature/PROJECTKEY-1-sample-issue", nil).Maybe()
 
 	return branchProvider
 }
