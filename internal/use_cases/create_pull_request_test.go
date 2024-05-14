@@ -30,7 +30,7 @@ type CreatePullRequestExecutionTestSuite struct {
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
-func (*CreatePullRequestExecutionTestSuite) NewFakeGitProvider() *domainFakes.FakeGitProvider {
+func (*CreatePullRequestExecutionTestSuite) newFakeGitProvider() *domainFakes.FakeGitProvider {
 	return &domainFakes.FakeGitProvider{
 		CurrentBranch: "main",
 		RemoteBranches: []string{
@@ -59,7 +59,7 @@ func (*CreatePullRequestExecutionTestSuite) NewFakeGitProvider() *domainFakes.Fa
 	}
 }
 
-func (*CreatePullRequestExecutionTestSuite) NewFakePullRequestProvider() *domainFakes.FakePullRequestProvider {
+func (*CreatePullRequestExecutionTestSuite) newFakePullRequestProvider() *domainFakes.FakePullRequestProvider {
 	return &domainFakes.FakePullRequestProvider{
 		PullRequests: map[string]*domain.PullRequest{
 			"feature/GH-3-pull-request-sample": {
@@ -215,7 +215,7 @@ func (*CreatePullRequestExecutionTestSuite) NewFakeIssueTracker() *domainFakes.F
 	}
 }
 
-func (*CreatePullRequestExecutionTestSuite) NewFakeIssueTrackerProvider(issueTracker domain.IssueTracker) *domainFakes.FakeIssueTrackerProvider {
+func (*CreatePullRequestExecutionTestSuite) newFakeIssueTrackerProvider(issueTracker domain.IssueTracker) *domainFakes.FakeIssueTrackerProvider {
 	return &domainFakes.FakeIssueTrackerProvider{
 		IssueTracker: issueTracker,
 	}
@@ -225,7 +225,7 @@ type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) NewFakeGitHubIssueTracker() *domainFakes.FakeIssueTracker {
+func (s *CreateGithubPullRequestExecutionTestSuite) newFakeGitHubIssueTracker() *domainFakes.FakeIssueTracker {
 	issueTracker := s.NewFakeIssueTracker()
 	issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
 	return issueTracker
@@ -244,11 +244,11 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = s.NewFakeGitProvider()
+	s.gitProvider = s.newFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = s.NewFakePullRequestProvider()
-	s.issueTracker = s.NewFakeGitHubIssueTracker()
-	s.issueTrackerProvider = s.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.pullRequestProvider = s.newFakePullRequestProvider()
+	s.issueTracker = s.newFakeGitHubIssueTracker()
+	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 
@@ -572,7 +572,7 @@ type CreateJiraPullRequestExecutionTestSuite struct {
 	getConfigFile func() (config.ConfigFile, error)
 }
 
-func (s *CreateJiraPullRequestExecutionTestSuite) NewFakeJiraIssueTracker() *domainFakes.FakeIssueTracker {
+func (s *CreateJiraPullRequestExecutionTestSuite) newFakeJiraIssueTracker() *domainFakes.FakeIssueTracker {
 	issueTracker := s.NewFakeIssueTracker()
 	issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
 	return issueTracker
@@ -604,11 +604,11 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = s.NewFakeGitProvider()
+	s.gitProvider = s.newFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = s.NewFakePullRequestProvider()
-	s.issueTracker = s.NewFakeJiraIssueTracker()
-	s.issueTrackerProvider = s.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.pullRequestProvider = s.newFakePullRequestProvider()
+	s.issueTracker = s.newFakeJiraIssueTracker()
+	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 
