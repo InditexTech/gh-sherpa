@@ -30,35 +30,6 @@ type CreatePullRequestExecutionTestSuite struct {
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
-func (*CreatePullRequestExecutionTestSuite) newFakeGitProvider() *domainFakes.FakeGitProvider {
-	return &domainFakes.FakeGitProvider{
-		CurrentBranch: "main",
-		RemoteBranches: []string{
-			"main",
-			"develop",
-			"feature/GH-1-sample-issue",
-			"feature/GH-2-remote-branch",
-			"feature/PROJECTKEY-1-sample-issue",
-			"feature/PROJECTKEY-2-remote-branch",
-		},
-		LocalBranches: []string{
-			"main",
-			"develop",
-			"feature/GH-1-sample-issue",
-			"feature/PROJECTKEY-1-sample-issue",
-			"feature/GH-3-local-branch",
-			"feature/PROJECTKEY-3-local-branch",
-			"feature/GH-6-with-no-remote-branch",
-			"feature/PROJECTKEY-6-with-no-remote-branch",
-		},
-		CommitsToPush: map[string][]string{},
-		BranchWithCommitError: map[string]error{
-			"feature/GH-4-with-commit-error":         domainFakes.ErrGetCommitsToPush,
-			"feature/PROJECTKEY-4-with-commit-error": domainFakes.ErrGetCommitsToPush,
-		},
-	}
-}
-
 func (*CreatePullRequestExecutionTestSuite) newFakePullRequestProvider() *domainFakes.FakePullRequestProvider {
 	return &domainFakes.FakePullRequestProvider{
 		PullRequests: map[string]*domain.PullRequest{
@@ -255,7 +226,10 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = s.newFakeGitProvider()
+	s.gitProvider = domainFakes.NewFakeGitProvider()
+	s.gitProvider.AddLocalBranches(s.defaultBranchName)
+	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
+
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.newFakePullRequestProvider()
 	s.issueTracker = s.newFakeGitHubIssueTracker()
@@ -282,16 +256,11 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 
 func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 	s.Run("should error if could not get git repository", func() {
-		branchName := "feature/GH-3-local-branch"
-		s.gitProvider.CurrentBranch = branchName
-		s.setGetBranchName(branchName)
-
 		s.repositoryProvider.Repository = nil
 
 		err := s.uc.Execute()
 
-		s.Error(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.ErrorIs(err, domainFakes.ErrRepositoryNotFound)
 	})
 
 	s.Run("should error if could not get current branch", func() {
@@ -307,6 +276,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		branchName := "branch-with-no-issue-name"
 
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -317,9 +287,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should exit if user does not confirm current branch", func() {
-		branchName := "feature/GH-3-local-branch"
-		s.gitProvider.CurrentBranch = branchName
-		s.setGetBranchName(branchName)
+		s.gitProvider.CurrentBranch = s.defaultBranchName
+		s.setGetBranchName(s.defaultBranchName)
 
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation(mock.Anything, mock.Anything).Return(false, nil).Once()
@@ -327,14 +296,13 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
 	})
 
 	s.Run("should return error if pr already exists", func() {
 		branchName := "feature/GH-3-pull-request-sample"
 		s.gitProvider.CurrentBranch = branchName
-		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, branchName)
-		s.gitProvider.CommitsToPush[branchName] = []string{}
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -346,6 +314,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should not ask the user for branch confirmation if default flag is used", func() {
 		branchName := "feature/GH-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 		s.uc.Cfg.IsInteractive = false
 
@@ -358,6 +327,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should create and push empty commit if remote branch nor pull request exists", func() {
 		branchName := "feature/GH-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -368,6 +338,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should return error if remote branch already exists", func() {
 		branchName := "feature/GH-1-sample-issue"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -379,6 +350,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should exit if user does not confirm the commit push when default flag is not used", func() {
 		branchName := "feature/GH-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 		s.gitProvider.CommitsToPush[branchName] = []string{"commit 1", "commit 2"}
 
@@ -394,6 +366,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should error if could not create empty commit", func() {
 		branchName := "feature/GH-4-with-commit-error"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.BranchWithCommitError = []string{branchName}
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -414,6 +387,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should error if could not create pull request", func() {
 		branchName := "feature/GH-6-with-no-remote-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, branchName)
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -540,6 +514,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should create pull request with no close issue flag", func() {
 		branchName := "feature/GH-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 
 		s.uc.Cfg.CloseIssue = false
@@ -615,7 +590,10 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = s.newFakeGitProvider()
+	s.gitProvider = domainFakes.NewFakeGitProvider()
+	s.gitProvider.AddLocalBranches(s.defaultBranchName)
+	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
+
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.newFakePullRequestProvider()
 	s.issueTracker = s.newFakeJiraIssueTracker()
@@ -642,13 +620,11 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 
 func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution() {
 	s.Run("should error if could not get git repository", func() {
-		s.gitProvider.CurrentBranch = "feature/PROJECTKEY-3-local-branch"
 		s.repositoryProvider.Repository = nil
 
 		err := s.uc.Execute()
 
-		s.Error(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.ErrorIs(err, domainFakes.ErrRepositoryNotFound)
 	})
 
 	s.Run("should error if could not get current branch", func() {
@@ -673,9 +649,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	})
 
 	s.Run("should exit if user does not confirm current branch", func() {
-		branchName := "feature/PROJECTKEY-3-local-branch"
-		s.gitProvider.CurrentBranch = branchName
-		s.setGetBranchName(branchName)
+		s.gitProvider.CurrentBranch = s.defaultBranchName
+		s.setGetBranchName(s.defaultBranchName)
 
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation(mock.Anything, mock.Anything).Return(false, nil).Once()
@@ -683,12 +658,13 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
 	})
 
 	s.Run("should return error if pr already exists", func() {
 		branchName := "feature/PROJECTKEY-3-pull-request-sample"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, branchName)
 		s.gitProvider.CommitsToPush[branchName] = []string{}
@@ -702,6 +678,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should not ask the user for branch confirmation if default flag is used", func() {
 		branchName := "feature/PROJECTKEY-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 		s.uc.Cfg.IsInteractive = false
 
@@ -714,6 +691,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should create and push empty commit if remote branch does not exists", func() {
 		branchName := "feature/PROJECTKEY-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -735,6 +713,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should exit if user does not confirm the commit push when default flag is not used", func() {
 		branchName := "feature/PROJECTKEY-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 		s.gitProvider.CommitsToPush[branchName] = []string{"commit 1", "commit 2"}
 
@@ -750,6 +729,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should error if could not create empty commit", func() {
 		branchName := "feature/PROJECTKEY-4-with-commit-error"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.BranchWithCommitError = []string{branchName}
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -770,6 +750,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should error if could not create pull request", func() {
 		branchName := "feature/PROJECTKEY-6-with-no-remote-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.LocalBranches = append(s.gitProvider.LocalBranches, branchName)
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
@@ -891,6 +872,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should create pull request with no close issue flag", func() {
 		branchName := "feature/PROJECTKEY-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
 		s.setGetBranchName(branchName)
 
 		s.expectNoPrFound()

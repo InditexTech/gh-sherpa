@@ -14,10 +14,34 @@ type FakeGitProvider struct {
 	LocalBranches         []string
 	CurrentBranch         string
 	CommitsToPush         map[string][]string
-	BranchWithCommitError map[string]error
+	BranchWithCommitError []string
 }
 
 var _ domain.GitProvider = (*FakeGitProvider)(nil)
+
+func NewFakeGitProvider() *FakeGitProvider {
+	return &FakeGitProvider{
+		CurrentBranch: "main",
+		RemoteBranches: []string{
+			"main",
+			"develop",
+		},
+		LocalBranches: []string{
+			"main",
+			"develop",
+		},
+		CommitsToPush:         map[string][]string{},
+		BranchWithCommitError: []string{},
+	}
+}
+
+func (f *FakeGitProvider) AddLocalBranches(branches ...string) {
+	f.LocalBranches = append(f.LocalBranches, branches...)
+}
+
+func (f *FakeGitProvider) AddRemoteBranches(branches ...string) {
+	f.RemoteBranches = append(f.RemoteBranches, branches...)
+}
 
 func (f *FakeGitProvider) BranchExists(branch string) bool {
 	return slices.Contains(f.LocalBranches, branch)
@@ -76,15 +100,11 @@ func (f *FakeGitProvider) CheckoutBranch(branch string) (err error) {
 var ErrGetCommitsToPush = errors.New("error getting commits to push")
 
 func (f *FakeGitProvider) GetCommitsToPush(branch string) (commits []string, err error) {
-	commitError, ok := f.BranchWithCommitError[branch]
-	if ok {
-		if commitError == nil {
-			return commits, ErrGetCommitsToPush
-		}
-		return commits, commitError
+	if slices.Contains(f.BranchWithCommitError, branch) {
+		return commits, ErrGetCommitsToPush
 	}
 
-	commits, ok = f.CommitsToPush[branch]
+	commits, ok := f.CommitsToPush[branch]
 	if !ok {
 		commits = []string{}
 	}

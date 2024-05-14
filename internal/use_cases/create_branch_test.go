@@ -160,10 +160,11 @@ func (*CreateBranchExecutionTestSuite) newFakeGitProvider() *domainFakes.FakeGit
 			"feature/GH-3-local-branch",
 			"feature/PROJECTKEY-3-local-branch",
 		},
+
 		CommitsToPush: map[string][]string{},
-		BranchWithCommitError: map[string]error{
-			"feature/GH-4-with-commit-error":         domainFakes.ErrGetCommitsToPush,
-			"feature/PROJECTKEY-4-with-commit-error": domainFakes.ErrGetCommitsToPush,
+		BranchWithCommitError: []string{
+			"feature/GH-4-with-commit-error",
+			"feature/PROJECTKEY-4-with-commit-error",
 		},
 	}
 }
