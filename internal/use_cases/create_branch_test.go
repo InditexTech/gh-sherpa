@@ -1,6 +1,7 @@
 package use_cases_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -146,6 +147,27 @@ func (*CreateBranchExecutionTestSuite) newFakeIssueTracker() *domainFakes.FakeIs
 	}
 }
 
+func (*CreateBranchExecutionTestSuite) newFakeGitProvider() *domainFakes.FakeGitProvider {
+	return &domainFakes.FakeGitProvider{
+		CurrentBranch: "main",
+		RemoteBranches: []string{
+			"main",
+			"develop",
+		},
+		LocalBranches: []string{
+			"main",
+			"develop",
+			"feature/GH-3-local-branch",
+			"feature/PROJECTKEY-3-local-branch",
+		},
+		CommitsToPush: map[string][]string{},
+		BranchWithCommitError: map[string]error{
+			"feature/GH-4-with-commit-error":         domainFakes.ErrGetCommitsToPush,
+			"feature/PROJECTKEY-4-with-commit-error": domainFakes.ErrGetCommitsToPush,
+		},
+	}
+}
+
 func (*CreateBranchExecutionTestSuite) newFakeRepositoryProvider() *domainFakes.FakeRepositoryProvider {
 	return &domainFakes.FakeRepositoryProvider{
 		Repository: &domain.Repository{
@@ -185,6 +207,7 @@ func (s *CreateBranchExecutionTestSuite) assertCreateBranchCalled(issueTrackerTy
 
 type CreateGithubBranchExecutionTestSuite struct {
 	CreateBranchExecutionTestSuite
+	gitProvider *domainFakes.FakeGitProvider
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) newFakeGitHubIssueTracker() *domainFakes.FakeIssueTracker {
@@ -202,7 +225,7 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSuite() {
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = s.initializeGitProvider()
+	s.gitProvider = s.newFakeGitProvider()
 	s.issueTracker = s.newFakeGitHubIssueTracker()
 	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
@@ -225,10 +248,7 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 
 func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if could not get git repository", func() {
-		s.expectCreateBranchNotCalled()
-
 		s.setGetBranchName(s.defaultBranchName)
-
 		s.repositoryProvider.Repository = nil
 
 		s.uc.Cfg.IssueID = "1"
@@ -236,43 +256,34 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		err := s.uc.Execute()
 
 		s.Error(err)
-		s.gitProvider.AssertExpectations(s.T())
-		s.assertCreateBranchNotCalled()
+		s.Assert().False(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if no issue flag is provided", func() {
-		s.expectCreateBranchNotCalled()
-
 		err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
-		s.gitProvider.AssertExpectations(s.T())
-		s.assertCreateBranchNotCalled()
+		s.Assert().False(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if branch already exists with default flag", func() {
-		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
-		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(true).Maybe()
+		branchName := "feature/GH-3-local-branch"
+		s.setGetBranchName(branchName)
 
-		s.expectCreateBranchNotCalled()
-
-		s.setGetBranchName(s.defaultBranchName)
-
-		s.uc.Cfg.IssueID = "1"
+		s.uc.Cfg.IssueID = "3"
 		s.uc.Cfg.IsInteractive = false
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, "a local branch with the name feature/GH-1-sample-issue already exists")
-		s.assertCreateBranchNotCalled()
+		s.ErrorContains(err, fmt.Sprintf("a local branch with the name %s already exists", branchName))
 	})
 
 	s.Run("should create branch if branch doesn't exists with default flag", func() {
-		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
-		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
+		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
+		// s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
 
-		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
-		s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
+		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.CheckoutNewBranchFromOrigin)
+		// s.gitProvider.EXPECT().CheckoutNewBranchFromOrigin("feature/GH-1-sample-issue", "main").Return(nil).Maybe()
 
 		s.setGetBranchName(s.defaultBranchName)
 
@@ -282,16 +293,15 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.gitProvider.AssertExpectations(s.T())
-		s.assertCreateBranchCalled(domain.IssueTrackerTypeGithub)
+		s.Assert().True(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should create branch if not exists without default flag", func() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
-		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
-		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
+		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
+		// s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(false).Maybe()
 
 		s.setGetBranchName(s.defaultBranchName)
 
@@ -300,26 +310,24 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.assertCreateBranchCalled(domain.IssueTrackerTypeGithub)
+		s.Assert().True(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if branch already exists without default flag", func() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 
-		mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
-		s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(true).Maybe()
+		// mocks.UnsetExpectedCall(&s.gitProvider.Mock, s.gitProvider.BranchExists)
+		// s.gitProvider.EXPECT().BranchExists("feature/GH-1-sample-issue").Return(true).Maybe()
 
-		s.expectCreateBranchNotCalled()
+		branchName := "feature/GH-3-local-branch"
+		s.setGetBranchName(branchName)
 
-		s.setGetBranchName(s.defaultBranchName)
-
-		s.uc.Cfg.IssueID = "1"
+		s.uc.Cfg.IssueID = "3"
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, "a local branch with the name feature/GH-1-sample-issue already exists")
-		s.assertCreateBranchNotCalled()
+		s.ErrorContains(err, fmt.Sprintf("a local branch with the name %s already exists", branchName))
 	})
 }
 
