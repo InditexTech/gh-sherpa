@@ -22,8 +22,36 @@ type FakeIssueTrackerConfiguration struct {
 
 var _ domain.IssueTracker = (*FakeIssueTracker)(nil)
 
+func NewFakeIssueTracker() *FakeIssueTracker {
+	return &FakeIssueTracker{
+		Configurations: map[string]FakeIssueTrackerConfiguration{},
+	}
+}
+
 func ErrIssueNotInitializedInMap(identifier string) error {
 	return fmt.Errorf("issue %s not initialized in map", identifier)
+}
+
+func (f *FakeIssueTracker) AddIssue(issueId string, issueType issue_types.IssueType) {
+	issueTypeLabel := "kind/" + issueType.String()
+	f.Configurations[issueId] = FakeIssueTrackerConfiguration{
+		IssueTrackerIdentifier: f.IssueTrackerType.String(),
+		IssueType:              issueType,
+		IssueTypeLabel:         issueTypeLabel,
+		Issue: domain.Issue{
+			ID:           issueId,
+			IssueTracker: f.IssueTrackerType,
+			Title:        "Sample issue",
+			Body:         "Sample issue body",
+			Labels: []domain.Label{
+				{
+					Id:   issueTypeLabel,
+					Name: issueTypeLabel,
+				},
+			},
+			Url: "https://github.com/InditexTech/gh-sherpa-repo-test/issues/" + issueId,
+		},
+	}
 }
 
 func (f *FakeIssueTracker) GetIssue(issueId string) (issue domain.Issue, err error) {
