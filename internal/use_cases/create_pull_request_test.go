@@ -215,6 +215,17 @@ func (*CreatePullRequestExecutionTestSuite) newFakeIssueTracker() *domainFakes.F
 	}
 }
 
+func (*CreatePullRequestExecutionTestSuite) newFakeRepositoryProvider() *domainFakes.FakeRepositoryProvider {
+	return &domainFakes.FakeRepositoryProvider{
+		Repository: &domain.Repository{
+			Name:             "gh-sherpa-test-repo",
+			Owner:            "inditextech",
+			NameWithOwner:    "inditextech/gh-sherpa-test-repo",
+			DefaultBranchRef: "main",
+		},
+	}
+}
+
 func (*CreatePullRequestExecutionTestSuite) newFakeIssueTrackerProvider(issueTracker domain.IssueTracker) *domainFakes.FakeIssueTrackerProvider {
 	return &domainFakes.FakeIssueTrackerProvider{
 		IssueTracker: issueTracker,
@@ -250,7 +261,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker = s.newFakeGitHubIssueTracker()
 	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
-	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
+	s.repositoryProvider = s.newFakeRepositoryProvider()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
 		IsInteractive:   true,
@@ -610,7 +621,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker = s.newFakeJiraIssueTracker()
 	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
-	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
+	s.repositoryProvider = s.newFakeRepositoryProvider()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
 		IsInteractive:   true,
