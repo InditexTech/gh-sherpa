@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
+	"github.com/InditexTech/gh-sherpa/internal/domain"
 	domainFakes "github.com/InditexTech/gh-sherpa/internal/fakes/domain"
 	"github.com/InditexTech/gh-sherpa/internal/mocks"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
@@ -57,6 +58,47 @@ func (*CreatePullRequestExecutionTestSuite) newFakeGitProvider() *domainFakes.Fa
 	}
 }
 
+func (*CreatePullRequestExecutionTestSuite) newFakePullRequestProvider() *domainFakes.FakePullRequestProvider {
+	return &domainFakes.FakePullRequestProvider{
+		PullRequests: map[string]*domain.PullRequest{
+			"feature/GH-3-pull-request-sample": {
+				Title:       "GH-3-pull-request-sample",
+				Number:      3,
+				State:       "OPEN",
+				Closed:      false,
+				Url:         "https://github.com/inditextech/gh-sherpa-test-repo/pulls/3",
+				HeadRefName: "feature/GH-3-pull-request-sample",
+				BaseRefName: "main",
+				Labels: []domain.Label{
+					{
+						Id:   "kind/feature",
+						Name: "kind/feature",
+					},
+				},
+			},
+			"feature/PROJECTKEY-3-pull-request-sample": {
+				Title:       "PROJECTKEY-4-pull-request-sample",
+				Number:      3,
+				State:       "OPEN",
+				Closed:      false,
+				Url:         "https://github.com/inditextech/gh-sherpa-test-repo/pulls/3",
+				HeadRefName: "feature/PROJECTKEY-3-pull-request-sample",
+				BaseRefName: "main",
+				Labels: []domain.Label{
+					{
+						Id:   "kind/feature",
+						Name: "kind/feature",
+					},
+				},
+			},
+		},
+		PullRequestsWithErrors: map[string]error{
+			"feature/GH-6-with-no-remote-branch":         domainFakes.ErrPullRequestWithError,
+			"feature/PROJECTKEY-6-with-no-remote-branch": domainFakes.ErrPullRequestWithError,
+		},
+	}
+}
+
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 }
@@ -76,7 +118,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.newFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
+	s.pullRequestProvider = s.newFakePullRequestProvider()
 	s.issueTracker = domainFakes.NewFakeGitHubIssueTracker()
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
@@ -430,7 +472,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = s.newFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
+	s.pullRequestProvider = s.newFakePullRequestProvider()
 	s.issueTracker = domainFakes.NewFakeJiraIssueTracker()
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
