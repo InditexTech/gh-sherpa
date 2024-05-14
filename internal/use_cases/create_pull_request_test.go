@@ -28,6 +28,35 @@ type CreatePullRequestExecutionTestSuite struct {
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
+func (*CreatePullRequestExecutionTestSuite) newFakeGitProvider() *domainFakes.FakeGitProvider {
+	return &domainFakes.FakeGitProvider{
+		CurrentBranch: "main",
+		RemoteBranches: []string{
+			"main",
+			"develop",
+			"feature/GH-1-sample-issue",
+			"feature/GH-2-remote-branch",
+			"feature/PROJECTKEY-1-sample-issue",
+			"feature/PROJECTKEY-2-remote-branch",
+		},
+		LocalBranches: []string{
+			"main",
+			"develop",
+			"feature/GH-1-sample-issue",
+			"feature/PROJECTKEY-1-sample-issue",
+			"feature/GH-3-local-branch",
+			"feature/PROJECTKEY-3-local-branch",
+			"feature/GH-6-with-no-remote-branch",
+			"feature/PROJECTKEY-6-with-no-remote-branch",
+		},
+		CommitsToPush: map[string][]string{},
+		BranchWithCommitError: map[string]error{
+			"feature/GH-4-with-commit-error":         domainFakes.ErrGetCommitsToPush,
+			"feature/PROJECTKEY-4-with-commit-error": domainFakes.ErrGetCommitsToPush,
+		},
+	}
+}
+
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 }
@@ -45,7 +74,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSuite() {
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = domainFakes.NewFakeGitProvider()
+	s.gitProvider = s.newFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.issueTracker = domainFakes.NewFakeGitHubIssueTracker()
@@ -182,7 +211,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should error if could not create empty commit", func() {
-		branchName := "feature/GH-4-commit-error"
+		branchName := "feature/GH-4-with-commit-error"
 		s.gitProvider.CurrentBranch = branchName
 		s.setGetBranchName(branchName)
 
@@ -399,7 +428,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TeardownTest() {
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
-	s.gitProvider = domainFakes.NewFakeGitProvider()
+	s.gitProvider = s.newFakeGitProvider()
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.issueTracker = domainFakes.NewFakeJiraIssueTracker()

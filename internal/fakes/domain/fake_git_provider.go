@@ -10,51 +10,14 @@ import (
 )
 
 type FakeGitProvider struct {
-	RemoteBranches []string
-	LocalBranches  []string
-	CurrentBranch  string
-	CommitsToPush  map[string][]string
+	RemoteBranches        []string
+	LocalBranches         []string
+	CurrentBranch         string
+	CommitsToPush         map[string][]string
+	BranchWithCommitError map[string]error
 }
 
 var _ domain.GitProvider = (*FakeGitProvider)(nil)
-
-func NewFakeGitProvider() *FakeGitProvider {
-	return &FakeGitProvider{
-		RemoteBranches: []string{
-			"main",
-			"develop",
-			"feature/GH-1-sample-issue",
-			"feature/GH-2-remote-branch",
-			"feature/PROJECTKEY-1-sample-issue",
-			"feature/PROJECTKEY-2-remote-branch",
-		},
-		LocalBranches: []string{
-			"main",
-			"develop",
-			"feature/GH-1-sample-issue",
-			"feature/PROJECTKEY-1-sample-issue",
-			"feature/GH-3-local-branch",
-			"feature/PROJECTKEY-3-local-branch",
-			"feature/GH-4-with-commit-error",
-			"feature/PROJECTKEY-4-with-commit-error",
-			"feature/GH-6-with-no-remote-branch",
-			"feature/PROJECTKEY-6-with-no-remote-branch",
-		},
-		CommitsToPush: map[string][]string{
-			"main":                                       {},
-			"develop":                                    {},
-			"feature/GH-1-sample-issue":                  {},
-			"feature/PROJECTKEY-1-sample-issue":          {},
-			"feature/GH-3-local-branch":                  {},
-			"feature/PROJECTKEY-3-local-branch":          {},
-			"feature/GH-5-with-no-local-branch":          {},
-			"feature/PROJECTKEY-5-with-no-local-branch":  {},
-			"feature/GH-6-with-no-remote-branch":         {},
-			"feature/PROJECTKEY-6-with-no-remote-branch": {},
-		},
-		CurrentBranch: "main",
-	}
-}
 
 func (f *FakeGitProvider) BranchExists(branch string) bool {
 	return slices.Contains(f.LocalBranches, branch)
@@ -113,10 +76,19 @@ func (f *FakeGitProvider) CheckoutBranch(branch string) (err error) {
 var ErrGetCommitsToPush = errors.New("error getting commits to push")
 
 func (f *FakeGitProvider) GetCommitsToPush(branch string) (commits []string, err error) {
-	commits, ok := f.CommitsToPush[branch]
-	if !ok {
-		return []string{}, ErrGetCommitsToPush
+	commitError, ok := f.BranchWithCommitError[branch]
+	if ok {
+		if commitError == nil {
+			return commits, ErrGetCommitsToPush
+		}
+		return commits, commitError
 	}
+
+	commits, ok = f.CommitsToPush[branch]
+	if !ok {
+		commits = []string{}
+	}
+
 	return commits, nil
 }
 
