@@ -100,7 +100,7 @@ func (*CreatePullRequestExecutionTestSuite) newFakePullRequestProvider() *domain
 	}
 }
 
-func (*CreatePullRequestExecutionTestSuite) NewFakeIssueTracker() *domainFakes.FakeIssueTracker {
+func (*CreatePullRequestExecutionTestSuite) newFakeIssueTracker() *domainFakes.FakeIssueTracker {
 	return &domainFakes.FakeIssueTracker{
 		Configurations: map[string]domainFakes.FakeIssueTrackerConfiguration{
 			"1": {
@@ -226,7 +226,7 @@ type CreateGithubPullRequestExecutionTestSuite struct {
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) newFakeGitHubIssueTracker() *domainFakes.FakeIssueTracker {
-	issueTracker := s.NewFakeIssueTracker()
+	issueTracker := s.newFakeIssueTracker()
 	issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
 	return issueTracker
 }
@@ -573,7 +573,7 @@ type CreateJiraPullRequestExecutionTestSuite struct {
 }
 
 func (s *CreateJiraPullRequestExecutionTestSuite) newFakeJiraIssueTracker() *domainFakes.FakeIssueTracker {
-	issueTracker := s.NewFakeIssueTracker()
+	issueTracker := s.newFakeIssueTracker()
 	issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
 	return issueTracker
 }
