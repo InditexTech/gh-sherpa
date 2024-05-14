@@ -30,23 +30,6 @@ type CreatePullRequestExecutionTestSuite struct {
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
-func (*CreatePullRequestExecutionTestSuite) newFakeRepositoryProvider() *domainFakes.FakeRepositoryProvider {
-	return &domainFakes.FakeRepositoryProvider{
-		Repository: &domain.Repository{
-			Name:             "gh-sherpa-test-repo",
-			Owner:            "inditextech",
-			NameWithOwner:    "inditextech/gh-sherpa-test-repo",
-			DefaultBranchRef: "main",
-		},
-	}
-}
-
-func (*CreatePullRequestExecutionTestSuite) newFakeIssueTrackerProvider(issueTracker domain.IssueTracker) *domainFakes.FakeIssueTrackerProvider {
-	return &domainFakes.FakeIssueTrackerProvider{
-		IssueTracker: issueTracker,
-	}
-}
-
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 }
@@ -74,12 +57,12 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker.AddIssue("3", issue_types.Documentation)
 	s.issueTracker.AddIssue("6", issue_types.Refactoring)
 
-	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.branchProvider = s.initializeBranchProvider()
-	s.repositoryProvider = s.newFakeRepositoryProvider()
+	s.repositoryProvider = domainFakes.NewRepositoryProvider()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
 		IsInteractive:   true,
@@ -440,12 +423,12 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
 	s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
 
-	s.issueTrackerProvider = s.newFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
 	s.branchProvider = s.initializeBranchProvider()
-	s.repositoryProvider = s.newFakeRepositoryProvider()
+	s.repositoryProvider = domainFakes.NewRepositoryProvider()
 
 	defaultConfig := use_cases.CreatePullRequestConfiguration{
 		IsInteractive:   true,

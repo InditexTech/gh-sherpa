@@ -12,6 +12,17 @@ type FakeRepositoryProvider struct {
 
 var _ domain.RepositoryProvider = (*FakeRepositoryProvider)(nil)
 
+func NewRepositoryProvider() *FakeRepositoryProvider {
+	return &FakeRepositoryProvider{
+		Repository: &domain.Repository{
+			Name:             "gh-sherpa-test-repo",
+			Owner:            "inditextech",
+			NameWithOwner:    "inditextech/gh-sherpa-test-repo",
+			DefaultBranchRef: "main",
+		},
+	}
+}
+
 var ErrRepositoryNotFound = errors.New("repository not found")
 
 func (f *FakeRepositoryProvider) GetRepository() (repo *domain.Repository, err error) {
