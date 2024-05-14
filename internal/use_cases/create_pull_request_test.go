@@ -215,6 +215,12 @@ func (*CreatePullRequestExecutionTestSuite) NewFakeIssueTracker() *domainFakes.F
 	}
 }
 
+func (*CreatePullRequestExecutionTestSuite) NewFakeIssueTrackerProvider(issueTracker domain.IssueTracker) *domainFakes.FakeIssueTrackerProvider {
+	return &domainFakes.FakeIssueTrackerProvider{
+		IssueTracker: issueTracker,
+	}
+}
+
 type CreateGithubPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 }
@@ -242,7 +248,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.NewFakePullRequestProvider()
 	s.issueTracker = s.NewFakeGitHubIssueTracker()
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = s.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 
@@ -602,7 +608,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = s.NewFakePullRequestProvider()
 	s.issueTracker = s.NewFakeJiraIssueTracker()
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = s.NewFakeIssueTrackerProvider(s.issueTracker)
 	s.branchProvider = s.initializeBranchProvider()
 	s.repositoryProvider = domainFakes.NewFakeRepositoryProvider()
 

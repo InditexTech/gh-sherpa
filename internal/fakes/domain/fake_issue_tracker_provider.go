@@ -14,12 +14,6 @@ type FakeIssueTrackerProvider struct {
 
 var _ domain.IssueTrackerProvider = (*FakeIssueTrackerProvider)(nil)
 
-func NewFakeIssueTrackerProvider(issueTracker domain.IssueTracker) *FakeIssueTrackerProvider {
-	return &FakeIssueTrackerProvider{
-		IssueTracker: issueTracker,
-	}
-}
-
 func (f *FakeIssueTrackerProvider) GetIssueTracker(identifier string) (issueTracker domain.IssueTracker, err error) {
 	_, err = strconv.Atoi(identifier)
 	if strings.HasPrefix(identifier, "GH-") || strings.HasPrefix(identifier, "PROJECTKEY-") || err == nil {
