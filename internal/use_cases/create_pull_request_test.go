@@ -130,11 +130,11 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		branchName := "feature/GH-3-pull-request-sample"
 		s.gitProvider.CurrentBranch = branchName
 		s.gitProvider.AddLocalBranches(branchName)
-		// TODO: Review this test case and check the pr closed status
 		s.pullRequestProvider.AddPullRequest(branchName, domain.PullRequest{})
 		s.setGetBranchName(branchName)
 
 		err := s.uc.Execute()
+
 		s.ErrorContains(err, "pull request")
 		s.ErrorContains(err, "already exists")
 	})
@@ -494,7 +494,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		branchName := "feature/PROJECTKEY-3-pull-request-sample"
 		s.gitProvider.CurrentBranch = branchName
 		s.gitProvider.AddLocalBranches(branchName)
-		// TODO: Review this test case and check the pr closed status
 		s.pullRequestProvider.AddPullRequest(branchName, domain.PullRequest{})
 		s.setGetBranchName(branchName)
 
