@@ -81,14 +81,14 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		err := s.uc.Execute()
 
 		s.Error(err)
-		s.Assert().False(s.gitProvider.BranchExists(s.defaultBranchName))
+		s.False(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if no issue flag is provided", func() {
 		err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
-		s.Assert().False(s.gitProvider.BranchExists(s.defaultBranchName))
+		s.False(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if branch already exists with default flag", func() {
@@ -113,7 +113,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().True(s.gitProvider.BranchExists(s.defaultBranchName))
+		s.True(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should create branch if not exists without default flag", func() {
@@ -127,7 +127,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().True(s.gitProvider.BranchExists(s.defaultBranchName))
+		s.True(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if branch already exists without default flag", func() {

@@ -96,7 +96,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not get the current branch name")
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should error if no issue could be identified", func() {
@@ -110,7 +110,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		expectedError := fmt.Sprintf("could not find an issue identifier in the current branch named %s", branchName)
 		s.EqualError(err, expectedError)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should exit if user does not confirm current branch", func() {
@@ -123,7 +123,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
 	})
 
 	s.Run("should return error if pr already exists", func() {
@@ -172,7 +172,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(s.defaultBranchName).Error())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should exit if user does not confirm the commit push when default flag is not used", func() {
@@ -188,7 +188,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should error if could not create empty commit", func() {
@@ -261,7 +261,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists("feature/GH-1-sample-issue").Error())
 		s.userInteractionProvider.AssertExpectations(s.T())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should create new branch name if user doesn't confirm default branch name when using issue flags", func() {
@@ -296,7 +296,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should checkout branch if user confirms branch usage with issue flag and no default flag", func() {
@@ -321,7 +321,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should create branch and pull request if local branch doesn't exists with issue flag", func() {
@@ -337,7 +337,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should create pull request with no close issue flag", func() {
@@ -351,7 +351,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should error if could not get issue", func() {
@@ -362,7 +362,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		err := s.uc.Execute()
 
 		s.Error(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 }
 
@@ -462,7 +462,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not get the current branch name")
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should error if no issue could be identified", func() {
@@ -474,7 +474,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		expectedError := fmt.Sprintf("could not find an issue identifier in the current branch named %s", branchName)
 		s.EqualError(err, expectedError)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should exit if user does not confirm current branch", func() {
@@ -487,7 +487,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
 	})
 
 	s.Run("should return error if pr already exists", func() {
@@ -535,7 +535,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists(s.defaultBranchName).Error())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should exit if user does not confirm the commit push when default flag is not used", func() {
@@ -551,7 +551,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should error if could not create empty commit", func() {
@@ -622,7 +622,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists("feature/PROJECTKEY-1-sample-issue").Error())
 		s.userInteractionProvider.AssertExpectations(s.T())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should create new branch name if user doesn't confirm default branch name when using issue flags", func() {
@@ -657,7 +657,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should checkout branch if user confirms branch usage with issue flag and no default flag", func() {
@@ -679,7 +679,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should create branch and pull request if local branch doesn't exists with issue flag", func() {
@@ -695,7 +695,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		s.Assert().True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
 	})
 
 	s.Run("should create pull request with no close issue flag", func() {
@@ -721,7 +721,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.Error(err)
-		s.Assert().False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 }
 
