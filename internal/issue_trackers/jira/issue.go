@@ -26,7 +26,7 @@ type IssueType struct {
 
 // Body implements domain.Issue.
 func (i Issue) Body() string {
-	panic("unimplemented")
+	return i.body
 }
 
 // FormatID implements domain.Issue.
