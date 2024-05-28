@@ -25,9 +25,9 @@ type CreatePullRequestExecutionTestSuite struct {
 	issueTrackerProvider    *domainFakes.FakeIssueTrackerProvider
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	pullRequestProvider     *domainFakes.FakePullRequestProvider
-	issueTracker            *domainFakes.FakeIssueTracker
-	branchProvider          *domainMocks.MockBranchProvider
-	repositoryProvider      *domainFakes.FakeRepositoryProvider
+	// issueTracker            *domainFakes.FakeIssueTracker
+	branchProvider     *domainMocks.MockBranchProvider
+	repositoryProvider *domainFakes.FakeRepositoryProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
@@ -51,13 +51,19 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider.AddLocalBranches(s.defaultBranchName)
 	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
 
-	s.issueTracker = domainFakes.NewFakeIssueTracker()
-	s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
-	s.issueTracker.AddIssue("1", issue_types.Feature)
-	s.issueTracker.AddIssue("3", issue_types.Documentation)
-	s.issueTracker.AddIssue("6", issue_types.Refactoring)
+	// s.issueTracker = domainFakes.NewFakeIssueTracker()
+	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
+	// s.issueTracker.AddIssue("1", issue_types.Feature)
+	// s.issueTracker.AddIssue("3", issue_types.Documentation)
+	// s.issueTracker.AddIssue("6", issue_types.Refactoring)
 
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
+	issue1 := domainFakes.NewFakeIssue("1", issue_types.Feature, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue1)
+	issue3 := domainFakes.NewFakeIssue("3", issue_types.Documentation, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue3)
+	issue6 := domainFakes.NewFakeIssue("6", issue_types.Refactoring, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue6)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()
@@ -417,13 +423,19 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider.AddLocalBranches(s.defaultBranchName)
 	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
 
-	s.issueTracker = domainFakes.NewFakeIssueTracker()
-	s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
-	s.issueTracker.AddIssue("PROJECTKEY-1", issue_types.Feature)
-	s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
-	s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
+	// s.issueTracker = domainFakes.NewFakeIssueTracker()
+	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
+	// s.issueTracker.AddIssue("PROJECTKEY-1", issue_types.Feature)
+	// s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
+	// s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
 
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
+	issue1 := domainFakes.NewFakeIssue("PROJECTKEY-1", issue_types.Feature, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue1)
+	issue3 := domainFakes.NewFakeIssue("PROJECTKEY-3", issue_types.Documentation, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue3)
+	issue6 := domainFakes.NewFakeIssue("PROJECTKEY-6", issue_types.Refactoring, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue6)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.pullRequestProvider = domainFakes.NewFakePullRequestProvider()

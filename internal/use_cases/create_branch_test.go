@@ -7,7 +7,6 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	domainFakes "github.com/InditexTech/gh-sherpa/internal/fakes/domain"
-	"github.com/InditexTech/gh-sherpa/internal/issue_trackers/github"
 	"github.com/InditexTech/gh-sherpa/internal/mocks"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/InditexTech/gh-sherpa/internal/use_cases"
@@ -40,10 +39,6 @@ func TestCreateGithubBranchExecutionTestSuite(t *testing.T) {
 
 func (s *CreateGithubBranchExecutionTestSuite) SetupSuite() {
 	s.defaultBranchName = "feature/GH-1-sample-issue"
-}
-
-type fakeGithubIssue struct {
-	github.Issue
 }
 
 func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
