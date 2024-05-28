@@ -112,7 +112,6 @@ func Test_CheckConfiguration(t *testing.T) {
 	}
 }
 
-// TODO: MOVE THIS TEST WHERE IS NEEDED
 func TestGetIssueType(t *testing.T) {
 
 	createIssue := func(labelNames ...string) domain.Issue {
@@ -225,8 +224,6 @@ func TestGithub_FormatIssueId(t *testing.T) {
 		})
 	}
 }
-
-//TODO: MOVE THIS TEST WHERE IS NEDED
 
 func TestGetIssueTypeLabel(t *testing.T) {
 
