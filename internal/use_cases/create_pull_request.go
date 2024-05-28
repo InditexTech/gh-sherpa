@@ -193,7 +193,7 @@ func (cpr CreatePullRequest) Execute() error {
 
 	labels := []string{}
 	// typeLabel := issueTracker.GetIssueTypeLabel(issue)
-	typeLabel := _issue.IssueTypeLabel()
+	typeLabel := _issue.TypeLabel()
 	if typeLabel != "" {
 		labels = append(labels, typeLabel)
 	}
@@ -230,28 +230,23 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 }
 
 func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
-	//TODO: MOVE THIS TO THE CORRESPONDING ISSUE (GITHUB, JIRA)
+	switch issue.TrackerType() {
+	case domain.IssueTrackerTypeGithub:
+		title = issue.Title()
 
-	// switch issue.IssueTracker {
-	// case domain.IssueTrackerTypeGithub:
-	// 	title = issue.Title
+		keyword := "Closes"
+		if !cpr.Cfg.CloseIssue {
+			keyword = "Related to"
+		}
+		body = fmt.Sprintf("%s #%s", keyword, issue.ID())
 
-	// 	keyword := "Closes"
-	// 	if !cpr.Cfg.CloseIssue {
-	// 		keyword = "Related to"
-	// 	}
-	// 	body = fmt.Sprintf("%s #%s", keyword, issue.ID)
+	case domain.IssueTrackerTypeJira:
+		title = fmt.Sprintf("[%s] %s", issue.ID(), issue.Title())
 
-	// case domain.IssueTrackerTypeJira:
-	// 	title = fmt.Sprintf("[%s] %s", issue.ID, issue.Title)
-
-	// 	body = fmt.Sprintf("Relates to [%s](%s)", issue.ID, issue.Url)
-	// default:
-	// 	err = fmt.Errorf("issue tracker %s is not supported", issue.IssueTracker)
-	// }
-
-	title = issue.Title()
-	body = issue.Body()
+		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID(), issue.URL())
+	default:
+		err = fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
+	}
 
 	return title, body, err
 }

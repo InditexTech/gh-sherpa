@@ -18,7 +18,7 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 	// }
 
 	// issueType := issueTracker.GetIssueType(issue)
-	issueType := issue.IssueType()
+	issueType := issue.Type()
 	branchType := issueType.String()
 
 	// issueID := issueTracker.FormatIssueId(issue.ID)
@@ -27,7 +27,7 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 	issueSlug := parseIssueContext(issue.Title())
 
 	// issueTrackerType := issueTracker.GetIssueTrackerType()
-	issueTrackerType := issue.IssueTrackerType()
+	issueTrackerType := issue.TrackerType()
 
 	if b.cfg.IsInteractive {
 		branchType, err = b.getBranchType(issueType, issueTrackerType)

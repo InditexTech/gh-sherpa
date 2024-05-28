@@ -42,18 +42,18 @@ func (f *FakeIssue) ID() string {
 	return f.id
 }
 
-// IssueTrackerType implements domain.Issue.
-func (f *FakeIssue) IssueTrackerType() domain.IssueTrackerType {
+// TrackerType implements domain.Issue.
+func (f *FakeIssue) TrackerType() domain.IssueTrackerType {
 	return f.issueTrackerType
 }
 
-// IssueType implements domain.Issue.
-func (f *FakeIssue) IssueType() issue_types.IssueType {
+// Type implements domain.Issue.
+func (f *FakeIssue) Type() issue_types.IssueType {
 	return f.issueType
 }
 
-// IssueTypeLabel implements domain.Issue.
-func (f *FakeIssue) IssueTypeLabel() string {
+// TypeLabel implements domain.Issue.
+func (f *FakeIssue) TypeLabel() string {
 	return fmt.Sprintf("kind/%s", f.issueType)
 }
 

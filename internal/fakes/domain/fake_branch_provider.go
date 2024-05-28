@@ -16,7 +16,7 @@ func NewFakeBranchProvider() FakeBranchProvider {
 }
 
 func (f *FakeBranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository) (branchName string, err error) {
-	switch issue.IssueTrackerType() {
+	switch issue.TrackerType() {
 	case domain.IssueTrackerTypeGithub:
 		return fmt.Sprintf("feature/GH-%s-generated-branch-name", issue.ID()), nil
 	case domain.IssueTrackerTypeJira:

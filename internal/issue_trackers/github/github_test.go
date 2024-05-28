@@ -168,7 +168,7 @@ func TestGetIssueType(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got := tc.issue.IssueType()
+			got := tc.issue.Type()
 			assert.Equal(t, tc.want, got)
 		})
 	}
@@ -278,7 +278,7 @@ func TestGetIssueTypeLabel(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got := tc.issue.IssueTypeLabel()
+			got := tc.issue.TypeLabel()
 			assert.Equal(t, tc.want, got)
 		})
 	}

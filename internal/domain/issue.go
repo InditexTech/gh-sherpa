@@ -26,7 +26,7 @@ type Issue interface {
 	Title() string
 	Body() string
 	URL() string
-	IssueTypeLabel() string
-	IssueTrackerType() IssueTrackerType
-	IssueType() issue_types.IssueType
+	TypeLabel() string
+	TrackerType() IssueTrackerType
+	Type() issue_types.IssueType
 }

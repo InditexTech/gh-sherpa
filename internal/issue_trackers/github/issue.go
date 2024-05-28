@@ -40,7 +40,7 @@ func (i Issue) URL() string {
 	return i.url
 }
 
-func (i Issue) IssueTypeLabel() string {
+func (i Issue) TypeLabel() string {
 	for _, cfgLabels := range i.labelsConfig {
 		for _, label := range i.labels {
 			if slices.Contains(cfgLabels, label.Name) {
@@ -52,12 +52,12 @@ func (i Issue) IssueTypeLabel() string {
 	return ""
 }
 
-func (i Issue) IssueTrackerType() domain.IssueTrackerType {
+func (i Issue) TrackerType() domain.IssueTrackerType {
 	return domain.IssueTrackerTypeGithub
 }
 
-func (i Issue) IssueType() issue_types.IssueType {
-	issueTypeLabel := i.IssueTypeLabel()
+func (i Issue) Type() issue_types.IssueType {
+	issueTypeLabel := i.TypeLabel()
 
 	for issueType, cfgLabels := range i.labelsConfig {
 		if slices.Contains(cfgLabels, issueTypeLabel) {
