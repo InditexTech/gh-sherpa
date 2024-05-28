@@ -370,12 +370,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) initializeUserInteractionPro
 	return userInteractionProvider
 }
 
-func (s *CreateGithubPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
-	branchProvider := &domainMocks.MockBranchProvider{}
-
-	return branchProvider
-}
-
 type CreateJiraPullRequestExecutionTestSuite struct {
 	CreatePullRequestExecutionTestSuite
 	getConfigFile func() (config.ConfigFile, error)
@@ -734,10 +728,4 @@ func (s *CreateJiraPullRequestExecutionTestSuite) initializeUserInteractionProvi
 	userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	return userInteractionProvider
-}
-
-func (s *CreateJiraPullRequestExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
-	branchProvider := &domainMocks.MockBranchProvider{}
-
-	return branchProvider
 }
