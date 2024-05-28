@@ -21,8 +21,8 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 	issueType := issue.Type()
 	branchType := issueType.String()
 
-	// issueID := issueTracker.FormatIssueId(issue.ID)
-	issueID := issue.ID()
+	// formattedID := issueTracker.FormatIssueId(issue.ID)
+	formattedID := issue.FormatID()
 
 	issueSlug := parseIssueContext(issue.Title())
 
@@ -35,7 +35,7 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 			return "", err
 		}
 
-		maxContextLen := calcIssueContextMaxLen(repo.NameWithOwner, branchType, issueID)
+		maxContextLen := calcIssueContextMaxLen(repo.NameWithOwner, branchType, formattedID)
 		promptIssueContext := fmt.Sprintf("additional description (optional). Truncate to %d chars", maxContextLen)
 		err = b.UserInteraction.SelectOrInput(promptIssueContext, []string{}, &issueSlug, false)
 		if err != nil {
@@ -55,7 +55,7 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 		}
 	}
 
-	branchName = b.formatBranchName(repo.NameWithOwner, branchType, issueID, issueSlug)
+	branchName = b.formatBranchName(repo.NameWithOwner, branchType, formattedID, issueSlug)
 
 	return branchName, nil
 }
