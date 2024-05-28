@@ -35,7 +35,7 @@ type CreateGithubPullRequestExecutionTestSuite struct {
 }
 
 func (s *CreatePullRequestExecutionTestSuite) setGetBranchName(branchName string) {
-	s.branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return(branchName, nil).Once()
+	s.branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything).Return(branchName, nil).Once()
 }
 
 func TestCreateGitHubPullRequestExecutionTestSuite(t *testing.T) {

@@ -15,12 +15,12 @@ func NewFakeBranchProvider() FakeBranchProvider {
 	return FakeBranchProvider{}
 }
 
-func (f *FakeBranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository) (branchName string, err error) {
-	switch issueTracker.GetIssueTrackerType() {
+func (f *FakeBranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository) (branchName string, err error) {
+	switch issue.IssueTrackerType() {
 	case domain.IssueTrackerTypeGithub:
-		return fmt.Sprintf("feature/GH-%s-generated-branch-name", issueIdentifier), nil
+		return fmt.Sprintf("feature/GH-%s-generated-branch-name", issue.ID()), nil
 	case domain.IssueTrackerTypeJira:
-		return fmt.Sprintf("feature/%s-generated-branch-name", issueIdentifier), nil
+		return fmt.Sprintf("feature/%s-generated-branch-name", issue.ID()), nil
 	default:
 
 	}

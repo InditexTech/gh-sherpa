@@ -7,6 +7,7 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	domainFakes "github.com/InditexTech/gh-sherpa/internal/fakes/domain"
+	"github.com/InditexTech/gh-sherpa/internal/issue_trackers/github"
 	"github.com/InditexTech/gh-sherpa/internal/mocks"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/InditexTech/gh-sherpa/internal/use_cases"
@@ -20,14 +21,13 @@ type CreateBranchExecutionTestSuite struct {
 	uc                      use_cases.CreateBranch
 	gitProvider             *domainFakes.FakeGitProvider
 	issueTrackerProvider    *domainFakes.FakeIssueTrackerProvider
-	issueTracker            *domainFakes.FakeIssueTracker
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	branchProvider          *domainMocks.MockBranchProvider
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
 func (s *CreateBranchExecutionTestSuite) setGetBranchName(branch string) {
-	s.branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return(branch, nil).Once()
+	s.branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything).Return(branch, nil).Once()
 }
 
 type CreateGithubBranchExecutionTestSuite struct {
@@ -42,16 +42,26 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSuite() {
 	s.defaultBranchName = "feature/GH-1-sample-issue"
 }
 
+type fakeGithubIssue struct {
+	github.Issue
+}
+
 func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
 
-	s.issueTracker = domainFakes.NewFakeIssueTracker()
-	s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
-	s.issueTracker.AddIssue("1", issue_types.Feature)
-	s.issueTracker.AddIssue("3", issue_types.Documentation)
-	s.issueTracker.AddIssue("6", issue_types.Refactoring)
+	// s.issueTracker = domainFakes.NewFakeIssueTracker()
+	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
+	// s.issueTracker.AddIssue("1", issue_types.Feature)
+	// s.issueTracker.AddIssue("3", issue_types.Documentation)
+	// s.issueTracker.AddIssue("6", issue_types.Refactoring)
 
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
+	issue1 := domainFakes.NewFakeIssue("1", issue_types.Feature, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue1)
+	issue3 := domainFakes.NewFakeIssue("3", issue_types.Documentation, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue3)
+	issue6 := domainFakes.NewFakeIssue("6", issue_types.Refactoring, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue6)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.branchProvider = s.initializeBranchProvider()
@@ -177,13 +187,19 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSuite() {
 func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
 
-	s.issueTracker = domainFakes.NewFakeIssueTracker()
-	s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
-	s.issueTracker.AddIssue("PROJECTKEY-1", issue_types.Feature)
-	s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
-	s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
+	// s.issueTracker = domainFakes.NewFakeIssueTracker()
+	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
+	// s.issueTracker.AddIssue("PROJECTKEY-1", issue_types.Feature)
+	// s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
+	// s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
 
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
+	issue1 := domainFakes.NewFakeIssue("PROJECTKEY-1", issue_types.Feature, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue1)
+	issue3 := domainFakes.NewFakeIssue("PROJECTKEY-3", issue_types.Documentation, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue3)
+	issue6 := domainFakes.NewFakeIssue("PROJECTKEY-6", issue_types.Refactoring, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue6)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
 	s.branchProvider = s.initializeBranchProvider()

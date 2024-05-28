@@ -40,12 +40,12 @@ func (cb CreateBranch) Execute() (err error) {
 		baseBranch = repo.DefaultBranchRef
 	}
 
-	issueTrackerProvider, err := cb.IssueTrackerProvider.GetIssueTracker(cb.Cfg.IssueID)
+	issue, err := cb.IssueTrackerProvider.GetIssue(cb.Cfg.IssueID)
 	if err != nil {
 		return err
 	}
 
-	branchName, err := cb.BranchProvider.GetBranchName(issueTrackerProvider, cb.Cfg.IssueID, *repo)
+	branchName, err := cb.BranchProvider.GetBranchName(issue, *repo)
 	if err != nil {
 		return err
 	}

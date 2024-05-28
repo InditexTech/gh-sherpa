@@ -11,20 +11,23 @@ import (
 )
 
 // GetBranchName asks the user for a branch name in an interactive way
-func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository) (branchName string, err error) {
-	issue, err := issueTracker.GetIssue(issueIdentifier)
-	if err != nil {
-		return "", err
-	}
+func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository) (branchName string, err error) {
+	// issue, err := issueTracker.GetIssue(issueIdentifier)
+	// if err != nil {
+	// 	return "", err
+	// }
 
-	issueType := issueTracker.GetIssueType(issue)
+	// issueType := issueTracker.GetIssueType(issue)
+	issueType := issue.IssueType()
 	branchType := issueType.String()
 
-	issueID := issueTracker.FormatIssueId(issue.ID)
+	// issueID := issueTracker.FormatIssueId(issue.ID)
+	issueID := issue.ID()
 
-	issueSlug := parseIssueContext(issue.Title)
+	issueSlug := parseIssueContext(issue.Title())
 
-	issueTrackerType := issueTracker.GetIssueTrackerType()
+	// issueTrackerType := issueTracker.GetIssueTrackerType()
+	issueTrackerType := issue.IssueTrackerType()
 
 	if b.cfg.IsInteractive {
 		branchType, err = b.getBranchType(issueType, issueTrackerType)

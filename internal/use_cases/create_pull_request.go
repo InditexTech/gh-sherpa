@@ -55,12 +55,13 @@ func (cpr CreatePullRequest) Execute() error {
 
 	// 1. FLAG ISSUE IS USED
 	if issueID != "" {
-		issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
+		_issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 		if err != nil {
 			return err
 		}
 
-		formattedIssueId := issueTracker.FormatIssueId(issueID)
+		// formattedIssueId := issueTracker.FormatIssueId(issueID)
+		formattedIssueId := _issue.FormatID()
 
 		// 7. CHECK IF A LOCAL BRANCH CONTAINS THIS ISSUE
 		name, exists := cpr.Git.BranchExistsContains(fmt.Sprintf("/%s-", formattedIssueId))
@@ -79,7 +80,7 @@ func (cpr CreatePullRequest) Execute() error {
 			}
 
 			if !confirmed {
-				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
+				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, _issue, *repo)
 				if err != nil {
 					return err
 				}
@@ -106,7 +107,7 @@ func (cpr CreatePullRequest) Execute() error {
 			}
 
 		} else {
-			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
+			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, _issue, *repo)
 			if err != nil {
 				return err
 			}
@@ -171,23 +172,28 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	// 15. GET INFO FROM ISSUE
-	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
+	// issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// issue, err := issueTracker.GetIssue(issueID)
+	// if err != nil {
+	// 	return err
+	// }
+	_issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 	if err != nil {
 		return err
 	}
 
-	issue, err := issueTracker.GetIssue(issueID)
-	if err != nil {
-		return err
-	}
-
-	title, body, err := cpr.getPullRequestTitleAndBody(issue)
+	title, body, err := cpr.getPullRequestTitleAndBody(_issue)
 	if err != nil {
 		return err
 	}
 
 	labels := []string{}
-	typeLabel := issueTracker.GetIssueTypeLabel(issue)
+	// typeLabel := issueTracker.GetIssueTypeLabel(issue)
+	typeLabel := _issue.IssueTypeLabel()
 	if typeLabel != "" {
 		labels = append(labels, typeLabel)
 	}
@@ -224,23 +230,28 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 }
 
 func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
-	switch issue.IssueTracker {
-	case domain.IssueTrackerTypeGithub:
-		title = issue.Title
+	//TODO: MOVE THIS TO THE CORRESPONDING ISSUE (GITHUB, JIRA)
 
-		keyword := "Closes"
-		if !cpr.Cfg.CloseIssue {
-			keyword = "Related to"
-		}
-		body = fmt.Sprintf("%s #%s", keyword, issue.ID)
+	// switch issue.IssueTracker {
+	// case domain.IssueTrackerTypeGithub:
+	// 	title = issue.Title
 
-	case domain.IssueTrackerTypeJira:
-		title = fmt.Sprintf("[%s] %s", issue.ID, issue.Title)
+	// 	keyword := "Closes"
+	// 	if !cpr.Cfg.CloseIssue {
+	// 		keyword = "Related to"
+	// 	}
+	// 	body = fmt.Sprintf("%s #%s", keyword, issue.ID)
 
-		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID, issue.Url)
-	default:
-		err = fmt.Errorf("issue tracker %s is not supported", issue.IssueTracker)
-	}
+	// case domain.IssueTrackerTypeJira:
+	// 	title = fmt.Sprintf("[%s] %s", issue.ID, issue.Title)
+
+	// 	body = fmt.Sprintf("Relates to [%s](%s)", issue.ID, issue.Url)
+	// default:
+	// 	err = fmt.Errorf("issue tracker %s is not supported", issue.IssueTracker)
+	// }
+
+	title = issue.Title()
+	body = issue.Body()
 
 	return title, body, err
 }
@@ -300,8 +311,8 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	return nil
 }
 
-func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {
-	branchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
+func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issue domain.Issue, repo domain.Repository) (branchName string, canceled bool, err error) {
+	branchName, err = cpr.BranchProvider.GetBranchName(issue, repo)
 	if err != nil {
 		return "", false, err
 	}

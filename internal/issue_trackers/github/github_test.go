@@ -9,7 +9,6 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type mockedCli struct {
@@ -29,8 +28,8 @@ func (m *mockedCli) GetRepo() (repo *domain.Repository, err error) {
 
 func (m *mockedCli) Execute(result any, _ []string) (err error) {
 	switch result := result.(type) {
-	case *Issue:
-		*result = Issue{
+	case *ghIssue:
+		*result = ghIssue{
 			Number: 1,
 			Title:  "Issue 1",
 			Body:   "Body 1",
@@ -65,7 +64,7 @@ func Test_GetIssue(t *testing.T) {
 		{
 			name:      "GetIssue",
 			args:      args{identifier: "1"},
-			want:      domain.Issue{ID: "1", Title: "Issue 1", Body: "Body 1", Labels: []domain.Label{{Id: "1", Name: "Label 1"}}, IssueTracker: domain.IssueTrackerTypeGithub},
+			want:      Issue{id: "1", title: "Issue 1", body: "Body 1", labels: []domain.Label{{Id: "1", Name: "Label 1"}}},
 			mockedCli: &mockedCli{},
 			wantErr:   false,
 		},
@@ -113,6 +112,7 @@ func Test_CheckConfiguration(t *testing.T) {
 	}
 }
 
+// TODO: MOVE THIS TEST WHERE IS NEEDED
 func TestGetIssueType(t *testing.T) {
 
 	createIssue := func(labelNames ...string) domain.Issue {
@@ -120,21 +120,15 @@ func TestGetIssueType(t *testing.T) {
 		for i, labelName := range labelNames {
 			labels[i] = domain.Label{Name: labelName}
 		}
-		return domain.Issue{Labels: labels}
-	}
-
-	cfg := Configuration{
-		Github: config.Github{
-			IssueLabels: config.GithubIssueLabels{
+		return Issue{
+			labels: labels,
+			labelsConfig: config.GithubIssueLabels{
 				issue_types.Bug:         {"bug", "bugfix"},
 				issue_types.Feature:     {"feature", "enhancement"},
 				issue_types.Refactoring: {},
 			},
-		},
+		}
 	}
-
-	g, err := New(cfg)
-	require.NoError(t, err)
 
 	for _, tc := range []struct {
 		name  string
@@ -174,7 +168,7 @@ func TestGetIssueType(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got := g.GetIssueType(tc.issue)
+			got := tc.issue.IssueType()
 			assert.Equal(t, tc.want, got)
 		})
 	}
@@ -211,33 +205,28 @@ func Test_IdentifyIssue(t *testing.T) {
 }
 
 func TestGithub_FormatIssueId(t *testing.T) {
-	type fields struct {
-		Cli domain.GhCli
-	}
 	type args struct {
 		issue domain.Issue
 	}
 	tests := []struct {
 		name        string
-		fields      fields
 		args        args
 		wantIssueId string
 	}{
 		{
 			name:        "FormatIssueId",
-			args:        args{issue: domain.Issue{ID: "1"}},
+			args:        args{issue: Issue{id: "1"}},
 			wantIssueId: "GH-1",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g := &Github{
-				cli: tt.fields.Cli,
-			}
-			assert.Equalf(t, tt.wantIssueId, g.FormatIssueId(tt.args.issue.ID), "FormatIssueId(%v)", tt.args.issue)
+			assert.Equalf(t, tt.wantIssueId, tt.args.issue.FormatID(), "FormatIssueId(%v)", tt.args.issue.ID())
 		})
 	}
 }
+
+//TODO: MOVE THIS TEST WHERE IS NEDED
 
 func TestGetIssueTypeLabel(t *testing.T) {
 
@@ -246,21 +235,15 @@ func TestGetIssueTypeLabel(t *testing.T) {
 		for i, labelName := range labelNames {
 			labels[i] = domain.Label{Name: labelName}
 		}
-		return domain.Issue{Labels: labels}
-	}
-
-	cfg := Configuration{
-		Github: config.Github{
-			IssueLabels: config.GithubIssueLabels{
+		return Issue{
+			labels: labels,
+			labelsConfig: config.GithubIssueLabels{
 				issue_types.Bug:         {"kind/bug", "kind/bugfix"},
 				issue_types.Feature:     {"kind/feat"},
 				issue_types.Refactoring: {},
 			},
-		},
+		}
 	}
-
-	g, err := New(cfg)
-	require.NoError(t, err)
 
 	for _, tc := range []struct {
 		name  string
@@ -295,7 +278,7 @@ func TestGetIssueTypeLabel(t *testing.T) {
 	} {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			got := g.GetIssueTypeLabel(tc.issue)
+			got := tc.issue.IssueTypeLabel()
 			assert.Equal(t, tc.want, got)
 		})
 	}
