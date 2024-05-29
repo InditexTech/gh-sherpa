@@ -398,12 +398,6 @@ func (s *CreateJiraPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider.AddLocalBranches(s.defaultBranchName)
 	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
 
-	// s.issueTracker = domainFakes.NewFakeIssueTracker()
-	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
-	// s.issueTracker.AddIssue("PROJECTKEY-1", issue_types.Feature)
-	// s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
-	// s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
-
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
 	issue1 := domainFakes.NewFakeIssue("PROJECTKEY-1", issue_types.Feature, domain.IssueTrackerTypeJira)
 	s.issueTrackerProvider.AddIssue(issue1)
