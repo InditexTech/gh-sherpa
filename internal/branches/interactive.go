@@ -24,7 +24,7 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 	// formattedID := issueTracker.FormatIssueId(issue.ID)
 	formattedID := issue.FormatID()
 
-	issueSlug := parseIssueContext(issue.Title())
+	issueSlug := normalizeBranch(issue.Title())
 
 	// issueTrackerType := issueTracker.GetIssueTrackerType()
 	issueTrackerType := issue.TrackerType()
@@ -42,7 +42,7 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 			return "", err
 		}
 
-		issueSlug = parseIssueContext(issueSlug)
+		issueSlug = normalizeBranch(issueSlug)
 
 	} else {
 		if issueType == issue_types.Other || issueType == issue_types.Unknown {

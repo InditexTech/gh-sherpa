@@ -29,7 +29,7 @@ func TestParseIssueContext(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			context := parseIssueContext(tt.given)
+			context := normalizeBranch(tt.given)
 
 			assert.Equal(t, tt.want, context)
 		})

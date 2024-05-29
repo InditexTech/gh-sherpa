@@ -3,11 +3,13 @@ package github
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 )
 
@@ -72,16 +74,41 @@ func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
 		}
 	}
 
+	issueTypeLabel := g.getIssueTypeLabel(labels)
+
 	return Issue{
-		id:           strconv.FormatInt(result.Number, 10),
-		title:        result.Title,
-		body:         result.Body,
-		url:          result.Url,
-		labels:       labels,
-		labelsConfig: g.cfg.IssueLabels,
+		id:        strconv.FormatInt(result.Number, 10),
+		title:     result.Title,
+		body:      result.Body,
+		url:       result.Url,
+		labels:    labels,
+		typeLabel: issueTypeLabel,
+		issueType: g.getIssueType(issueTypeLabel),
 	}, nil
 
 	// return result, nil
+}
+
+func (g *Github) getIssueType(issueTypeLabel string) issue_types.IssueType {
+	for issueType, cfgLabels := range g.cfg.IssueLabels {
+		if slices.Contains(cfgLabels, issueTypeLabel) {
+			return issueType
+		}
+	}
+
+	return issue_types.Unknown
+}
+
+func (g *Github) getIssueTypeLabel(labels []domain.Label) string {
+	for _, cfgLabels := range g.cfg.IssueLabels {
+		for _, label := range labels {
+			if slices.Contains(cfgLabels, label.Name) {
+				return label.Name
+			}
+		}
+	}
+
+	return ""
 }
 
 func (g *Github) IdentifyIssue(identifier string) bool {

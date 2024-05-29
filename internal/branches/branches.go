@@ -58,13 +58,13 @@ func ParseBranchName(branchName string) *BranchNameInfo {
 	return nil
 }
 
-type issueContextRule struct {
+type branchNameRule struct {
 	pattern          regexp.Regexp
 	replace          string
 	repeatWhileMatch bool
 }
 
-var issueContextRules = []issueContextRule{
+var branchNameRules = []branchNameRule{
 	{pattern: *regexp.MustCompile(`^/`), replace: ""},                                      // Conventional Git branch naming. See https://git-scm.com/docs/git-check-ref-format
 	{pattern: *regexp.MustCompile(`~|\^|:|\?|\*|\[|@\{|\\\\`), replace: ""},                // Conventional Git branch naming.
 	{pattern: *regexp.MustCompile(`\/\/| |[\/\.]\.|[[:cntrl:]]`), replace: "-"},            // Conventional Git branch naming.
@@ -79,20 +79,20 @@ var issueContextRules = []issueContextRule{
 	{pattern: *regexp.MustCompile(`[^\w\-]`), replace: ""},                                 // Remove any other character for Kubernetes compatibility
 }
 
-func parseIssueContext(issueContext string) string {
-	issueContext = strings.TrimSpace(issueContext)
+func normalizeBranch(branchSlug string) string {
+	branchSlug = strings.TrimSpace(branchSlug)
 
-	for _, r := range issueContextRules {
-		issueContext = r.pattern.ReplaceAllString(issueContext, r.replace)
+	for _, r := range branchNameRules {
+		branchSlug = r.pattern.ReplaceAllString(branchSlug, r.replace)
 
-		for r.repeatWhileMatch && r.pattern.MatchString(issueContext) {
-			issueContext = r.pattern.ReplaceAllString(issueContext, r.replace)
+		for r.repeatWhileMatch && r.pattern.MatchString(branchSlug) {
+			branchSlug = r.pattern.ReplaceAllString(branchSlug, r.replace)
 		}
 	}
 
-	issueContext = strings.ToLower(issueContext)
+	branchSlug = strings.ToLower(branchSlug)
 
-	return issueContext
+	return branchSlug
 }
 
 // formatBranchName formats a branch name based on the issue type and the issue identifier.

@@ -55,13 +55,13 @@ func (cpr CreatePullRequest) Execute() error {
 
 	// 1. FLAG ISSUE IS USED
 	if issueID != "" {
-		_issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
+		issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 		if err != nil {
 			return err
 		}
 
 		// formattedIssueId := issueTracker.FormatIssueId(issueID)
-		formattedIssueId := _issue.FormatID()
+		formattedIssueId := issue.FormatID()
 
 		// 7. CHECK IF A LOCAL BRANCH CONTAINS THIS ISSUE
 		name, exists := cpr.Git.BranchExistsContains(fmt.Sprintf("/%s-", formattedIssueId))
@@ -80,7 +80,7 @@ func (cpr CreatePullRequest) Execute() error {
 			}
 
 			if !confirmed {
-				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, _issue, *repo)
+				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issue, *repo)
 				if err != nil {
 					return err
 				}
@@ -107,7 +107,7 @@ func (cpr CreatePullRequest) Execute() error {
 			}
 
 		} else {
-			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, _issue, *repo)
+			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issue, *repo)
 			if err != nil {
 				return err
 			}

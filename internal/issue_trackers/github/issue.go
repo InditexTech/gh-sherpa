@@ -2,20 +2,19 @@ package github
 
 import (
 	"fmt"
-	"slices"
 
-	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 )
 
 type Issue struct {
-	id           string
-	title        string
-	body         string
-	url          string
-	labels       []domain.Label
-	labelsConfig config.GithubIssueLabels
+	id        string
+	title     string
+	body      string
+	url       string
+	typeLabel string
+	issueType issue_types.IssueType
+	labels    []domain.Label
 }
 
 var _ domain.Issue = (*Issue)(nil)
@@ -41,15 +40,7 @@ func (i Issue) URL() string {
 }
 
 func (i Issue) TypeLabel() string {
-	for _, cfgLabels := range i.labelsConfig {
-		for _, label := range i.labels {
-			if slices.Contains(cfgLabels, label.Name) {
-				return label.Name
-			}
-		}
-	}
-
-	return ""
+	return i.typeLabel
 }
 
 func (i Issue) TrackerType() domain.IssueTrackerType {
@@ -57,13 +48,5 @@ func (i Issue) TrackerType() domain.IssueTrackerType {
 }
 
 func (i Issue) Type() issue_types.IssueType {
-	issueTypeLabel := i.TypeLabel()
-
-	for issueType, cfgLabels := range i.labelsConfig {
-		if slices.Contains(cfgLabels, issueTypeLabel) {
-			return issueType
-		}
-	}
-
-	return issue_types.Unknown
+	return i.issueType
 }
