@@ -43,7 +43,7 @@ func (f *fakeCli) Execute(result any, _ []string) (err error) {
 	return
 }
 
-func Test_GetIssue(t *testing.T) {
+func TestGetIssue(t *testing.T) {
 	newGhIssue := func(number int, labels []string) *ghIssue {
 		labl := make([]Label, len(labels))
 		for i, label := range labels {

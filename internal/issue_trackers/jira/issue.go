@@ -1,24 +1,23 @@
 package jira
 
 import (
-	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 )
 
 type Issue struct {
-	id               string
-	title            string
-	body             string
-	url              string
-	issueType        IssueType
-	issueTypesConfig config.JiraIssueTypes
-	labelsConfig     map[issue_types.IssueType][]string
+	id            string
+	title         string
+	body          string
+	url           string
+	jiraIssueType JiraIssueType
+	typeLabel     string
+	issueType     issue_types.IssueType
 }
 
 var _ domain.Issue = (*Issue)(nil)
 
-type IssueType struct {
+type JiraIssueType struct {
 	Id          string
 	Name        string
 	Description string
@@ -51,28 +50,12 @@ func (i Issue) TrackerType() domain.IssueTrackerType {
 
 // Type implements domain.Issue.
 func (i Issue) Type() issue_types.IssueType {
-	for issueType, ids := range i.issueTypesConfig {
-		for _, id := range ids {
-			if id == i.issueType.Id {
-				return issueType
-			}
-		}
-	}
-
-	return issue_types.Unknown
+	return i.issueType
 }
 
 // TypeLabel implements domain.Issue.
 func (i Issue) TypeLabel() string {
-	issueType := i.Type()
-
-	for mappedIssueType, labels := range i.labelsConfig {
-		if issueType == mappedIssueType && len(labels) > 0 {
-			return labels[0]
-		}
-	}
-
-	return ""
+	return i.typeLabel
 }
 
 // URL implements domain.Issue.
