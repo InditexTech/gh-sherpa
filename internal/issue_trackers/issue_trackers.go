@@ -2,7 +2,6 @@ package issue_trackers
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -55,16 +54,15 @@ func NewFromConfiguration(globalConfig config.Configuration) (*Provider, error) 
 	})
 }
 
-func (p Provider) GetIssueTracker(identifier string) (domain.IssueTracker, error) {
+func (p Provider) GetIssue(identifier string) (domain.Issue, error) {
 	if p.github.IdentifyIssue(identifier) {
 		logging.Debugf("Issue %s identified as a Github issue", identifier)
-		return &p.github, nil
+		return p.github.GetIssue(identifier)
 	}
 
 	if p.jira.IdentifyIssue(identifier) {
 		logging.Debugf("Issue %s identified as a Jira issue", identifier)
-		return &p.jira, nil
-
+		return p.jira.GetIssue(identifier)
 	}
 
 	return nil, fmt.Errorf("could not identify issue %s", identifier)
@@ -79,48 +77,6 @@ func (p Provider) ParseIssueId(identifier string) (issueId string) {
 	if p.jira.IdentifyIssue(identifier) {
 		logging.Debugf("Issue %s identified as a Jira issue", identifier)
 		return p.jira.ParseRawIssueId(identifier)
-	}
-
-	return
-}
-
-// GetIssueTitle returns the issue title
-func (p *Provider) GetIssueTitle(issue domain.Issue) (title string, err error) {
-	switch issue.IssueTracker {
-	case domain.IssueTrackerTypeGithub:
-		title = issue.Title
-	case domain.IssueTrackerTypeJira:
-		title = fmt.Sprintf("[%s] %s", issue.ID, issue.Title)
-	default:
-		err = fmt.Errorf("issue tracker %s is not supported", issue.IssueTracker)
-	}
-
-	return
-}
-
-// GetIssueBody returns the issue body
-func (p *Provider) GetIssueBody(issue domain.Issue, noCloseIssue bool) (body string, err error) {
-	switch issue.IssueTracker {
-	case domain.IssueTrackerTypeGithub:
-		keyword := "Closes"
-		if noCloseIssue {
-			keyword = "Related to"
-		}
-
-		body = fmt.Sprintf("%s #%s", keyword, issue.ID)
-
-	case domain.IssueTrackerTypeJira:
-		jiraHost := p.cfg.Jira.Auth.Host
-		jiraUrlBrowseIssue := jiraHost
-		if !strings.HasSuffix(jiraHost, "/") {
-			jiraUrlBrowseIssue += "/"
-		}
-
-		jiraUrlBrowseIssue += "browse/" + issue.ID
-
-		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID, jiraUrlBrowseIssue)
-	default:
-		err = fmt.Errorf("issue tracker %s is not supported", issue.IssueTracker)
 	}
 
 	return

@@ -55,12 +55,12 @@ func (cpr CreatePullRequest) Execute() error {
 
 	// 1. FLAG ISSUE IS USED
 	if issueID != "" {
-		issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
+		issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 		if err != nil {
 			return err
 		}
 
-		formattedIssueId := issueTracker.FormatIssueId(issueID)
+		formattedIssueId := issue.FormatID()
 
 		// 7. CHECK IF A LOCAL BRANCH CONTAINS THIS ISSUE
 		name, exists := cpr.Git.BranchExistsContains(fmt.Sprintf("/%s-", formattedIssueId))
@@ -79,7 +79,7 @@ func (cpr CreatePullRequest) Execute() error {
 			}
 
 			if !confirmed {
-				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
+				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issue, *repo)
 				if err != nil {
 					return err
 				}
@@ -106,7 +106,7 @@ func (cpr CreatePullRequest) Execute() error {
 			}
 
 		} else {
-			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
+			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issue, *repo)
 			if err != nil {
 				return err
 			}
@@ -170,13 +170,7 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("a pull request %s for this branch already exists", pr.Url)
 	}
 
-	// 15. GET INFO FROM ISSUE
-	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
-	if err != nil {
-		return err
-	}
-
-	issue, err := issueTracker.GetIssue(issueID)
+	issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 	if err != nil {
 		return err
 	}
@@ -187,7 +181,7 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	labels := []string{}
-	typeLabel := issueTracker.GetIssueTypeLabel(issue)
+	typeLabel := issue.TypeLabel()
 	if typeLabel != "" {
 		labels = append(labels, typeLabel)
 	}
@@ -224,22 +218,22 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 }
 
 func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
-	switch issue.IssueTracker {
+	switch issue.TrackerType() {
 	case domain.IssueTrackerTypeGithub:
-		title = issue.Title
+		title = issue.Title()
 
 		keyword := "Closes"
 		if !cpr.Cfg.CloseIssue {
 			keyword = "Related to"
 		}
-		body = fmt.Sprintf("%s #%s", keyword, issue.ID)
+		body = fmt.Sprintf("%s #%s", keyword, issue.ID())
 
 	case domain.IssueTrackerTypeJira:
-		title = fmt.Sprintf("[%s] %s", issue.ID, issue.Title)
+		title = fmt.Sprintf("[%s] %s", issue.ID(), issue.Title())
 
-		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID, issue.Url)
+		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID(), issue.URL())
 	default:
-		err = fmt.Errorf("issue tracker %s is not supported", issue.IssueTracker)
+		err = fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
 	}
 
 	return title, body, err
@@ -300,8 +294,8 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	return nil
 }
 
-func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {
-	branchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
+func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issue domain.Issue, repo domain.Repository) (branchName string, canceled bool, err error) {
+	branchName, err = cpr.BranchProvider.GetBranchName(issue, repo)
 	if err != nil {
 		return "", false, err
 	}

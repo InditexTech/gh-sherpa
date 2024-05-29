@@ -1,7 +1,6 @@
 package jira
 
 import (
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -17,11 +16,11 @@ var issuePattern = regexp.MustCompile(`^(?P<issue_key>\w+)-(?P<issue_num>\d+)$`)
 
 type Jira struct {
 	cfg    Configuration
-	client JiraClient
+	client gojiraClient
 }
 
-type JiraClient struct {
-	gojira.Client
+type gojiraClient interface {
+	getIssue(issueID string) (*gojira.Issue, *gojira.Response, error)
 }
 
 type Configuration struct {
@@ -34,20 +33,18 @@ func New(cfg Configuration) (jira *Jira, err error) {
 
 	jira = &Jira{cfg: cfg}
 
-	gojiraClient, err := createBearerClient(cfg.Auth.Token, cfg.Auth.Host, cfg.Auth.SkipTLSVerify)
+	bearerClient, err := createBearerClient(cfg.Auth.Token, cfg.Auth.Host, cfg.Auth.SkipTLSVerify)
 	if err != nil {
 		return nil, fmt.Errorf("could not create a Jira client: %s", err)
 	}
 
-	jira.client = *gojiraClient
+	jira.client = bearerClient
 
 	return
 }
 
-var _ domain.IssueTracker = (*Jira)(nil)
-
 func (j *Jira) GetIssue(identifier string) (issue domain.Issue, err error) {
-	issueGot, res, err := j.client.Issue.Get(identifier, &gojira.GetQueryOptions{Fields: "issuetype,summary"})
+	issueGot, res, err := j.client.getIssue(identifier)
 
 	if err != nil {
 		if res == nil {
@@ -74,10 +71,46 @@ func (j *Jira) GetIssue(identifier string) (issue domain.Issue, err error) {
 	return
 }
 
-func (j *Jira) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType) {
-	for issueType, ids := range j.cfg.Jira.IssueTypes {
+func (j *Jira) IdentifyIssue(identifier string) bool {
+	return issuePattern.MatchString(identifier)
+}
+
+func (j *Jira) CheckConfiguration() (err error) {
+	// TODO: Check if configuration is valid
+	return
+}
+
+func (j *Jira) ParseRawIssueId(identifier string) (issueId string) {
+	return identifier
+}
+
+func (j *Jira) generateUrl(issueKey string) string {
+	return fmt.Sprintf("%s/browse/%s", j.cfg.Auth.Host, issueKey)
+}
+
+func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
+
+	issueType := j.getIssueType(issue.Fields.Type.ID)
+
+	return Issue{
+		id:    issue.Key,
+		title: issue.Fields.Summary,
+		body:  issue.Fields.Description,
+		url:   j.generateUrl(issue.Key),
+		jiraIssueType: JiraIssueType{
+			Id:          issue.Fields.Type.ID,
+			Name:        issue.Fields.Type.Name,
+			Description: issue.Fields.Type.Description,
+		},
+		issueType: issueType,
+		typeLabel: j.getIssueTypeLabel(issueType),
+	}
+}
+
+func (j *Jira) getIssueType(issueID string) issue_types.IssueType {
+	for issueType, ids := range j.cfg.IssueTypes {
 		for _, id := range ids {
-			if id == issue.Type.Id {
+			if id == issueID {
 				return issueType
 			}
 		}
@@ -86,65 +119,7 @@ func (j *Jira) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType
 	return issue_types.Unknown
 }
 
-func (j *Jira) IdentifyIssue(identifier string) bool {
-	return issuePattern.MatchString(identifier)
-}
-
-func (j *Jira) CheckConfiguration() (err error) {
-
-	return
-}
-
-func (j *Jira) FormatIssueId(issueId string) (formattedIssueId string) {
-	return issueId
-}
-
-func (j *Jira) GetIssueTrackerType() domain.IssueTrackerType {
-	return domain.IssueTrackerTypeJira
-}
-
-func createBearerClient(token string, host string, skipTLSVerify bool) (client *JiraClient, err error) {
-	customTransport := http.DefaultTransport.(*http.Transport).Clone()
-	customTransport.TLSClientConfig = &tls.Config{InsecureSkipVerify: skipTLSVerify}
-
-	tp := gojira.BearerAuthTransport{
-		Token:     token,
-		Transport: customTransport,
-	}
-
-	gojiraClient, err := gojira.NewClient(tp.Client(), host)
-
-	if err != nil {
-		return
-	}
-
-	client = &JiraClient{*gojiraClient}
-
-	return
-}
-
-func (j *Jira) ParseRawIssueId(identifier string) (issueId string) {
-	return identifier
-}
-
-func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
-	return domain.Issue{
-		ID:    issue.Key,
-		Title: issue.Fields.Summary,
-		Body:  issue.Fields.Description,
-		Url:   fmt.Sprintf("%s/browse/%s", j.cfg.Auth.Host, issue.Key),
-		Type: domain.IssueType{
-			Id:          issue.Fields.Type.ID,
-			Name:        issue.Fields.Type.Name,
-			Description: issue.Fields.Type.Description,
-		},
-		IssueTracker: domain.IssueTrackerTypeJira,
-	}
-}
-
-func (j *Jira) GetIssueTypeLabel(issue domain.Issue) string {
-	issueType := j.GetIssueType(issue)
-
+func (j *Jira) getIssueTypeLabel(issueType issue_types.IssueType) string {
 	for mappedIssueType, labels := range j.cfg.IssueTypeLabels {
 		if issueType == mappedIssueType && len(labels) > 0 {
 			return labels[0]
