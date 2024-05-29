@@ -40,12 +40,6 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSuite() {
 func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
 
-	// s.issueTracker = domainFakes.NewFakeIssueTracker()
-	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
-	// s.issueTracker.AddIssue("1", issue_types.Feature)
-	// s.issueTracker.AddIssue("3", issue_types.Documentation)
-	// s.issueTracker.AddIssue("6", issue_types.Refactoring)
-
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
 	issue1 := domainFakes.NewFakeIssue("1", issue_types.Feature, domain.IssueTrackerTypeGithub)
 	s.issueTrackerProvider.AddIssue(issue1)
@@ -168,12 +162,6 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSuite() {
 
 func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
-
-	// s.issueTracker = domainFakes.NewFakeIssueTracker()
-	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
-	// s.issueTracker.AddIssue("PROJECTKEY-1", issue_types.Feature)
-	// s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
-	// s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
 
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
 	issue1 := domainFakes.NewFakeIssue("PROJECTKEY-1", issue_types.Feature, domain.IssueTrackerTypeJira)

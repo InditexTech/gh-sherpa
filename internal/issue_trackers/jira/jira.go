@@ -43,8 +43,6 @@ func New(cfg Configuration) (jira *Jira, err error) {
 	return
 }
 
-// var _ domain.IssueTracker = (*Jira)(nil)
-
 func (j *Jira) GetIssue(identifier string) (issue domain.Issue, err error) {
 	issueGot, res, err := j.client.getIssue(identifier)
 
@@ -73,18 +71,6 @@ func (j *Jira) GetIssue(identifier string) (issue domain.Issue, err error) {
 	return
 }
 
-// func (j *Jira) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType) {
-// 	for issueType, ids := range j.cfg.Jira.IssueTypes {
-// 		for _, id := range ids {
-// 			if id == issue.Type.Id {
-// 				return issueType
-// 			}
-// 		}
-// 	}
-
-// 	return issue_types.Unknown
-// }
-
 func (j *Jira) IdentifyIssue(identifier string) bool {
 	return issuePattern.MatchString(identifier)
 }
@@ -94,21 +80,12 @@ func (j *Jira) CheckConfiguration() (err error) {
 	return
 }
 
-// func (j *Jira) FormatIssueId(issueId string) (formattedIssueId string) {
-// 	return issueId
-// }
-
-// func (j *Jira) GetIssueTrackerType() domain.IssueTrackerType {
-// 	return domain.IssueTrackerTypeJira
-// }
-
 func (j *Jira) ParseRawIssueId(identifier string) (issueId string) {
 	return identifier
 }
 
 func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
 
-	// issueTypeLabel := j.getIssueTypeLabel(issue.Fields.Type)
 
 	issueType := j.getIssueType(issue.Fields.Type.ID)
 
@@ -148,15 +125,3 @@ func (j *Jira) getIssueTypeLabel(issueType issue_types.IssueType) string {
 
 	return ""
 }
-
-// func (j *Jira) GetIssueTypeLabel(issue domain.Issue) string {
-// 	issueType := j.GetIssueType(issue)
-
-// 	for mappedIssueType, labels := range j.cfg.IssueTypeLabels {
-// 		if issueType == mappedIssueType && len(labels) > 0 {
-// 			return labels[0]
-// 		}
-// 	}
-
-// 	return ""
-// }

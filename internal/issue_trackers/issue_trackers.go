@@ -57,13 +57,11 @@ func NewFromConfiguration(globalConfig config.Configuration) (*Provider, error) 
 func (p Provider) GetIssue(identifier string) (domain.Issue, error) {
 	if p.github.IdentifyIssue(identifier) {
 		logging.Debugf("Issue %s identified as a Github issue", identifier)
-		// return &p.github, nil
 		return p.github.GetIssue(identifier)
 	}
 
 	if p.jira.IdentifyIssue(identifier) {
 		logging.Debugf("Issue %s identified as a Jira issue", identifier)
-		// return &p.jira, nil
 		return p.jira.GetIssue(identifier)
 	}
 

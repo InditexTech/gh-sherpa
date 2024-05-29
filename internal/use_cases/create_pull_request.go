@@ -60,7 +60,6 @@ func (cpr CreatePullRequest) Execute() error {
 			return err
 		}
 
-		// formattedIssueId := issueTracker.FormatIssueId(issueID)
 		formattedIssueId := issue.FormatID()
 
 		// 7. CHECK IF A LOCAL BRANCH CONTAINS THIS ISSUE
@@ -171,16 +170,6 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("a pull request %s for this branch already exists", pr.Url)
 	}
 
-	// 15. GET INFO FROM ISSUE
-	// issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// issue, err := issueTracker.GetIssue(issueID)
-	// if err != nil {
-	// 	return err
-	// }
 	_issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 	if err != nil {
 		return err
@@ -192,7 +181,6 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	labels := []string{}
-	// typeLabel := issueTracker.GetIssueTypeLabel(issue)
 	typeLabel := _issue.TypeLabel()
 	if typeLabel != "" {
 		labels = append(labels, typeLabel)

@@ -23,42 +23,34 @@ type JiraIssueType struct {
 	Description string
 }
 
-// Body implements domain.Issue.
 func (i Issue) Body() string {
 	return i.body
 }
 
-// FormatID implements domain.Issue.
 func (i Issue) FormatID() string {
 	return i.id
 }
 
-// ID implements domain.Issue.
 func (i Issue) ID() string {
 	return i.id
 }
 
-// Title implements domain.Issue.
 func (i Issue) Title() string {
 	return i.title
 }
 
-// TrackerType implements domain.Issue.
 func (i Issue) TrackerType() domain.IssueTrackerType {
 	return domain.IssueTrackerTypeJira
 }
 
-// Type implements domain.Issue.
 func (i Issue) Type() issue_types.IssueType {
 	return i.issueType
 }
 
-// TypeLabel implements domain.Issue.
 func (i Issue) TypeLabel() string {
 	return i.typeLabel
 }
 
-// URL implements domain.Issue.
 func (i Issue) URL() string {
 	return i.url
 }

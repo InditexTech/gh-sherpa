@@ -25,9 +25,8 @@ type CreatePullRequestExecutionTestSuite struct {
 	issueTrackerProvider    *domainFakes.FakeIssueTrackerProvider
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
 	pullRequestProvider     *domainFakes.FakePullRequestProvider
-	// issueTracker            *domainFakes.FakeIssueTracker
-	branchProvider     *domainFakes.FakeBranchProvider
-	repositoryProvider *domainFakes.FakeRepositoryProvider
+	branchProvider          *domainFakes.FakeBranchProvider
+	repositoryProvider      *domainFakes.FakeRepositoryProvider
 }
 
 type CreateGithubPullRequestExecutionTestSuite struct {
@@ -46,12 +45,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
 	s.gitProvider.AddLocalBranches(s.defaultBranchName)
 	s.gitProvider.AddRemoteBranches(s.defaultBranchName)
-
-	// s.issueTracker = domainFakes.NewFakeIssueTracker()
-	// s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
-	// s.issueTracker.AddIssue("1", issue_types.Feature)
-	// s.issueTracker.AddIssue("3", issue_types.Documentation)
-	// s.issueTracker.AddIssue("6", issue_types.Refactoring)
 
 	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
 	issue1 := domainFakes.NewFakeIssue("1", issue_types.Feature, domain.IssueTrackerTypeGithub)

@@ -12,21 +12,13 @@ import (
 
 // GetBranchName asks the user for a branch name in an interactive way
 func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository) (branchName string, err error) {
-	// issue, err := issueTracker.GetIssue(issueIdentifier)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// issueType := issueTracker.GetIssueType(issue)
 	issueType := issue.Type()
 	branchType := issueType.String()
 
-	// formattedID := issueTracker.FormatIssueId(issue.ID)
 	formattedID := issue.FormatID()
 
 	issueSlug := normalizeBranch(issue.Title())
 
-	// issueTrackerType := issueTracker.GetIssueTrackerType()
 	issueTrackerType := issue.TrackerType()
 
 	if b.cfg.IsInteractive {

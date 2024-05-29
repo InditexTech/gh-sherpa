@@ -41,8 +41,6 @@ type Label struct {
 	Color       string
 }
 
-// var _ domain.IssueTracker = (*Github)(nil)
-
 // New returns a new Github issue tracker with the given configuration
 func New(cfg Configuration) (*Github, error) {
 
@@ -86,7 +84,6 @@ func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
 		issueType: g.getIssueType(issueTypeLabel),
 	}, nil
 
-	// return result, nil
 }
 
 func (g *Github) getIssueType(issueTypeLabel string) issue_types.IssueType {
