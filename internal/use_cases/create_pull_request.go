@@ -170,18 +170,18 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("a pull request %s for this branch already exists", pr.Url)
 	}
 
-	_issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
+	issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 	if err != nil {
 		return err
 	}
 
-	title, body, err := cpr.getPullRequestTitleAndBody(_issue)
+	title, body, err := cpr.getPullRequestTitleAndBody(issue)
 	if err != nil {
 		return err
 	}
 
 	labels := []string{}
-	typeLabel := _issue.TypeLabel()
+	typeLabel := issue.TypeLabel()
 	if typeLabel != "" {
 		labels = append(labels, typeLabel)
 	}

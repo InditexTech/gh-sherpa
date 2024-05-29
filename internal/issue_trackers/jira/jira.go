@@ -84,8 +84,11 @@ func (j *Jira) ParseRawIssueId(identifier string) (issueId string) {
 	return identifier
 }
 
-func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
+func (j *Jira) generateUrl(issueKey string) string {
+	return fmt.Sprintf("%s/browse/%s", j.cfg.Auth.Host, issueKey)
+}
 
+func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
 
 	issueType := j.getIssueType(issue.Fields.Type.ID)
 
@@ -93,7 +96,7 @@ func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
 		id:    issue.Key,
 		title: issue.Fields.Summary,
 		body:  issue.Fields.Description,
-		url:   fmt.Sprintf("%s/browse/%s", j.cfg.Auth.Host, issue.Key),
+		url:   j.generateUrl(issue.Key),
 		jiraIssueType: JiraIssueType{
 			Id:          issue.Fields.Type.ID,
 			Name:        issue.Fields.Type.Name,
