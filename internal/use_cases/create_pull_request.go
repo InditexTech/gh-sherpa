@@ -71,8 +71,8 @@ func (cpr CreatePullRequest) Execute() error {
 
 	var branchExists bool
 	if fromLocalBranch {
-        branchExists = true
-    } else {
+		branchExists = true
+	} else {
 		formattedIssueID := issue.FormatID()
 		currentBranch, branchExists = cpr.Git.FindBranch(fmt.Sprintf("/%s-", formattedIssueID))
 
