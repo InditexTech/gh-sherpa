@@ -53,74 +53,72 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("could not get the current branch name because %s", err)
 	}
 
-	isIssueIdProvided := cpr.Cfg.IssueID != ""
+	isIssueProvidedFlow := cpr.Cfg.IssueID != ""
 
-	// Extract issue
-	issue, err := cpr.extractIssue(currentBranch)
+	var issueID string
+	if isIssueProvidedFlow {
+		issueID = cpr.Cfg.IssueID
+	} else {
+		issueID, err = cpr.extractIssueIdFromBranch(currentBranch)
+		if err != nil {
+			return err
+		}
+	}
+
+	issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
 	if err != nil {
 		return err
 	}
 
 	// Check if a local branch already exists for the given issue
 	branchExists := true
-	if isIssueIdProvided {
+	if isIssueProvidedFlow {
 		formattedIssueID := issue.FormatID()
-		currentBranch, branchExists = cpr.Git.BranchExistsContains(fmt.Sprintf("/%s-", formattedIssueID))
+		currentBranch, branchExists = cpr.Git.FindBranch(fmt.Sprintf("/%s-", formattedIssueID))
 
-		if branchExists && !isInteractive {
-			return fmt.Errorf("the branch %s already exists", logging.PaintWarning(currentBranch))
-		}
+		if branchExists {
+			if !isInteractive {
+				return fmt.Errorf("the branch %s already exists", logging.PaintWarning(currentBranch))
+			}
 
-		if branchExists && isInteractive {
 			logging.PrintWarn(fmt.Sprintf("there is already a local branch named %s for this issue", logging.PaintInfo(currentBranch)))
 		}
 	}
 
-	// Confirm usage of the existing branch
-	confirmUseExistingBranch := true
+	branchConfirmed := true
 	if branchExists && isInteractive {
-		confirmUseExistingBranch, err = cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
+		branchConfirmed, err = cpr.UserInteractionProvider.
+			AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
 		if err != nil {
 			return err
 		}
+	}
 
-		if !confirmUseExistingBranch {
-			if !isIssueIdProvided {
-				return nil
-			}
-
-		} else {
-			if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
-				return fmt.Errorf("could not switch to the branch because %w", err)
-			}
+	if branchExists && branchConfirmed {
+		if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
+			return fmt.Errorf("could not switch to the branch because %w", err)
 		}
 	}
 
+	if !branchConfirmed && !isIssueProvidedFlow {
+		// Clean exit since user do not want to continue
+		return nil
+	}
+
 	// Create brand new local branch if the branch does not exists or the user wants to create a new branch
-	if !branchExists || !confirmUseExistingBranch {
+	if !branchExists || !branchConfirmed {
 		currentBranch, err = cpr.BranchProvider.GetBranchName(issue, *repo)
 		if err != nil {
 			return err
 		}
 
-		if cpr.Git.RemoteBranchExists(currentBranch) {
-			return ErrRemoteBranchAlreadyExists(currentBranch)
-		}
-
-		fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n", logging.PaintInfo(currentBranch), logging.PaintInfo(baseBranch))
-		if isInteractive {
-			confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
-			if err != nil {
-				return err
-			}
-			if !confirmed {
-				return nil
-			}
-		}
-
-		if err := cpr.createNewLocalBranch(currentBranch, baseBranch); err != nil {
+        cancel, err := cpr.createBranch(currentBranch, baseBranch)
+		if err != nil {
 			return err
 		}
+        if cancel {
+            return nil
+        }
 	}
 
 	// <-------------------------------------------------------------------->
@@ -191,21 +189,15 @@ func (cpr CreatePullRequest) Execute() error {
 	return nil
 }
 
-func (cpr *CreatePullRequest) extractIssue(currentBranch string) (domain.Issue, error) {
-	issueID := cpr.Cfg.IssueID
-
-	if issueID == "" {
-		branchNameInfo := branches.ParseBranchName(currentBranch)
-		if branchNameInfo == nil || branchNameInfo.IssueId == "" {
-			return nil, fmt.Errorf("could not find an issue identifier in the current branch named %s", logging.PaintWarning(currentBranch))
-		}
-
-		logging.PrintInfo(fmt.Sprintf("The current branch named %s is available to create a pull request", logging.PaintWarning(currentBranch)))
-
-		issueID = cpr.IssueTrackerProvider.ParseIssueId(branchNameInfo.IssueId)
+func (cpr *CreatePullRequest) extractIssueIdFromBranch(currentBranch string) (string, error) {
+	branchNameInfo := branches.ParseBranchName(currentBranch)
+	if branchNameInfo == nil || branchNameInfo.IssueId == "" {
+		return "", fmt.Errorf("could not find an issue identifier in the current branch named %s", logging.PaintWarning(currentBranch))
 	}
 
-	return cpr.IssueTrackerProvider.GetIssue(issueID)
+	logging.PrintInfo(fmt.Sprintf("The current branch named %s is available to create a pull request", logging.PaintWarning(currentBranch)))
+
+	return cpr.IssueTrackerProvider.ParseIssueId(branchNameInfo.IssueId), nil
 }
 
 func (cpr *CreatePullRequest) createEmptyCommit() error {
@@ -267,4 +259,32 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	}
 
 	return nil
+}
+
+func (cpr *CreatePullRequest) createBranch(branch string, baseBranch string) (cancel bool, err error) {
+	if cpr.Git.RemoteBranchExists(branch) {
+		err = ErrRemoteBranchAlreadyExists(branch)
+		return
+	}
+
+	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n",
+		logging.PaintInfo(branch), logging.PaintInfo(baseBranch))
+
+	if cpr.Cfg.IsInteractive {
+		var confirmed bool
+		confirmed, err = cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+		if err != nil {
+			return
+		}
+		if !confirmed {
+            cancel = true
+			return
+		}
+	}
+
+	if err = cpr.createNewLocalBranch(branch, baseBranch); err != nil {
+		return
+	}
+
+	return
 }
