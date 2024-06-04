@@ -92,36 +92,31 @@ func (cpr CreatePullRequest) Execute() error {
 		if err != nil {
 			return err
 		}
+
+		if !branchConfirmed && !isIssueProvidedFlow {
+			// Clean exit since user do not want to continue
+			return nil
+		}
 	}
 
 	if branchExists && branchConfirmed {
 		if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
 			return fmt.Errorf("could not switch to the branch because %w", err)
 		}
-	}
-
-	if !branchConfirmed && !isIssueProvidedFlow {
-		// Clean exit since user do not want to continue
-		return nil
-	}
-
-	// Create brand new local branch if the branch does not exists or the user wants to create a new branch
-	if !branchExists || !branchConfirmed {
+	} else {
 		currentBranch, err = cpr.BranchProvider.GetBranchName(issue, *repo)
 		if err != nil {
 			return err
 		}
 
-        cancel, err := cpr.createBranch(currentBranch, baseBranch)
+		cancel, err := cpr.createBranch(currentBranch, baseBranch)
 		if err != nil {
 			return err
 		}
-        if cancel {
-            return nil
-        }
+		if cancel {
+			return nil
+		}
 	}
-
-	// <-------------------------------------------------------------------->
 
 	if cpr.Git.RemoteBranchExists(currentBranch) {
 		return ErrRemoteBranchAlreadyExists(currentBranch)
@@ -277,7 +272,7 @@ func (cpr *CreatePullRequest) createBranch(branch string, baseBranch string) (ca
 			return
 		}
 		if !confirmed {
-            cancel = true
+			cancel = true
 			return
 		}
 	}

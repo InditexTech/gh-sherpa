@@ -629,7 +629,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.userInteractionProvider.AssertExpectations(s.T())
 	})
 
-    // TODO: Review test description
+	// TODO: Review test description
 	s.Run("should return error if user doesn't confirm branch name when using issue flags", func() {
 		s.gitProvider.LocalBranches = []string{"main", "develop"}
 		s.gitProvider.RemoteBranches = []string{"main", "develop"}
