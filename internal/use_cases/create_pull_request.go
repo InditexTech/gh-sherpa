@@ -158,23 +158,9 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("a pull request %s for this branch already exists", pr.Url)
 	}
 
-	title, body, err := cpr.getPullRequestTitleAndBody(issue)
-	if err != nil {
+	if err := cpr.createPullRequestFromIssue(issue, baseBranch, currentBranch); err != nil {
 		return err
 	}
-
-	labels := []string{}
-	typeLabel := issue.TypeLabel()
-	if typeLabel != "" {
-		labels = append(labels, typeLabel)
-	}
-
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)
-	if err != nil {
-		return fmt.Errorf("could not create the pull request because %s", err)
-	}
-
-	fmt.Printf("\nThe pull request %s have been created!\nYou are now working on the branch %s\n", logging.PaintInfo(prURL), logging.PaintInfo(currentBranch))
 
 	return nil
 }
@@ -277,4 +263,27 @@ func (cpr *CreatePullRequest) createBranch(branch string, baseBranch string) (ca
 	}
 
 	return
+}
+
+func (cpr *CreatePullRequest) createPullRequestFromIssue(issue domain.Issue, baseBranch string, headBranch string) error {
+	title, body, err := cpr.getPullRequestTitleAndBody(issue)
+	if err != nil {
+		return err
+	}
+
+	labels := []string{}
+	typeLabel := issue.TypeLabel()
+	if typeLabel != "" {
+		labels = append(labels, typeLabel)
+	}
+
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, headBranch, cpr.Cfg.DraftPR, labels)
+	if err != nil {
+		return fmt.Errorf("could not create the pull request because %s", err)
+	}
+
+	fmt.Printf("\nThe pull request %s have been created!\nYou are now working on the branch %s\n",
+		logging.PaintInfo(prURL), logging.PaintInfo(headBranch))
+
+	return nil
 }
