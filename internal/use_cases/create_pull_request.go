@@ -77,14 +77,14 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	// Confirm usage of the existing branch
-	confirmUseExisistingBranch := true
+	confirmUseExistingBranch := true
 	if branchExists && isInteractive {
-		confirmUseExisistingBranch, err = cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
+		confirmUseExistingBranch, err = cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
 		if err != nil {
 			return err
 		}
 
-		if !confirmUseExisistingBranch {
+		if !confirmUseExistingBranch {
 			if !isIssueIdProvided {
 				return nil
 			}
@@ -97,7 +97,7 @@ func (cpr CreatePullRequest) Execute() error {
 	}
 
 	// Create brand new local branch if the branch does not exists or the user wants to create a new branch
-	if !branchExists || !confirmUseExisistingBranch {
+	if !branchExists || !confirmUseExistingBranch {
 		currentBranch, err = cpr.BranchProvider.GetBranchName(issue, *repo)
 		if err != nil {
 			return err

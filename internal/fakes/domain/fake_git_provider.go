@@ -15,6 +15,7 @@ type FakeGitProvider struct {
 	CurrentBranch         string
 	CommitsToPush         map[string][]string
 	BranchWithCommitError []string
+	BranchWithPushError   []string
 }
 
 var _ domain.GitProvider = (*FakeGitProvider)(nil)
@@ -33,6 +34,14 @@ func NewFakeGitProvider() *FakeGitProvider {
 		CommitsToPush:         map[string][]string{},
 		BranchWithCommitError: []string{},
 	}
+}
+
+func (f *FakeGitProvider) ResetLocalBranches() {
+	f.LocalBranches = []string{"main", "develop"}
+}
+
+func (f *FakeGitProvider) ResetRemoteBranches() {
+	f.RemoteBranches = []string{"main", "develop"}
 }
 
 func (f *FakeGitProvider) AddLocalBranches(branches ...string) {
@@ -126,7 +135,12 @@ func (f *FakeGitProvider) CommitEmpty(message string) (err error) {
 	return nil
 }
 
+var ErrPushBranch = errors.New("error pushing branch")
+
 func (f *FakeGitProvider) PushBranch(branch string) (err error) {
+	if slices.Contains(f.BranchWithPushError, branch) {
+		return ErrPushBranch
+	}
 	if !slices.Contains(f.LocalBranches, branch) {
 		return fmt.Errorf("local branch %s not found", branch)
 	}
