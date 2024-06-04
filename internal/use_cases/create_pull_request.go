@@ -87,8 +87,8 @@ func (cpr CreatePullRequest) Execute() error {
 
 	branchConfirmed := true
 	if branchExists && isInteractive {
-		branchConfirmed, err = cpr.UserInteractionProvider.
-			AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
+		branchConfirmed, err = cpr.UserInteractionProvider.AskUserForConfirmation(
+			"Do you want to use this branch to create the pull request", true)
 		if err != nil {
 			return err
 		}
@@ -131,11 +131,11 @@ func (cpr CreatePullRequest) Execute() error {
 	if hasPendingCommits {
 		logging.PrintWarn("the branch contains commits that have not been pushed yet")
 
-		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue pushing all pending commits in this branch and create the pull request", true)
+		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation(
+			"Do you want to continue pushing all pending commits in this branch and create the pull request", true)
 		if err != nil {
 			return err
 		}
-
 		if !confirmed {
 			return nil
 		}
@@ -149,16 +149,12 @@ func (cpr CreatePullRequest) Execute() error {
 		return err
 	}
 
-	// <-------------------------------------------------------------------->
-
-	// 13. CHECK IF PR DOES ALREADY EXISTS
 	pr, err := cpr.PullRequestProvider.GetPullRequestForBranch(currentBranch)
 	if err != nil {
 		return fmt.Errorf("error while getting pull request for branch: %w", err)
 	}
 
 	if pr != nil && !pr.Closed {
-		// 14. EXIT
 		return fmt.Errorf("a pull request %s for this branch already exists", pr.Url)
 	}
 
@@ -173,14 +169,13 @@ func (cpr CreatePullRequest) Execute() error {
 		labels = append(labels, typeLabel)
 	}
 
-	// 16. CREATE PULL REQUEST
 	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)
 	if err != nil {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
 
 	fmt.Printf("\nThe pull request %s have been created!\nYou are now working on the branch %s\n", logging.PaintInfo(prURL), logging.PaintInfo(currentBranch))
-	// 17. EXIT
+
 	return nil
 }
 
@@ -214,21 +209,21 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 	case domain.IssueTrackerTypeGithub:
 		title = issue.Title()
 
-		keyword := "Closes"
-		if !cpr.Cfg.CloseIssue {
-			keyword = "Related to"
+		keyword := "Related to"
+		if cpr.Cfg.CloseIssue {
+			keyword = "Closes"
 		}
 		body = fmt.Sprintf("%s #%s", keyword, issue.ID())
 
 	case domain.IssueTrackerTypeJira:
 		title = fmt.Sprintf("[%s] %s", issue.ID(), issue.Title())
-
 		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID(), issue.URL())
+
 	default:
 		err = fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
 	}
 
-	return title, body, err
+	return
 }
 
 func (cpr *CreatePullRequest) hasPendingCommits(currentBranch string) (bool, error) {
