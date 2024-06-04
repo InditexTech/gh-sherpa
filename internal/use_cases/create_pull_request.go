@@ -212,15 +212,6 @@ func (cpr *CreatePullRequest) createEmptyCommit() error {
 	return cpr.Git.CommitEmpty("chore: initial commit")
 }
 
-func (cpr *CreatePullRequest) createEmptyCommitAndPush(branchName string) (err error) {
-	// 18. CREATE EMPTY COMMIT
-	if err = cpr.createEmptyCommit(); err != nil {
-		return fmt.Errorf("could not do the empty commit because %s", err)
-	}
-
-	return cpr.pushChanges(branchName)
-}
-
 func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 	// 19. PUSH CHANGES
 	err = cpr.Git.PushBranch(branchName)
@@ -262,45 +253,6 @@ func (cpr *CreatePullRequest) hasPendingCommits(currentBranch string) (bool, err
 	return len(commitsToPush) > 0, nil
 }
 
-func (cpr *CreatePullRequest) pendingCommits(currentBranch string) (canceled bool, err error) {
-	// 11. CHECK IF BRANCH HAS PENDING COMMITS
-	hasPendingCommits, err := cpr.hasPendingCommits(currentBranch)
-	if err != nil {
-		return false, err
-	}
-
-	if hasPendingCommits {
-		logging.PrintWarn("the branch contains commits that have not been pushed yet")
-
-		// 21. ASK USER CONFIRMATION TO PUSH THE COMMITS
-		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue pushing all pending commits in this branch and create the pull request", true)
-		if err != nil {
-			return false, err
-		}
-
-		if !confirmed {
-			// 22. EXIT
-			return true, nil
-		}
-
-		// 19. PUSH CHANGES
-		if err := cpr.pushChanges(currentBranch); err != nil {
-			return false, err
-		}
-
-	} else {
-		// 12. DOES THE REMOTE BRANCH EXISTS
-		if !cpr.Git.RemoteBranchExists(currentBranch) {
-			// 18. & //19.
-			if err := cpr.createEmptyCommitAndPush(currentBranch); err != nil {
-				return false, err
-			}
-		}
-	}
-
-	return false, nil
-}
-
 func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string) error {
 	// Check if the base branch will be fetched before the new branch is created
 	if cpr.Cfg.FetchFromOrigin {
@@ -315,37 +267,4 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	}
 
 	return nil
-}
-
-func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issue domain.Issue, repo domain.Repository) (branchName string, canceled bool, err error) {
-	branchName, err = cpr.BranchProvider.GetBranchName(issue, repo)
-	if err != nil {
-		return "", false, err
-	}
-
-	if cpr.Git.RemoteBranchExists(branchName) {
-		return "", true, ErrRemoteBranchAlreadyExists(branchName)
-	}
-
-	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n", logging.PaintInfo(branchName), logging.PaintInfo(baseBranch))
-	if cpr.Cfg.IsInteractive {
-		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
-		if err != nil {
-			return "", false, err
-		}
-		if !confirmed {
-			return "", true, nil
-		}
-	}
-
-	if err = cpr.createNewLocalBranch(branchName, baseBranch); err != nil {
-		return
-	}
-
-	// 18. && 19.
-	if err = cpr.createEmptyCommitAndPush(branchName); err != nil {
-		return
-	}
-
-	return branchName, false, nil
 }
