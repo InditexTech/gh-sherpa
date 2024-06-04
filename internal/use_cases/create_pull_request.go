@@ -36,6 +36,7 @@ type CreatePullRequest struct {
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
 	isInteractive := cpr.Cfg.IsInteractive
+	fromLocalBranch := cpr.Cfg.IssueID == ""
 
 	repo, err := cpr.RepositoryProvider.GetRepository()
 	if err != nil {
@@ -53,16 +54,14 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("could not get the current branch name because %s", err)
 	}
 
-	isIssueProvidedFlow := cpr.Cfg.IssueID != ""
-
 	var issueID string
-	if isIssueProvidedFlow {
-		issueID = cpr.Cfg.IssueID
-	} else {
+	if fromLocalBranch {
 		issueID, err = cpr.extractIssueIdFromBranch(currentBranch)
 		if err != nil {
 			return err
 		}
+	} else {
+		issueID = cpr.Cfg.IssueID
 	}
 
 	issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
@@ -72,7 +71,7 @@ func (cpr CreatePullRequest) Execute() error {
 
 	// Check if a local branch already exists for the given issue
 	branchExists := true
-	if isIssueProvidedFlow {
+	if !fromLocalBranch {
 		formattedIssueID := issue.FormatID()
 		currentBranch, branchExists = cpr.Git.FindBranch(fmt.Sprintf("/%s-", formattedIssueID))
 
@@ -81,7 +80,8 @@ func (cpr CreatePullRequest) Execute() error {
 				return fmt.Errorf("the branch %s already exists", logging.PaintWarning(currentBranch))
 			}
 
-			logging.PrintWarn(fmt.Sprintf("there is already a local branch named %s for this issue", logging.PaintInfo(currentBranch)))
+			logging.PrintWarn(
+				fmt.Sprintf("there is already a local branch named %s for this issue", logging.PaintInfo(currentBranch)))
 		}
 	}
 
@@ -93,7 +93,7 @@ func (cpr CreatePullRequest) Execute() error {
 			return err
 		}
 
-		if !branchConfirmed && !isIssueProvidedFlow {
+		if fromLocalBranch && !branchConfirmed {
 			// Clean exit since user do not want to continue
 			return nil
 		}
