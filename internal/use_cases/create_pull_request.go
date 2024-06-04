@@ -69,7 +69,6 @@ func (cpr CreatePullRequest) Execute() error {
 		return err
 	}
 
-	// Check if a local branch already exists for the given issue
 	branchExists := true
 	if !fromLocalBranch {
 		formattedIssueID := issue.FormatID()
@@ -122,7 +121,6 @@ func (cpr CreatePullRequest) Execute() error {
 		return ErrRemoteBranchAlreadyExists(currentBranch)
 	}
 
-	// 11. CHECK IF BRANCH HAS PENDING COMMITS
 	hasPendingCommits, err := cpr.hasPendingCommits(currentBranch)
 	if err != nil {
 		return err
