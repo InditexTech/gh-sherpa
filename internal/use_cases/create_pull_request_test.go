@@ -189,10 +189,10 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should error if could not create empty commit", func() {
-		branchName := "feature/GH-4-with-commit-error"
-		s.gitProvider.CurrentBranch = branchName
-		s.gitProvider.BranchWithCommitError = []string{branchName}
-		s.branchProvider.SetBranchName(branchName)
+		s.gitProvider.ResetRemoteBranches()
+		s.gitProvider.CurrentBranch = s.defaultBranchName
+		s.gitProvider.BranchWithCommitError = []string{s.defaultBranchName}
+		s.branchProvider.SetBranchName(s.defaultBranchName)
 
 		err := s.uc.Execute()
 
@@ -200,9 +200,10 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should error if could not push branch", func() {
-		branchName := "feature/GH-5-with-no-local-branch"
-		s.gitProvider.CurrentBranch = branchName
-		s.branchProvider.SetBranchName(branchName)
+		s.gitProvider.ResetRemoteBranches()
+		s.gitProvider.CurrentBranch = s.defaultBranchName
+		s.branchProvider.SetBranchName(s.defaultBranchName)
+		s.gitProvider.BranchWithPushError = []string{s.defaultBranchName}
 
 		err := s.uc.Execute()
 
@@ -222,6 +223,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should checkout local branch if branch exists and user confirms branch usage without default flag and issue flag", func() {
+		s.gitProvider.ResetRemoteBranches()
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(true, nil).Once()
 
@@ -287,6 +289,8 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should checkout branch if user confirms branch usage with issue flag and no default flag", func() {
+		s.gitProvider.ResetRemoteBranches()
+
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(true, nil).Once()
 
@@ -312,6 +316,9 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	})
 
 	s.Run("should create branch and pull request if local branch doesn't exists with issue flag", func() {
+		s.gitProvider.ResetLocalBranches()
+		s.gitProvider.ResetRemoteBranches()
+
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInputPrompt)
 		s.userInteractionProvider.EXPECT().SelectOrInputPrompt("Label 'kind/feature' found. What type of branch name do you want to create?", []string{"feature", "other"}, mock.Anything, true).Return(nil).Once()
 		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 29 chars", []string{}, mock.Anything, false).Return(nil).Once()
@@ -538,10 +545,10 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	})
 
 	s.Run("should error if could not create empty commit", func() {
-		branchName := "feature/PROJECTKEY-4-with-commit-error"
-		s.gitProvider.CurrentBranch = branchName
-		s.gitProvider.BranchWithCommitError = []string{branchName}
-		s.branchProvider.SetBranchName(branchName)
+		s.gitProvider.ResetRemoteBranches()
+		s.gitProvider.CurrentBranch = s.defaultBranchName
+		s.gitProvider.BranchWithCommitError = []string{s.defaultBranchName}
+		s.branchProvider.SetBranchName(s.defaultBranchName)
 
 		err := s.uc.Execute()
 
@@ -549,9 +556,10 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	})
 
 	s.Run("should error if could not push branch", func() {
-		branchName := "feature/PROJECTKEY-5-with-no-local-branch"
-		s.gitProvider.CurrentBranch = branchName
-		s.branchProvider.SetBranchName(branchName)
+		s.gitProvider.BranchWithPushError = []string{s.defaultBranchName}
+		s.gitProvider.ResetRemoteBranches()
+		s.gitProvider.CurrentBranch = s.defaultBranchName
+		s.branchProvider.SetBranchName(s.defaultBranchName)
 
 		err := s.uc.Execute()
 
@@ -571,6 +579,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	})
 
 	s.Run("should checkout local branch if branch exists and user confirms branch usage without default flag and issue flag", func() {
+		s.gitProvider.ResetRemoteBranches()
+
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(true, nil).Once()
 
@@ -619,6 +629,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.userInteractionProvider.AssertExpectations(s.T())
 	})
 
+	// TODO: Review test description
 	s.Run("should return error if user doesn't confirm branch name when using issue flags", func() {
 		s.gitProvider.LocalBranches = []string{"main", "develop"}
 		s.gitProvider.RemoteBranches = []string{"main", "develop"}
@@ -636,6 +647,8 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	})
 
 	s.Run("should checkout branch if user confirms branch usage with issue flag and no default flag", func() {
+		s.gitProvider.ResetRemoteBranches()
+
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to use this branch to create the pull request", true).Return(true, nil).Once()
 
@@ -658,6 +671,9 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	})
 
 	s.Run("should create branch and pull request if local branch doesn't exists with issue flag", func() {
+		s.gitProvider.ResetLocalBranches()
+		s.gitProvider.ResetRemoteBranches()
+
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.SelectOrInputPrompt)
 		s.userInteractionProvider.EXPECT().SelectOrInputPrompt("Issue type 'feature' found. What type of branch name do you want to create?", []string{"feature", "other"}, mock.Anything, true).Return(nil).Once()
 		s.userInteractionProvider.EXPECT().SelectOrInput("additional description (optional). Truncate to 21 chars", []string{}, mock.Anything, false).Return(nil).Once()
