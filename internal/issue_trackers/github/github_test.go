@@ -1,6 +1,7 @@
 package github
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -9,16 +10,51 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type fakeCli struct {
 	gh.Cli
 	issue *ghIssue
+	err   error
 }
 
-var _ domain.GhCli = (*fakeCli)(nil)
+func (f *fakeCli) setError() {
+	f.err = errors.New("error")
+}
 
-func (f *fakeCli) GetRepo() (repo *domain.Repository, err error) {
+func (f *fakeCli) setIssue(number int) {
+	f.issue = &ghIssue{
+		Number: int64(number),
+		Title:  "Issue Title",
+		Body:   "Issue Body",
+		Url:    "https://github.example.com/owner/repo/issues/1",
+		Labels: []Label{
+			{
+				Id:          1,
+				Name:        "kind/feature",
+				Description: "feature kind label",
+				Color:       "#fff",
+			},
+		},
+	}
+}
+
+func (f *fakeCli) resetLabels() {
+	f.issue.Labels = []Label{}
+}
+
+func (f *fakeCli) addIssueTypeLabel(issueType issue_types.IssueType) {
+	f.issue.Labels = append(f.issue.Labels, Label{
+		Id:          len(issueType),
+		Name:        fmt.Sprintf("kind/%s", issueType),
+		Description: fmt.Sprintf("%s kind label", issueType),
+	})
+}
+
+var _ GithubCli = (*fakeCli)(nil)
+
+func (f *fakeCli) GetRepository() (repo *domain.Repository, err error) {
 	repo = &domain.Repository{
 		Name:             "Repo 1",
 		Owner:            "Owner 1",
@@ -30,6 +66,9 @@ func (f *fakeCli) GetRepo() (repo *domain.Repository, err error) {
 var errExecuteError = fmt.Errorf("execute error")
 
 func (f *fakeCli) Execute(result any, _ []string) (err error) {
+	if f.err != nil {
+		return f.err
+	}
 	if f.issue == nil {
 		return errExecuteError
 	}
@@ -43,110 +82,135 @@ func (f *fakeCli) Execute(result any, _ []string) (err error) {
 	return
 }
 
-func TestGetIssue(t *testing.T) {
-	newGhIssue := func(number int, labels []string) *ghIssue {
-		labl := make([]Label, len(labels))
-		for i, label := range labels {
-			labl[i] = Label{Name: label}
-		}
+type GithubTestSuite struct {
+	suite.Suite
+	github         *Github
+	fakeCli        *fakeCli
+	defaultIssueID string
+	expectedIssue  *Issue
+	newGhCli       func() GithubCli
+}
 
-		return &ghIssue{
-			Number: int64(number),
-			Title:  "fake title",
-			Body:   "fake body",
-			Url:    "fake url",
-			Labels: labl,
-		}
+func TestGithubSuite(t *testing.T) {
+	suite.Run(t, new(GithubTestSuite))
+}
+
+func (s *GithubTestSuite) SetupSuite() {
+	s.defaultIssueID = "1"
+	s.newGhCli = newGhCli
+}
+
+func (s *GithubTestSuite) TearDownSuite() {
+	newGhCli = s.newGhCli
+}
+
+func (s *GithubTestSuite) SetupSubTest() {
+	s.fakeCli = &fakeCli{}
+	s.fakeCli.setIssue(1)
+
+	newGhCli = func() GithubCli {
+		return s.fakeCli
 	}
 
-	newIssue := func(id string, typeLabel string, issueType issue_types.IssueType, labels []string) Issue {
-		labl := make([]domain.Label, len(labels))
-		for i, label := range labels {
-			labl[i] = domain.Label{Name: label}
-		}
-
-		return Issue{
-			id:        id,
-			title:     "fake title",
-			body:      "fake body",
-			url:       "fake url",
-			typeLabel: typeLabel,
-			issueType: issueType,
-			labels:    labl,
-		}
-	}
-
-	tests := []struct {
-		name           string
-		identifier     string
-		retrievedIssue *ghIssue
-		want           Issue
-		wantErr        bool
-	}{
-		{
-			name:           "should return bug issue",
-			identifier:     "1",
-			retrievedIssue: newGhIssue(1, []string{"kind/bug"}),
-			want:           newIssue("1", "kind/bug", issue_types.Bug, []string{"kind/bug"}),
-		},
-		{
-			name:           "should return feature issue",
-			identifier:     "1",
-			retrievedIssue: newGhIssue(1, []string{"kind/enhancement", "other/label"}),
-			want:           newIssue("1", "kind/enhancement", issue_types.Feature, []string{"kind/enhancement", "other/label"}),
-		},
-		{
-			name:           "should return unknown issue if no label is present",
-			identifier:     "1",
-			retrievedIssue: newGhIssue(1, []string{}),
-			want:           newIssue("1", "", issue_types.Unknown, []string{}),
-		},
-		{
-			name:           "should return unknown issue if could not determine type",
-			identifier:     "1",
-			retrievedIssue: newGhIssue(1, []string{"random-label", "other-label"}),
-			want:           newIssue("1", "", issue_types.Unknown, []string{"random-label", "other-label"}),
-		},
-		{
-			name:    "should return error if could not execute",
-			wantErr: true,
+	cfg := Configuration{
+		Github: config.Github{
+			IssueLabels: config.GithubIssueLabels{
+				issue_types.Bug:         {"kind/bug", "kind/bugfix"},
+				issue_types.Feature:     {"kind/feature", "kind/enhancement"},
+				issue_types.Refactoring: {},
+			},
 		},
 	}
 
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			github := &Github{
-				cli: &fakeCli{
-					issue: tc.retrievedIssue,
-				},
-				cfg: Configuration{
-					Github: config.Github{
-						IssueLabels: config.GithubIssueLabels{
-							issue_types.Bug:         {"kind/bug", "kind/bugfix"},
-							issue_types.Feature:     {"kind/feature", "kind/enhancement"},
-							issue_types.Refactoring: {},
-						},
-					},
-				},
-			}
+	g, err := New(cfg)
+	s.Require().NoError(err)
 
-			issue, err := github.GetIssue(tc.identifier)
+	s.github = g
 
-			if tc.wantErr {
-				assert.Error(t, err)
-				return
-			}
-
-			assert.NoError(t, err)
-			assert.Equal(t, tc.want, issue)
-		})
+	s.expectedIssue = &Issue{
+		id:        s.defaultIssueID,
+		title:     "Issue Title",
+		body:      "Issue Body",
+		url:       "https://github.example.com/owner/repo/issues/1",
+		typeLabel: "kind/feature",
+		issueType: issue_types.Feature,
+		labels: []domain.Label{
+			{
+				Id:          "1",
+				Name:        "kind/feature",
+				Description: "feature kind label",
+				Color:       "#fff",
+			},
+		},
 	}
+}
+
+func (s *GithubTestSuite) TestGetIssue() {
+	s.Run("should return error if could not execute", func() {
+		s.fakeCli.setError()
+
+		issue, err := s.github.GetIssue(s.defaultIssueID)
+
+		s.Error(err)
+		s.Nil(issue)
+	})
+
+	s.Run("should return bug issue", func() {
+		s.fakeCli.resetLabels()
+		s.fakeCli.addIssueTypeLabel(issue_types.Bug)
+
+		issue, err := s.github.GetIssue(s.defaultIssueID)
+
+		s.NoError(err)
+		s.Require().NotNil(issue)
+		s.Equal(issue_types.Bug, issue.Type())
+		s.Equal("kind/bug", issue.TypeLabel())
+	})
+
+	s.Run("should return unknown issue if no label is present", func() {
+		s.fakeCli.resetLabels()
+
+		issue, err := s.github.GetIssue(s.defaultIssueID)
+
+		s.NoError(err)
+		s.Require().NotNil(issue)
+		s.Equal(issue_types.Unknown, issue.Type())
+	})
+
+	s.Run("should return unknown issue if could not determine label type", func() {
+		s.fakeCli.resetLabels()
+		s.fakeCli.addIssueTypeLabel("random-label")
+
+		issue, err := s.github.GetIssue(s.defaultIssueID)
+
+		s.NoError(err)
+		s.Require().NotNil(issue)
+		s.Equal(issue_types.Unknown, issue.Type())
+	})
+
+	s.Run("should return issue", func() {
+		issue, err := s.github.GetIssue(s.defaultIssueID)
+
+		s.NoError(err)
+		s.Require().NotNil(s.expectedIssue)
+		s.Equal(*s.expectedIssue, issue)
+	})
+
+	s.Run("should return error if given issue id is a pull request number", func() {
+		s.fakeCli.issue.PullRequest = &ghPullRequest{}
+
+		issueId := "99"
+		issue, err := s.github.GetIssue(issueId)
+
+		s.ErrorContains(err, ErrIdIsPullRequestNumber(issueId).Error())
+		s.Nil(issue)
+	})
+
 }
 
 func Test_CheckConfiguration(t *testing.T) {
 	type fields struct {
-		Cli domain.GhCli
+		Cli GithubCli
 	}
 	tests := []struct {
 		name    string
@@ -167,7 +231,7 @@ func Test_CheckConfiguration(t *testing.T) {
 
 func Test_IdentifyIssue(t *testing.T) {
 	type fields struct {
-		Cli domain.GhCli
+		Cli GithubCli
 	}
 	type args struct {
 		identifier string
