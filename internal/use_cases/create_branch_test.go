@@ -20,14 +20,9 @@ type CreateBranchExecutionTestSuite struct {
 	uc                      use_cases.CreateBranch
 	gitProvider             *domainFakes.FakeGitProvider
 	issueTrackerProvider    *domainFakes.FakeIssueTrackerProvider
-	issueTracker            *domainFakes.FakeIssueTracker
 	userInteractionProvider *domainMocks.MockUserInteractionProvider
-	branchProvider          *domainMocks.MockBranchProvider
+	branchProvider          *domainFakes.FakeBranchProvider
 	repositoryProvider      *domainFakes.FakeRepositoryProvider
-}
-
-func (s *CreateBranchExecutionTestSuite) setGetBranchName(branch string) {
-	s.branchProvider.EXPECT().GetBranchName(mock.Anything, mock.Anything, mock.Anything).Return(branch, nil).Once()
 }
 
 type CreateGithubBranchExecutionTestSuite struct {
@@ -45,16 +40,19 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSuite() {
 func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
 
-	s.issueTracker = domainFakes.NewFakeIssueTracker()
-	s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeGithub
-	s.issueTracker.AddIssue("1", issue_types.Feature)
-	s.issueTracker.AddIssue("3", issue_types.Documentation)
-	s.issueTracker.AddIssue("6", issue_types.Refactoring)
-
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
+	issue1 := domainFakes.NewFakeIssue("1", issue_types.Feature, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue1)
+	issue3 := domainFakes.NewFakeIssue("3", issue_types.Documentation, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue3)
+	issue6 := domainFakes.NewFakeIssue("6", issue_types.Refactoring, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue6)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.branchProvider = s.initializeBranchProvider()
+
+	s.branchProvider = domainFakes.NewFakeBranchProvider()
+	s.branchProvider.SetBranchName(s.defaultBranchName)
+
 	s.repositoryProvider = domainFakes.NewRepositoryProvider()
 
 	defaultConfig := use_cases.CreateBranchConfiguration{
@@ -73,7 +71,6 @@ func (s *CreateGithubBranchExecutionTestSuite) SetupSubTest() {
 
 func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if could not get git repository", func() {
-		s.setGetBranchName(s.defaultBranchName)
 		s.repositoryProvider.Repository = nil
 
 		s.uc.Cfg.IssueID = "1"
@@ -94,7 +91,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if branch already exists with default flag", func() {
 		branchName := "feature/GH-3-local-branch"
 		s.gitProvider.AddLocalBranches(branchName)
-		s.setGetBranchName(branchName)
+		s.branchProvider.SetBranchName(branchName)
 
 		s.uc.Cfg.IssueID = "3"
 		s.uc.Cfg.IsInteractive = false
@@ -105,8 +102,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should create branch if branch doesn't exists with default flag", func() {
-		s.setGetBranchName(s.defaultBranchName)
-
 		s.uc.Cfg.IssueID = "1"
 		s.uc.Cfg.IsInteractive = false
 
@@ -119,9 +114,6 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should create branch if not exists without default flag", func() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
-
-		s.setGetBranchName(s.defaultBranchName)
-
 		s.uc.Cfg.IssueID = "1"
 
 		err := s.uc.Execute()
@@ -136,7 +128,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		branchName := "feature/GH-3-local-branch"
 		s.gitProvider.AddLocalBranches(branchName)
-		s.setGetBranchName(branchName)
+		s.branchProvider.SetBranchName(branchName)
 
 		s.uc.Cfg.IssueID = "3"
 
@@ -156,12 +148,6 @@ func (s *CreateGithubBranchExecutionTestSuite) initializeUserInteractionProvider
 	return userInteractionProvider
 }
 
-func (s *CreateGithubBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
-	branchProvider := &domainMocks.MockBranchProvider{}
-
-	return branchProvider
-}
-
 type CreateJiraBranchExecutionTestSuite struct {
 	CreateBranchExecutionTestSuite
 }
@@ -177,16 +163,19 @@ func (s *CreateJiraBranchExecutionTestSuite) SetupSuite() {
 func (s *CreateJiraBranchExecutionTestSuite) SetupSubTest() {
 	s.gitProvider = domainFakes.NewFakeGitProvider()
 
-	s.issueTracker = domainFakes.NewFakeIssueTracker()
-	s.issueTracker.IssueTrackerType = domain.IssueTrackerTypeJira
-	s.issueTracker.AddIssue("PROJECTKEY-1", issue_types.Feature)
-	s.issueTracker.AddIssue("PROJECTKEY-3", issue_types.Documentation)
-	s.issueTracker.AddIssue("PROJECTKEY-6", issue_types.Refactoring)
-
-	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider(s.issueTracker)
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
+	issue1 := domainFakes.NewFakeIssue("PROJECTKEY-1", issue_types.Feature, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue1)
+	issue3 := domainFakes.NewFakeIssue("PROJECTKEY-3", issue_types.Documentation, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue3)
+	issue6 := domainFakes.NewFakeIssue("PROJECTKEY-6", issue_types.Refactoring, domain.IssueTrackerTypeJira)
+	s.issueTrackerProvider.AddIssue(issue6)
 
 	s.userInteractionProvider = s.initializeUserInteractionProvider()
-	s.branchProvider = s.initializeBranchProvider()
+
+	s.branchProvider = domainFakes.NewFakeBranchProvider()
+	s.branchProvider.SetBranchName(s.defaultBranchName)
+
 	s.repositoryProvider = domainFakes.NewRepositoryProvider()
 
 	s.uc = use_cases.CreateBranch{
@@ -202,7 +191,6 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	issueID := "PROJECTKEY-1"
 
 	s.Run("should error if could not get git repository", func() {
-		s.setGetBranchName(s.defaultBranchName)
 		s.repositoryProvider.Repository = nil
 
 		s.uc.Cfg.IssueID = issueID
@@ -223,7 +211,7 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should error if branch already exists with default flag", func() {
 		branchName := "feature/PROJECTKEY-3-local-branch"
 		s.gitProvider.AddLocalBranches(branchName)
-		s.setGetBranchName(branchName)
+		s.branchProvider.SetBranchName(branchName)
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-3"
 		s.uc.Cfg.IsInteractive = false
@@ -234,8 +222,6 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	})
 
 	s.Run("should create branch if branch doesn't exists with default flag", func() {
-		s.setGetBranchName(s.defaultBranchName)
-
 		s.uc.Cfg.IssueID = issueID
 		s.uc.Cfg.IsInteractive = false
 
@@ -248,9 +234,6 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 	s.Run("should create branch if not exists without default flag", func() {
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
-
-		s.setGetBranchName(s.defaultBranchName)
-
 		s.uc.Cfg.IssueID = issueID
 
 		err := s.uc.Execute()
@@ -265,7 +248,7 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		branchName := "feature/PROJECTKEY-3-local-branch"
 		s.gitProvider.AddLocalBranches(branchName)
-		s.setGetBranchName(branchName)
+		s.branchProvider.SetBranchName(branchName)
 
 		s.uc.Cfg.IssueID = issueID
 
@@ -283,10 +266,4 @@ func (s *CreateJiraBranchExecutionTestSuite) initializeUserInteractionProvider()
 	userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	return userInteractionProvider
-}
-
-func (s *CreateJiraBranchExecutionTestSuite) initializeBranchProvider() *domainMocks.MockBranchProvider {
-	branchProvider := &domainMocks.MockBranchProvider{}
-
-	return branchProvider
 }

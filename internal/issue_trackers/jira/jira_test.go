@@ -1,21 +1,66 @@
 package jira
 
 import (
-	"reflect"
+	"errors"
+	"net/http"
 	"testing"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
-	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	gojira "github.com/andygrunwald/go-jira"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
+type fakeClient struct {
+	issue    *gojira.Issue
+	response *gojira.Response
+	err      error
+}
+
+func (f *fakeClient) setError() {
+	f.err = errors.New("error")
+}
+
+func (f *fakeClient) setIssue(key string) {
+	f.issue = &gojira.Issue{
+		Key: key,
+		Fields: &gojira.IssueFields{
+			Summary:     "Issue Summary",
+			Description: "Issue Description",
+			Type: gojira.IssueType{
+				ID:          "3",
+				Name:        "Jira Issue Name",
+				Description: "Jira Issue Description",
+			},
+		},
+	}
+}
+
+func (f *fakeClient) changeIssueType(id string) {
+	if f.issue != nil {
+		f.issue.Fields.Type.ID = id
+	}
+}
+
+func (f *fakeClient) setResponse(statusCode int) {
+	f.response = &gojira.Response{
+		Response: &http.Response{
+			StatusCode: statusCode,
+		},
+	}
+}
+
+func (f *fakeClient) getIssue(identifier string) (*gojira.Issue, *gojira.Response, error) {
+	return f.issue, f.response, f.err
+}
+
 type JiraTestSuite struct {
 	suite.Suite
-	jira *Jira
+	jira               *Jira
+	createBearerClient func(token string, host string, skipTLSVerify bool) (gojiraClient, error)
+	fakeClient         *fakeClient
+	defaultKey         string
+	expectedIssue      *Issue
 }
 
 func TestJiraTestSuite(t *testing.T) {
@@ -23,11 +68,38 @@ func TestJiraTestSuite(t *testing.T) {
 }
 
 func (s *JiraTestSuite) SetupSuite() {
+	s.defaultKey = "PROJECTKEY-1"
+	s.createBearerClient = createBearerClient
+}
+
+func (s *JiraTestSuite) TearDownSuite() {
+	createBearerClient = s.createBearerClient
+}
+
+func (s *JiraTestSuite) SetupSubTest() {
+	s.fakeClient = &fakeClient{}
+	s.fakeClient.setIssue(s.defaultKey)
+	s.fakeClient.setResponse(http.StatusOK)
+
+	createBearerClient = func(token, host string, skipTLSVerify bool) (gojiraClient, error) {
+		return s.fakeClient, nil
+	}
+
 	cfg := Configuration{
 		Jira: config.Jira{
 			Auth: config.JiraAuth{
 				Host: "https://jira.example.com/jira",
 			},
+			IssueTypes: config.JiraIssueTypes{
+				issue_types.Bug:         {"1"},
+				issue_types.Feature:     {"3", "5"},
+				issue_types.Refactoring: {},
+			},
+		},
+		IssueTypeLabels: map[issue_types.IssueType][]string{
+			issue_types.Bug:         {"kind/bug", "kind/bugfix"},
+			issue_types.Feature:     {"kind/feature"},
+			issue_types.Refactoring: {},
 		},
 	}
 
@@ -35,137 +107,59 @@ func (s *JiraTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	s.jira = j
+
+	s.expectedIssue = &Issue{
+		id:    s.defaultKey,
+		title: "Issue Summary",
+		body:  "Issue Description",
+		url:   "https://jira.example.com/jira/browse/PROJECTKEY-1",
+		jiraIssueType: JiraIssueType{
+			Id:          "3",
+			Name:        "Jira Issue Name",
+			Description: "Jira Issue Description",
+		},
+		typeLabel: "kind/feature",
+		issueType: issue_types.Feature,
+	}
 }
 
-func (s *JiraTestSuite) TestGojiraIssueToDomainIssue() {
-	s.Run("Should convert a gojira issue to a domain issue", func() {
-		issue := gojira.Issue{
-			Key: "ISSUE-1",
-			Fields: &gojira.IssueFields{
-				Summary:     "Summary",
-				Description: "Description",
-				Type: gojira.IssueType{
-					ID:          "1",
-					Name:        "Bug",
-					Description: "Fixes a bug",
-				},
-			},
-		}
+func (s *JiraTestSuite) TestGetIssue() {
+	s.Run("should return error if could not execute", func() {
+		s.fakeClient.setError()
 
-		result := s.jira.goJiraIssueToIssue(issue)
+		issue, err := s.jira.GetIssue(s.defaultKey)
 
-		expected := domain.Issue{
-			ID:    "ISSUE-1",
-			Title: "Summary",
-			Body:  "Description",
-			Type: domain.IssueType{
-				Id:          "1",
-				Name:        "Bug",
-				Description: "Fixes a bug",
-			},
-			Url:          "https://jira.example.com/jira/browse/ISSUE-1",
-			IssueTracker: domain.IssueTrackerTypeJira,
-		}
-
-		s.Truef(reflect.DeepEqual(expected, result), "expected: %v, got: %v", expected, result)
+		s.Error(err)
+		s.Nil(issue)
 	})
-}
 
-func TestGetIssueType(t *testing.T) {
+	s.Run("should return bug issue", func() {
+		s.fakeClient.changeIssueType("1")
 
-	createIssue := func(issueTypeId string) domain.Issue {
-		return domain.Issue{Type: domain.IssueType{Id: issueTypeId}}
-	}
+		issue, err := s.jira.GetIssue(s.defaultKey)
 
-	cfg := Configuration{
-		Jira: config.Jira{
-			IssueTypes: config.JiraIssueTypes{
-				issue_types.Bug:         {"1"},
-				issue_types.Feature:     {"3", "5"},
-				issue_types.Improvement: {},
-			},
-		},
-	}
+		s.NoError(err)
+		s.Require().NotNil(issue)
+		s.Equal(issue_types.Bug, issue.Type())
+		s.Equal("kind/bug", issue.TypeLabel())
+	})
 
-	j, err := New(cfg)
-	require.NoError(t, err)
+	s.Run("should return unknown issue", func() {
 
-	for _, tc := range []struct {
-		name  string
-		issue domain.Issue
-		want  issue_types.IssueType
-	}{
-		{
-			name:  "GetIssueType bug",
-			issue: createIssue("1"),
-			want:  issue_types.Bug,
-		},
-		{
-			name:  "GetIssueType feature",
-			issue: createIssue("3"),
-			want:  issue_types.Feature,
-		},
-		{
-			name:  "GetIssueType unknown",
-			issue: createIssue("-1"),
-			want:  issue_types.Unknown,
-		},
-	} {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			got := j.GetIssueType(tc.issue)
-			assert.Equal(t, tc.want, got)
-		})
-	}
-}
+		s.fakeClient.changeIssueType("99")
 
-func TestGetIssueTypeLabel(t *testing.T) {
-	createIssue := func(issueTypeId string) domain.Issue {
-		return domain.Issue{Type: domain.IssueType{Id: issueTypeId}}
-	}
+		issue, err := s.jira.GetIssue(s.defaultKey)
 
-	cfg := Configuration{
-		Jira: config.Jira{
-			IssueTypes: config.JiraIssueTypes{
-				issue_types.Bug:         {"1"},
-				issue_types.Feature:     {"3", "5"},
-				issue_types.Improvement: {},
-			},
-		},
-		IssueTypeLabels: map[issue_types.IssueType][]string{
-			issue_types.Bug:     {"kind/bug", "kind/bugfix"},
-			issue_types.Feature: {"kind/feat"},
-		},
-	}
+		s.NoError(err)
+		s.Require().NotNil(issue)
+		s.Equal(issue_types.Unknown, issue.Type())
+	})
 
-	j, err := New(cfg)
-	require.NoError(t, err)
+	s.Run("should return issue", func() {
+		issue, err := s.jira.GetIssue(s.defaultKey)
 
-	for _, tc := range []struct {
-		name  string
-		issue domain.Issue
-		want  string
-	}{
-		{
-			name:  "Get issue type label with single mapped label",
-			issue: createIssue("5"),
-			want:  "kind/feat",
-		},
-		{
-			name:  "Returns first issue label if multiple labels are mapped to the same issue type",
-			issue: createIssue("1"),
-			want:  "kind/bug",
-		},
-		{
-			name:  "Returns empty string if no kind is present in the issue",
-			issue: createIssue("-1"),
-			want:  "",
-		},
-	} {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			got := j.GetIssueTypeLabel(tc.issue)
-			assert.Equal(t, tc.want, got)
-		})
-	}
+		s.NoError(err)
+		s.Require().NotNil(s.expectedIssue)
+		s.Equal(*s.expectedIssue, issue)
+	})
 }

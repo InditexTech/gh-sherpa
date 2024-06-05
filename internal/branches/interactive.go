@@ -11,20 +11,15 @@ import (
 )
 
 // GetBranchName asks the user for a branch name in an interactive way
-func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIdentifier string, repo domain.Repository) (branchName string, err error) {
-	issue, err := issueTracker.GetIssue(issueIdentifier)
-	if err != nil {
-		return "", err
-	}
-
-	issueType := issueTracker.GetIssueType(issue)
+func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository) (branchName string, err error) {
+	issueType := issue.Type()
 	branchType := issueType.String()
 
-	issueID := issueTracker.FormatIssueId(issue.ID)
+	formattedID := issue.FormatID()
 
-	issueSlug := parseIssueContext(issue.Title)
+	issueSlug := normalizeBranch(issue.Title())
 
-	issueTrackerType := issueTracker.GetIssueTrackerType()
+	issueTrackerType := issue.TrackerType()
 
 	if b.cfg.IsInteractive {
 		branchType, err = b.getBranchType(issueType, issueTrackerType)
@@ -32,14 +27,14 @@ func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIde
 			return "", err
 		}
 
-		maxContextLen := calcIssueContextMaxLen(repo.NameWithOwner, branchType, issueID)
+		maxContextLen := calcIssueContextMaxLen(repo.NameWithOwner, branchType, formattedID)
 		promptIssueContext := fmt.Sprintf("additional description (optional). Truncate to %d chars", maxContextLen)
 		err = b.UserInteraction.SelectOrInput(promptIssueContext, []string{}, &issueSlug, false)
 		if err != nil {
 			return "", err
 		}
 
-		issueSlug = parseIssueContext(issueSlug)
+		issueSlug = normalizeBranch(issueSlug)
 
 	} else {
 		if issueType == issue_types.Other || issueType == issue_types.Unknown {
@@ -52,7 +47,7 @@ func (b BranchProvider) GetBranchName(issueTracker domain.IssueTracker, issueIde
 		}
 	}
 
-	branchName = b.formatBranchName(repo.NameWithOwner, branchType, issueID, issueSlug)
+	branchName = b.formatBranchName(repo.NameWithOwner, branchType, formattedID, issueSlug)
 
 	return branchName, nil
 }

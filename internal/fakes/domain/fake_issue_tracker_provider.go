@@ -2,31 +2,37 @@ package domain
 
 import (
 	"errors"
-	"strconv"
 	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 )
 
 type FakeIssueTrackerProvider struct {
-	IssueTracker domain.IssueTracker
+	Issues []domain.Issue
 }
 
 var _ domain.IssueTrackerProvider = (*FakeIssueTrackerProvider)(nil)
 
-func NewFakeIssueTrackerProvider(issueTracker domain.IssueTracker) *FakeIssueTrackerProvider {
+func NewFakeIssueTrackerProvider() *FakeIssueTrackerProvider {
 	return &FakeIssueTrackerProvider{
-		IssueTracker: issueTracker,
+		Issues: []domain.Issue{},
 	}
 }
 
-func (f *FakeIssueTrackerProvider) GetIssueTracker(identifier string) (issueTracker domain.IssueTracker, err error) {
-	_, err = strconv.Atoi(identifier)
-	if strings.HasPrefix(identifier, "GH-") || strings.HasPrefix(identifier, "PROJECTKEY-") || err == nil {
-		return f.IssueTracker, nil
+var ErrNoIssue = errors.New("no issue")
+
+func (f *FakeIssueTrackerProvider) AddIssue(issue domain.Issue) {
+	f.Issues = append(f.Issues, issue)
+}
+
+func (f *FakeIssueTrackerProvider) GetIssue(identifier string) (issue domain.Issue, err error) {
+	for _, i := range f.Issues {
+		if i.ID() == identifier {
+			return i, nil
+		}
 	}
 
-	return nil, errors.New("issue tracker not found")
+	return nil, ErrNoIssue
 }
 
 func (f *FakeIssueTrackerProvider) ParseIssueId(identifier string) (issueId string) {

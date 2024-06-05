@@ -35,6 +35,9 @@ type CreatePullRequest struct {
 
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
+	isInteractive := cpr.Cfg.IsInteractive
+	fromLocalBranch := cpr.Cfg.IssueID == ""
+
 	repo, err := cpr.RepositoryProvider.GetRepository()
 	if err != nil {
 		logging.Debugf("error while getting repo: %s", err)
@@ -51,166 +54,130 @@ func (cpr CreatePullRequest) Execute() error {
 		return fmt.Errorf("could not get the current branch name because %s", err)
 	}
 
-	issueID := cpr.Cfg.IssueID
-
-	// 1. FLAG ISSUE IS USED
-	if issueID != "" {
-		issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
+	var issueID string
+	if fromLocalBranch {
+		issueID, err = cpr.extractIssueIdFromBranch(currentBranch)
 		if err != nil {
 			return err
 		}
-
-		formattedIssueId := issueTracker.FormatIssueId(issueID)
-
-		// 7. CHECK IF A LOCAL BRANCH CONTAINS THIS ISSUE
-		name, exists := cpr.Git.BranchExistsContains(fmt.Sprintf("/%s-", formattedIssueId))
-		if exists {
-			// 8. FLAG DEFAULT IS USED
-			if !cpr.Cfg.IsInteractive {
-				return fmt.Errorf("the branch %s already exists", logging.PaintWarning(name))
-			}
-
-			logging.PrintWarn(fmt.Sprintf("there is already a local branch named %s for this issue", logging.PaintInfo(name)))
-
-			// 9. CONFIRM USER TO USE THE BRANCH
-			confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
-			if err != nil {
-				return err
-			}
-
-			if !confirmed {
-				branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
-				if err != nil {
-					return err
-				}
-				currentBranch = branchName
-				if canceled {
-					return nil
-				}
-
-			} else {
-				currentBranch = name
-				if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
-					return fmt.Errorf("could not switch to the branch because %w", err)
-				}
-
-				// 11. CHECK IF BRANCH HAS PENDING COMMITS
-				canceled, err := cpr.pendingCommits(currentBranch)
-				if err != nil {
-					return err
-				}
-				if canceled {
-					return nil
-				}
-
-			}
-
-		} else {
-			branchName, canceled, err := cpr.createNewUserBranchAndPush(baseBranch, issueTracker, issueID, *repo)
-			if err != nil {
-				return err
-			}
-			currentBranch = branchName
-
-			if canceled {
-				return nil
-			}
-		}
-
 	} else {
-		// 1.NO
+		issueID = cpr.Cfg.IssueID
+	}
 
-		branchNameInfo := branches.ParseBranchName(currentBranch)
-		// 2. DOES CURRENT BRANCH CONTAINS A ISSUE IN IT
-		if branchNameInfo == nil || branchNameInfo.IssueId == "" {
-			// 3. EXIT
-			return fmt.Errorf("could not find an issue identifier in the current branch named %s", logging.PaintWarning(currentBranch))
-		}
+	issue, err := cpr.IssueTrackerProvider.GetIssue(issueID)
+	if err != nil {
+		return err
+	}
 
-		logging.PrintInfo(fmt.Sprintf("The current branch named %s is available to create a pull request", logging.PaintWarning(currentBranch)))
+	var branchExists bool
+	if fromLocalBranch {
+		branchExists = true
+	} else {
+		formattedIssueID := issue.FormatID()
+		currentBranch, branchExists = cpr.Git.FindBranch(fmt.Sprintf("/%s-", formattedIssueID))
 
-		issueID = cpr.IssueTrackerProvider.ParseIssueId(branchNameInfo.IssueId)
-
-		// 4. FLAG DEFAULT IS USED
-		if cpr.Cfg.IsInteractive {
-			// 5. CONFIG USER TO USE THIS BRANCH
-			confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to use this branch to create the pull request", true)
-			if err != nil {
-				return err
+		if branchExists {
+			if !isInteractive {
+				return fmt.Errorf("the branch %s already exists", logging.PaintWarning(currentBranch))
 			}
 
-			if !confirmed {
-				return nil
-			}
-
+			logging.PrintWarn(
+				fmt.Sprintf("there is already a local branch named %s for this issue", logging.PaintInfo(currentBranch)))
 		}
+	}
 
-		if cpr.Git.RemoteBranchExists(currentBranch) {
-			return ErrRemoteBranchAlreadyExists(currentBranch)
-		}
-
-		// 11. CHECK IF BRANCH HAS PENDING COMMITS
-		canceled, err := cpr.pendingCommits(currentBranch)
+	branchConfirmed := true
+	if branchExists && isInteractive {
+		branchConfirmed, err = cpr.UserInteractionProvider.AskUserForConfirmation(
+			"Do you want to use this branch to create the pull request", true)
 		if err != nil {
 			return err
 		}
-		if canceled {
+
+		if fromLocalBranch && !branchConfirmed {
+			// Clean exit since user do not want to continue
 			return nil
 		}
 	}
 
-	// 13. CHECK IF PR DOES ALREADY EXISTS
+	if branchExists && branchConfirmed {
+		if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
+			return fmt.Errorf("could not switch to the branch because %w", err)
+		}
+	} else {
+		currentBranch, err = cpr.BranchProvider.GetBranchName(issue, *repo)
+		if err != nil {
+			return err
+		}
+
+		cancel, err := cpr.createBranch(currentBranch, baseBranch)
+		if err != nil {
+			return err
+		}
+		if cancel {
+			return nil
+		}
+	}
+
+	if cpr.Git.RemoteBranchExists(currentBranch) {
+		return ErrRemoteBranchAlreadyExists(currentBranch)
+	}
+
+	hasPendingCommits, err := cpr.hasPendingCommits(currentBranch)
+	if err != nil {
+		return err
+	}
+
+	if hasPendingCommits {
+		logging.PrintWarn("the branch contains commits that have not been pushed yet")
+
+		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation(
+			"Do you want to continue pushing all pending commits in this branch and create the pull request", true)
+		if err != nil {
+			return err
+		}
+		if !confirmed {
+			return nil
+		}
+	} else {
+		if err = cpr.createEmptyCommit(); err != nil {
+			return fmt.Errorf("could not do the empty commit because %s", err)
+		}
+	}
+
+	if err := cpr.pushChanges(currentBranch); err != nil {
+		return err
+	}
+
 	pr, err := cpr.PullRequestProvider.GetPullRequestForBranch(currentBranch)
 	if err != nil {
 		return fmt.Errorf("error while getting pull request for branch: %w", err)
 	}
 
 	if pr != nil && !pr.Closed {
-		// 14. EXIT
 		return fmt.Errorf("a pull request %s for this branch already exists", pr.Url)
 	}
 
-	// 15. GET INFO FROM ISSUE
-	issueTracker, err := cpr.IssueTrackerProvider.GetIssueTracker(issueID)
-	if err != nil {
+	if err := cpr.createPullRequestFromIssue(issue, baseBranch, currentBranch); err != nil {
 		return err
 	}
 
-	issue, err := issueTracker.GetIssue(issueID)
-	if err != nil {
-		return err
-	}
-
-	title, body, err := cpr.getPullRequestTitleAndBody(issue)
-	if err != nil {
-		return err
-	}
-
-	labels := []string{}
-	typeLabel := issueTracker.GetIssueTypeLabel(issue)
-	if typeLabel != "" {
-		labels = append(labels, typeLabel)
-	}
-
-	// 16. CREATE PULL REQUEST
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, currentBranch, cpr.Cfg.DraftPR, labels)
-	if err != nil {
-		return fmt.Errorf("could not create the pull request because %s", err)
-	}
-
-	fmt.Printf("\nThe pull request %s have been created!\nYou are now working on the branch %s\n", logging.PaintInfo(prURL), logging.PaintInfo(currentBranch))
-	// 17. EXIT
 	return nil
 }
 
-func (cpr *CreatePullRequest) createEmptyCommitAndPush(branchName string) (err error) {
-	// 18. CREATE EMPTY COMMIT
-	err = cpr.Git.CommitEmpty("chore: initial commit")
-	if err != nil {
-		return fmt.Errorf("could not do the empty commit because %s", err)
+func (cpr *CreatePullRequest) extractIssueIdFromBranch(currentBranch string) (string, error) {
+	branchNameInfo := branches.ParseBranchName(currentBranch)
+	if branchNameInfo == nil || branchNameInfo.IssueId == "" {
+		return "", fmt.Errorf("could not find an issue identifier in the current branch named %s", logging.PaintWarning(currentBranch))
 	}
 
-	return cpr.pushChanges(branchName)
+	logging.PrintInfo(fmt.Sprintf("The current branch named %s is available to create a pull request", logging.PaintWarning(currentBranch)))
+
+	return cpr.IssueTrackerProvider.ParseIssueId(branchNameInfo.IssueId), nil
+}
+
+func (cpr *CreatePullRequest) createEmptyCommit() error {
+	return cpr.Git.CommitEmpty("chore: initial commit")
 }
 
 func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
@@ -224,64 +191,34 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 }
 
 func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
-	switch issue.IssueTracker {
+	switch issue.TrackerType() {
 	case domain.IssueTrackerTypeGithub:
-		title = issue.Title
+		title = issue.Title()
 
-		keyword := "Closes"
-		if !cpr.Cfg.CloseIssue {
-			keyword = "Related to"
+		keyword := "Related to"
+		if cpr.Cfg.CloseIssue {
+			keyword = "Closes"
 		}
-		body = fmt.Sprintf("%s #%s", keyword, issue.ID)
+		body = fmt.Sprintf("%s #%s", keyword, issue.ID())
 
 	case domain.IssueTrackerTypeJira:
-		title = fmt.Sprintf("[%s] %s", issue.ID, issue.Title)
+		title = fmt.Sprintf("[%s] %s", issue.ID(), issue.Title())
+		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID(), issue.URL())
 
-		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID, issue.Url)
 	default:
-		err = fmt.Errorf("issue tracker %s is not supported", issue.IssueTracker)
+		err = fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
 	}
 
-	return title, body, err
+	return
 }
 
-func (cpr *CreatePullRequest) pendingCommits(currentBranch string) (canceled bool, err error) {
-	// 11. CHECK IF BRANCH HAS PENDING COMMITS
+func (cpr *CreatePullRequest) hasPendingCommits(currentBranch string) (bool, error) {
 	commitsToPush, err := cpr.Git.GetCommitsToPush(currentBranch)
 	if err != nil {
 		return false, err
 	}
 
-	if len(commitsToPush) > 0 {
-		logging.PrintWarn("the branch contains commits that have not been pushed yet")
-
-		// 21. ASK USER CONFIRMATION TO PUSH THE COMMITS
-		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue pushing all pending commits in this branch and create the pull request", true)
-		if err != nil {
-			return false, err
-		}
-
-		if !confirmed {
-			// 22. EXIT
-			return true, nil
-		}
-
-		// 19. PUSH CHANGES
-		if err := cpr.pushChanges(currentBranch); err != nil {
-			return false, err
-		}
-
-	} else {
-		// 12. DOES THE REMOTE BRANCH EXISTS
-		if !cpr.Git.RemoteBranchExists(currentBranch) {
-			// 18. & //19.
-			if err := cpr.createEmptyCommitAndPush(currentBranch); err != nil {
-				return false, err
-			}
-		}
-	}
-
-	return false, nil
+	return len(commitsToPush) > 0, nil
 }
 
 func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string) error {
@@ -300,35 +237,53 @@ func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBra
 	return nil
 }
 
-func (cpr *CreatePullRequest) createNewUserBranchAndPush(baseBranch string, issueTracker domain.IssueTracker, issueID string, repo domain.Repository) (branchName string, canceled bool, err error) {
-	branchName, err = cpr.BranchProvider.GetBranchName(issueTracker, issueID, repo)
-	if err != nil {
-		return "", false, err
+func (cpr *CreatePullRequest) createBranch(branch string, baseBranch string) (cancel bool, err error) {
+	if cpr.Git.RemoteBranchExists(branch) {
+		err = ErrRemoteBranchAlreadyExists(branch)
+		return
 	}
 
-	if cpr.Git.RemoteBranchExists(branchName) {
-		return "", true, ErrRemoteBranchAlreadyExists(branchName)
-	}
+	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n",
+		logging.PaintInfo(branch), logging.PaintInfo(baseBranch))
 
-	fmt.Printf("\nA new pull request is going to be created from %s to %s branch\n", logging.PaintInfo(branchName), logging.PaintInfo(baseBranch))
 	if cpr.Cfg.IsInteractive {
-		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
+		var confirmed bool
+		confirmed, err = cpr.UserInteractionProvider.AskUserForConfirmation("Do you want to continue?", true)
 		if err != nil {
-			return "", false, err
+			return
 		}
 		if !confirmed {
-			return "", true, nil
+			cancel = true
+			return
 		}
 	}
 
-	if err = cpr.createNewLocalBranch(branchName, baseBranch); err != nil {
+	if err = cpr.createNewLocalBranch(branch, baseBranch); err != nil {
 		return
 	}
 
-	// 18. && 19.
-	if err = cpr.createEmptyCommitAndPush(branchName); err != nil {
-		return
+	return
+}
+
+func (cpr *CreatePullRequest) createPullRequestFromIssue(issue domain.Issue, baseBranch string, headBranch string) error {
+	title, body, err := cpr.getPullRequestTitleAndBody(issue)
+	if err != nil {
+		return err
 	}
 
-	return branchName, false, nil
+	labels := []string{}
+	typeLabel := issue.TypeLabel()
+	if typeLabel != "" {
+		labels = append(labels, typeLabel)
+	}
+
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, headBranch, cpr.Cfg.DraftPR, labels)
+	if err != nil {
+		return fmt.Errorf("could not create the pull request because %s", err)
+	}
+
+	fmt.Printf("\nThe pull request %s have been created!\nYou are now working on the branch %s\n",
+		logging.PaintInfo(prURL), logging.PaintInfo(headBranch))
+
+	return nil
 }

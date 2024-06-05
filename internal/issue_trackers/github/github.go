@@ -26,7 +26,7 @@ type Configuration struct {
 	config.Github
 }
 
-type Issue struct {
+type ghIssue struct {
 	Number int64
 	Title  string
 	Body   string
@@ -41,8 +41,6 @@ type Label struct {
 	Color       string
 }
 
-var _ domain.IssueTracker = (*Github)(nil)
-
 // New returns a new Github issue tracker with the given configuration
 func New(cfg Configuration) (*Github, error) {
 
@@ -55,7 +53,7 @@ func New(cfg Configuration) (*Github, error) {
 func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
 	command := []string{"issue", "view", identifier, "--json", "labels,number,title,body,url"}
 
-	result := Issue{}
+	result := ghIssue{}
 
 	err = g.cli.Execute(&result, command)
 	if err != nil {
@@ -74,26 +72,40 @@ func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
 		}
 	}
 
-	return domain.Issue{
-		ID:           strconv.FormatInt(result.Number, 10),
-		Title:        result.Title,
-		Body:         result.Body,
-		Url:          result.Url,
-		Labels:       labels,
-		IssueTracker: domain.IssueTrackerTypeGithub,
+	issueTypeLabel := g.getIssueTypeLabel(labels)
+
+	return Issue{
+		id:        strconv.FormatInt(result.Number, 10),
+		title:     result.Title,
+		body:      result.Body,
+		url:       result.Url,
+		labels:    labels,
+		typeLabel: issueTypeLabel,
+		issueType: g.getIssueType(issueTypeLabel),
 	}, nil
+
 }
 
-func (g *Github) GetIssueType(issue domain.Issue) (issueType issue_types.IssueType) {
-	issueTypeLabel := g.GetIssueTypeLabel(issue)
-
-	for issueType, cfgLabels := range g.cfg.Github.IssueLabels {
+func (g *Github) getIssueType(issueTypeLabel string) issue_types.IssueType {
+	for issueType, cfgLabels := range g.cfg.IssueLabels {
 		if slices.Contains(cfgLabels, issueTypeLabel) {
 			return issueType
 		}
 	}
 
 	return issue_types.Unknown
+}
+
+func (g *Github) getIssueTypeLabel(labels []domain.Label) string {
+	for _, cfgLabels := range g.cfg.IssueLabels {
+		for _, label := range labels {
+			if slices.Contains(cfgLabels, label.Name) {
+				return label.Name
+			}
+		}
+	}
+
+	return ""
 }
 
 func (g *Github) IdentifyIssue(identifier string) bool {
@@ -105,32 +117,11 @@ func (g *Github) CheckConfiguration() (err error) {
 	return
 }
 
-func (g *Github) FormatIssueId(issueId string) (formattedIssueId string) {
-	return fmt.Sprintf("GH-%s", issueId)
-}
-
 func (g *Github) ParseRawIssueId(identifier string) (issueId string) {
 	match := issuePattern.FindStringSubmatch(identifier)
 
 	if len(match) > 0 {
 		return match[1]
-	}
-
-	return ""
-}
-
-func (g *Github) GetIssueTrackerType() domain.IssueTrackerType {
-	return domain.IssueTrackerTypeGithub
-}
-
-// GetIssueTypeLabel returns the type label related to the issue or empty string if not found
-func (g *Github) GetIssueTypeLabel(issue domain.Issue) string {
-	for _, cfgLabels := range g.cfg.Github.IssueLabels {
-		for _, label := range issue.Labels {
-			if slices.Contains(cfgLabels, label.Name) {
-				return label.Name
-			}
-		}
 	}
 
 	return ""

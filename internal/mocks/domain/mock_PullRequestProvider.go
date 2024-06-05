@@ -77,17 +77,17 @@ func (_c *MockPullRequestProvider_CreatePullRequest_Call) RunAndReturn(run func(
 	return _c
 }
 
-// GetPullRequestForBranch provides a mock function with given fields: _a0
-func (_m *MockPullRequestProvider) GetPullRequestForBranch(_a0 string) (*domain.PullRequest, error) {
-	ret := _m.Called(_a0)
+// GetPullRequestForBranch provides a mock function with given fields: branch
+func (_m *MockPullRequestProvider) GetPullRequestForBranch(branch string) (*domain.PullRequest, error) {
+	ret := _m.Called(branch)
 
 	var r0 *domain.PullRequest
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) (*domain.PullRequest, error)); ok {
-		return rf(_a0)
+		return rf(branch)
 	}
 	if rf, ok := ret.Get(0).(func(string) *domain.PullRequest); ok {
-		r0 = rf(_a0)
+		r0 = rf(branch)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.PullRequest)
@@ -95,7 +95,7 @@ func (_m *MockPullRequestProvider) GetPullRequestForBranch(_a0 string) (*domain.
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(_a0)
+		r1 = rf(branch)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -109,12 +109,12 @@ type MockPullRequestProvider_GetPullRequestForBranch_Call struct {
 }
 
 // GetPullRequestForBranch is a helper method to define mock.On call
-//   - _a0 string
-func (_e *MockPullRequestProvider_Expecter) GetPullRequestForBranch(_a0 interface{}) *MockPullRequestProvider_GetPullRequestForBranch_Call {
-	return &MockPullRequestProvider_GetPullRequestForBranch_Call{Call: _e.mock.On("GetPullRequestForBranch", _a0)}
+//   - branch string
+func (_e *MockPullRequestProvider_Expecter) GetPullRequestForBranch(branch interface{}) *MockPullRequestProvider_GetPullRequestForBranch_Call {
+	return &MockPullRequestProvider_GetPullRequestForBranch_Call{Call: _e.mock.On("GetPullRequestForBranch", branch)}
 }
 
-func (_c *MockPullRequestProvider_GetPullRequestForBranch_Call) Run(run func(_a0 string)) *MockPullRequestProvider_GetPullRequestForBranch_Call {
+func (_c *MockPullRequestProvider_GetPullRequestForBranch_Call) Run(run func(branch string)) *MockPullRequestProvider_GetPullRequestForBranch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})

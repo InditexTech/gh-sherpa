@@ -96,19 +96,19 @@ func (p *Provider) GetCurrentBranch() (branchName string, err error) {
 	return
 }
 
-func (p *Provider) BranchExistsContains(branch string) (name string, exists bool) {
-	args := []string{"rev-parse", "--abbrev-ref", "--branches=*" + branch + "*"}
+func (p *Provider) FindBranch(substring string) (branch string, exists bool) {
+	args := []string{"rev-parse", "--abbrev-ref", "--branches=*" + substring + "*"}
 
 	out, _ := runGitCommand(args...)
 
-	name = strings.Split(out, "\n")[0]
-	name = strings.TrimSpace(name)
+	branch = strings.Split(out, "\n")[0]
+	branch = strings.TrimSpace(branch)
 
 	if os.Getenv(DRY_RUN_ENV) != "" {
 		return "", false
 	}
 
-	return name, name != ""
+	return branch, branch != ""
 }
 
 func (p *Provider) CheckoutBranch(branch string) (err error) {

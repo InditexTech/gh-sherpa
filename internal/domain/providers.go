@@ -24,7 +24,7 @@ type GitProvider interface {
 	FetchBranchFromOrigin(branch string) (err error)
 	CheckoutNewBranchFromOrigin(branch string, base string) (err error)
 	GetCurrentBranch() (branchName string, err error)
-	BranchExistsContains(branch string) (name string, exists bool)
+	FindBranch(substring string) (branch string, exists bool)
 	CheckoutBranch(branch string) (err error)
 	GetCommitsToPush(branch string) (commits []string, err error)
 	RemoteBranchExists(branch string) (exists bool)
@@ -33,5 +33,5 @@ type GitProvider interface {
 }
 
 type BranchProvider interface {
-	GetBranchName(issueTracker IssueTracker, issueIdentifier string, repo Repository) (branchName string, err error)
+	GetBranchName(issue Issue, repo Repository) (branchName string, err error)
 }
