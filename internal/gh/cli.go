@@ -13,8 +13,6 @@ import (
 
 type Cli struct{}
 
-var _ domain.GhCli = (*Cli)(nil)
-
 func (c *Cli) GetRepository() (repo *domain.Repository, err error) {
 	baseCommand := []string{"repo", "view", "--json", "name,owner,nameWithOwner,defaultBranchRef"}
 

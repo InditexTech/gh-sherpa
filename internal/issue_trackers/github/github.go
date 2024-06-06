@@ -21,14 +21,14 @@ var ErrIdIsPullRequestNumber = func(identifier string) error {
 	return fmt.Errorf("given identifier %s is a Pull Request number", identifier)
 }
 
-type GithubCli interface {
-	domain.GhCli
+type githubCli interface {
+	Execute(result interface{}, command []string) error
 	domain.RepositoryProvider
 }
 
 type Github struct {
 	cfg Configuration
-	cli GithubCli
+	cli githubCli
 }
 
 type Configuration struct {
@@ -57,7 +57,7 @@ type Label struct {
 	Color       string
 }
 
-var newGhCli = func() GithubCli {
+var newGhCli = func() githubCli {
 	return &gh.Cli{}
 }
 

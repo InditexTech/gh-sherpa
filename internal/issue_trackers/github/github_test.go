@@ -52,7 +52,7 @@ func (f *fakeCli) addIssueTypeLabel(issueType issue_types.IssueType) {
 	})
 }
 
-var _ GithubCli = (*fakeCli)(nil)
+var _ githubCli = (*fakeCli)(nil)
 
 func (f *fakeCli) GetRepository() (repo *domain.Repository, err error) {
 	repo = &domain.Repository{
@@ -88,7 +88,7 @@ type GithubTestSuite struct {
 	fakeCli        *fakeCli
 	defaultIssueID string
 	expectedIssue  *Issue
-	newGhCli       func() GithubCli
+	newGhCli       func() githubCli
 }
 
 func TestGithubSuite(t *testing.T) {
@@ -108,7 +108,7 @@ func (s *GithubTestSuite) SetupSubTest() {
 	s.fakeCli = &fakeCli{}
 	s.fakeCli.setIssue(1)
 
-	newGhCli = func() GithubCli {
+	newGhCli = func() githubCli {
 		return s.fakeCli
 	}
 
@@ -210,7 +210,7 @@ func (s *GithubTestSuite) TestGetIssue() {
 
 func Test_CheckConfiguration(t *testing.T) {
 	type fields struct {
-		Cli GithubCli
+		Cli githubCli
 	}
 	tests := []struct {
 		name    string
@@ -231,7 +231,7 @@ func Test_CheckConfiguration(t *testing.T) {
 
 func Test_IdentifyIssue(t *testing.T) {
 	type fields struct {
-		Cli GithubCli
+		Cli githubCli
 	}
 	type args struct {
 		identifier string
