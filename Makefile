@@ -47,7 +47,7 @@ coverage:
 	$(eval TEST_COVERAGE_PROFILE_OUTPUT_DIRNAME=$(shell dirname $(TEST_COVERAGE_PROFILE_OUTPUT)))
 	$(eval TEST_REPORT_OUTPUT_DIRNAME=$(shell dirname $(TEST_REPORT_OUTPUT)))
 	mkdir -p $(TEST_COVERAGE_PROFILE_OUTPUT_DIRNAME) $(TEST_REPORT_OUTPUT_DIRNAME)
-	$(GO) test ./... -coverprofile=$(TEST_COVERAGE_PROFILE_OUTPUT) -json > $(TEST_REPORT_OUTPUT)
+	$(GO) test ./... -coverpkg=./... -coverprofile=$(TEST_COVERAGE_PROFILE_OUTPUT) -json > $(TEST_REPORT_OUTPUT)
 
 .PHONY: generate-mocks
 generate-mocks:
