@@ -80,4 +80,5 @@ branches:
   # Branch name max number of characters
   # Useful when you want to crop the branch name to a specific length.
   # By default it will use 63 for Kubernetes resources compatibility.
+  # You can disable this limit of characters by setting this value to 0.
   max_length: 63
