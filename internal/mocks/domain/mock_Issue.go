@@ -145,129 +145,6 @@ func (_c *MockIssue_ID_Call) RunAndReturn(run func() string) *MockIssue_ID_Call 
 	return _c
 }
 
-// IssueTrackerType provides a mock function with given fields:
-func (_m *MockIssue) IssueTrackerType() domain.IssueTrackerType {
-	ret := _m.Called()
-
-	var r0 domain.IssueTrackerType
-	if rf, ok := ret.Get(0).(func() domain.IssueTrackerType); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(domain.IssueTrackerType)
-	}
-
-	return r0
-}
-
-// MockIssue_IssueTrackerType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueTrackerType'
-type MockIssue_IssueTrackerType_Call struct {
-	*mock.Call
-}
-
-// IssueTrackerType is a helper method to define mock.On call
-func (_e *MockIssue_Expecter) IssueTrackerType() *MockIssue_IssueTrackerType_Call {
-	return &MockIssue_IssueTrackerType_Call{Call: _e.mock.On("IssueTrackerType")}
-}
-
-func (_c *MockIssue_IssueTrackerType_Call) Run(run func()) *MockIssue_IssueTrackerType_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockIssue_IssueTrackerType_Call) Return(_a0 domain.IssueTrackerType) *MockIssue_IssueTrackerType_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockIssue_IssueTrackerType_Call) RunAndReturn(run func() domain.IssueTrackerType) *MockIssue_IssueTrackerType_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// IssueType provides a mock function with given fields:
-func (_m *MockIssue) IssueType() issue_types.IssueType {
-	ret := _m.Called()
-
-	var r0 issue_types.IssueType
-	if rf, ok := ret.Get(0).(func() issue_types.IssueType); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(issue_types.IssueType)
-	}
-
-	return r0
-}
-
-// MockIssue_IssueType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueType'
-type MockIssue_IssueType_Call struct {
-	*mock.Call
-}
-
-// IssueType is a helper method to define mock.On call
-func (_e *MockIssue_Expecter) IssueType() *MockIssue_IssueType_Call {
-	return &MockIssue_IssueType_Call{Call: _e.mock.On("IssueType")}
-}
-
-func (_c *MockIssue_IssueType_Call) Run(run func()) *MockIssue_IssueType_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockIssue_IssueType_Call) Return(_a0 issue_types.IssueType) *MockIssue_IssueType_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockIssue_IssueType_Call) RunAndReturn(run func() issue_types.IssueType) *MockIssue_IssueType_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// IssueTypeLabel provides a mock function with given fields:
-func (_m *MockIssue) IssueTypeLabel() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// MockIssue_IssueTypeLabel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IssueTypeLabel'
-type MockIssue_IssueTypeLabel_Call struct {
-	*mock.Call
-}
-
-// IssueTypeLabel is a helper method to define mock.On call
-func (_e *MockIssue_Expecter) IssueTypeLabel() *MockIssue_IssueTypeLabel_Call {
-	return &MockIssue_IssueTypeLabel_Call{Call: _e.mock.On("IssueTypeLabel")}
-}
-
-func (_c *MockIssue_IssueTypeLabel_Call) Run(run func()) *MockIssue_IssueTypeLabel_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockIssue_IssueTypeLabel_Call) Return(_a0 string) *MockIssue_IssueTypeLabel_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockIssue_IssueTypeLabel_Call) RunAndReturn(run func() string) *MockIssue_IssueTypeLabel_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Title provides a mock function with given fields:
 func (_m *MockIssue) Title() string {
 	ret := _m.Called()
@@ -305,6 +182,129 @@ func (_c *MockIssue_Title_Call) Return(_a0 string) *MockIssue_Title_Call {
 }
 
 func (_c *MockIssue_Title_Call) RunAndReturn(run func() string) *MockIssue_Title_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TrackerType provides a mock function with given fields:
+func (_m *MockIssue) TrackerType() domain.IssueTrackerType {
+	ret := _m.Called()
+
+	var r0 domain.IssueTrackerType
+	if rf, ok := ret.Get(0).(func() domain.IssueTrackerType); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(domain.IssueTrackerType)
+	}
+
+	return r0
+}
+
+// MockIssue_TrackerType_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TrackerType'
+type MockIssue_TrackerType_Call struct {
+	*mock.Call
+}
+
+// TrackerType is a helper method to define mock.On call
+func (_e *MockIssue_Expecter) TrackerType() *MockIssue_TrackerType_Call {
+	return &MockIssue_TrackerType_Call{Call: _e.mock.On("TrackerType")}
+}
+
+func (_c *MockIssue_TrackerType_Call) Run(run func()) *MockIssue_TrackerType_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockIssue_TrackerType_Call) Return(_a0 domain.IssueTrackerType) *MockIssue_TrackerType_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockIssue_TrackerType_Call) RunAndReturn(run func() domain.IssueTrackerType) *MockIssue_TrackerType_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Type provides a mock function with given fields:
+func (_m *MockIssue) Type() issue_types.IssueType {
+	ret := _m.Called()
+
+	var r0 issue_types.IssueType
+	if rf, ok := ret.Get(0).(func() issue_types.IssueType); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(issue_types.IssueType)
+	}
+
+	return r0
+}
+
+// MockIssue_Type_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Type'
+type MockIssue_Type_Call struct {
+	*mock.Call
+}
+
+// Type is a helper method to define mock.On call
+func (_e *MockIssue_Expecter) Type() *MockIssue_Type_Call {
+	return &MockIssue_Type_Call{Call: _e.mock.On("Type")}
+}
+
+func (_c *MockIssue_Type_Call) Run(run func()) *MockIssue_Type_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockIssue_Type_Call) Return(_a0 issue_types.IssueType) *MockIssue_Type_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockIssue_Type_Call) RunAndReturn(run func() issue_types.IssueType) *MockIssue_Type_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TypeLabel provides a mock function with given fields:
+func (_m *MockIssue) TypeLabel() string {
+	ret := _m.Called()
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
+// MockIssue_TypeLabel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TypeLabel'
+type MockIssue_TypeLabel_Call struct {
+	*mock.Call
+}
+
+// TypeLabel is a helper method to define mock.On call
+func (_e *MockIssue_Expecter) TypeLabel() *MockIssue_TypeLabel_Call {
+	return &MockIssue_TypeLabel_Call{Call: _e.mock.On("TypeLabel")}
+}
+
+func (_c *MockIssue_TypeLabel_Call) Run(run func()) *MockIssue_TypeLabel_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockIssue_TypeLabel_Call) Return(_a0 string) *MockIssue_TypeLabel_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockIssue_TypeLabel_Call) RunAndReturn(run func() string) *MockIssue_TypeLabel_Call {
 	_c.Call.Return(run)
 	return _c
 }
