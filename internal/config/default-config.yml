@@ -77,7 +77,7 @@ branches:
     # bugfix: myfix
     # Example: map `feature` type to a branch prefix `feat/xxxx`:
     # feature: feat
-  # Bran max length configuration
+  # Branch name max number of characters
   # Useful when you want to crop the branch name to a specific length.
-  # By default it will use 63 due to compatibilities with Kubernetes.
+  # By default it will use 63 for Kubernetes resources compatibility.
   max_length: 63
