@@ -4,11 +4,109 @@ import (
 	"testing"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
+	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
+	domainFakes "github.com/InditexTech/gh-sherpa/internal/fakes/domain"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
+
+type BranchTestSuite struct {
+	suite.Suite
+	b                       *BranchProvider
+	userInteractionProvider *domainMocks.MockUserInteractionProvider
+	fakeIssue               *domainFakes.FakeIssue
+	defaultRepository       *domain.Repository
+}
+
+func TestBranchTestSuite(t *testing.T) {
+	suite.Run(t, new(BranchTestSuite))
+}
+
+func (s *BranchTestSuite) SetupSubTest() {
+	s.userInteractionProvider = &domainMocks.MockUserInteractionProvider{}
+
+	s.b = &BranchProvider{
+		cfg: Configuration{
+			Branches: config.Branches{
+				Prefixes: map[issue_types.IssueType]string{
+					issue_types.Bug: "bugfix",
+				},
+				MaxLength: 0,
+			},
+		},
+		UserInteraction: s.userInteractionProvider,
+	}
+
+	s.defaultRepository = &domain.Repository{
+		Name:             "test-name",
+		Owner:            "test-owner",
+		NameWithOwner:    "test-owner/test-name",
+		DefaultBranchRef: "main",
+	}
+
+	s.fakeIssue = domainFakes.NewFakeIssue("1", issue_types.Bug, domain.IssueTrackerTypeGithub)
+}
+
+func (s *BranchTestSuite) TestGetBranchName() {
+
+	s.Run("should return expected branch name", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return cropped branch", func() {
+		expectedBrachName := "bugfix/GH-1-my-title-is-too-long-and-it-sho"
+
+		s.fakeIssue.SetTitle("my title is too long and it should not matter")
+
+		s.b.cfg.Branches.MaxLength = 63
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return expected branch name when interactive", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title-from-interactive"
+
+		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(name string, validValues []string, variable *string, required bool) {
+			*variable = "fake title from interactive"
+		}).Return(nil).Once()
+
+		s.b.cfg.IsInteractive = true
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return cropped branch name when interactive", func() {
+		expectedBrachName := "bugfix/GH-1-this-is-a-very-long-fake-title"
+
+		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(name string, validValues []string, variable *string, required bool) {
+			*variable = "this is a very long fake title from interactive"
+		}).Return(nil).Once()
+
+		s.b.cfg.IsInteractive = true
+		s.b.cfg.Branches.MaxLength = 63
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+}
 
 func TestParseIssueContext(t *testing.T) {
 	tests := []struct {
@@ -45,6 +143,7 @@ func TestFormatBranchName(t *testing.T) {
 		issueId              string
 		issueContext         string
 		branchPrefixOverride map[issue_types.IssueType]string
+		maxLength            int
 	}
 	tests := []struct {
 		name string
@@ -53,7 +152,14 @@ func TestFormatBranchName(t *testing.T) {
 	}{
 		{
 			name: "Does format branch name",
-			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title"},
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "my-title",
+				maxLength:    63,
+			},
+
 			want: "feature/GH-1-my-title",
 		},
 		{
@@ -64,12 +170,19 @@ func TestFormatBranchName(t *testing.T) {
 				issueId:              "GH-1",
 				issueContext:         "my-title",
 				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+				maxLength:            63,
 			},
 			want: "feat/GH-1-my-title",
 		},
 		{
 			name: "Does format long branch name",
-			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title-is-too-long-and-it-should-be-truncated"},
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "my-title-is-too-long-and-it-should-be-truncated",
+				maxLength:    63,
+			},
 			want: "feature/GH-1-my-title-is-too-long-and-it-s",
 		},
 		{
@@ -80,6 +193,7 @@ func TestFormatBranchName(t *testing.T) {
 				issueId:              "GH-1",
 				issueContext:         "my-title-is-too-long-and-it-should-be-truncated",
 				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+				maxLength:            63,
 			},
 			want: "feat/GH-1-my-title-is-too-long-and-it-shou",
 		},
@@ -91,8 +205,31 @@ func TestFormatBranchName(t *testing.T) {
 				issueId:              "GH-1",
 				issueContext:         "refactor-issue",
 				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Refactoring: ""},
+				maxLength:            63,
 			},
 			want: "refactoring/GH-1-refactor-issue",
+		},
+		{
+			name: "Does not crop the title if the maxLength is 0",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "this-is-a-very-long-title-that-will-not-be-cropped",
+				maxLength:    0,
+			},
+			want: "feature/GH-1-this-is-a-very-long-title-that-will-not-be-cropped",
+		},
+		{
+			name: "Does not crop the title if the maxLength is negative",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "this-is-a-very-long-title-that-will-not-be-cropped",
+				maxLength:    -1,
+			},
+			want: "feature/GH-1-this-is-a-very-long-title-that-will-not-be-cropped",
 		},
 	}
 
@@ -102,7 +239,8 @@ func TestFormatBranchName(t *testing.T) {
 			b := BranchProvider{
 				cfg: Configuration{
 					Branches: config.Branches{
-						Prefixes: tt.args.branchPrefixOverride,
+						Prefixes:  tt.args.branchPrefixOverride,
+						MaxLength: tt.args.maxLength,
 					},
 				},
 			}

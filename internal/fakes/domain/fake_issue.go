@@ -9,22 +9,34 @@ import (
 
 type FakeIssue struct {
 	id               string
+	title            string
+	body             string
+	url              string
 	issueType        issue_types.IssueType
 	issueTrackerType domain.IssueTrackerType
+	typeLabel        string
 }
 
 var _ domain.Issue = (*FakeIssue)(nil)
 
+func (f *FakeIssue) SetTitle(title string) {
+	f.title = title
+}
+
 func NewFakeIssue(id string, issueType issue_types.IssueType, issueTrackerType domain.IssueTrackerType) *FakeIssue {
 	return &FakeIssue{
 		id:               id,
+		title:            "fake title",
+		body:             "fake body",
+		url:              "fake url",
 		issueType:        issueType,
 		issueTrackerType: issueTrackerType,
+		typeLabel:        fmt.Sprintf("kind/%s", issueType),
 	}
 }
 
 func (f *FakeIssue) Body() string {
-	return "fake body"
+	return f.body
 }
 
 func (f *FakeIssue) FormatID() string {
@@ -48,13 +60,13 @@ func (f *FakeIssue) Type() issue_types.IssueType {
 }
 
 func (f *FakeIssue) TypeLabel() string {
-	return fmt.Sprintf("kind/%s", f.issueType)
+	return f.typeLabel
 }
 
 func (f *FakeIssue) Title() string {
-	return "fake title"
+	return f.title
 }
 
 func (f *FakeIssue) URL() string {
-	return "fake url"
+	return f.url
 }

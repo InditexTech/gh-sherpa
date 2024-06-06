@@ -25,3 +25,4 @@ branches:
   prefixes:
     feature: "feat"
     bugfix: "fix"
+  max_length: 63

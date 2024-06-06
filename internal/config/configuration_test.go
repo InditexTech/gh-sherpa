@@ -291,4 +291,13 @@ func (s *ValidateConfigTestSuite) TestConfigurationValidations() {
 		s.Error(err)
 	})
 
+	s.Run("Should return error if branches max length is negative", func() {
+		tCfg := s.getValidConfig()
+		tCfg.Branches.MaxLength = -1
+
+		err := tCfg.Validate()
+
+		s.Error(err)
+	})
+
 }
