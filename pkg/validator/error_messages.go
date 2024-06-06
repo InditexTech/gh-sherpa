@@ -15,7 +15,7 @@ var validationErrorMessages = map[string]string{
 	"validIssueTypeKeys": "Keys must be a valid issue type. Check the documentation for the list of valid issue types",
 	"uniqueMapValues":    "Values must be unique across all keys. Check the default values for possible collisions",
 }
-var validationErroMessagesWithParam = map[string]string{
+var validationErrorMessagesWithParam = map[string]string{
 	"gte": "Must be greater than or equal to %s",
 }
 
@@ -26,7 +26,7 @@ func getPrettyErrors(validationErrors govalidator.ValidationErrors) string {
 		errKey := fieldErr.Namespace()
 		errMsg, ok := validationErrorMessages[fieldErr.Tag()]
 		if !ok {
-			errMsg, ok = validationErroMessagesWithParam[fieldErr.Tag()]
+			errMsg, ok = validationErrorMessagesWithParam[fieldErr.Tag()]
 			if !ok {
 				errMsg = fmt.Sprintf(fallbackErrMessage, fieldErr.Field(), fieldErr.Tag())
 			} else {
