@@ -59,58 +59,6 @@ func (_c *MockGitProvider_BranchExists_Call) RunAndReturn(run func(string) bool)
 	return _c
 }
 
-// BranchExistsContains provides a mock function with given fields: branch
-func (_m *MockGitProvider) BranchExistsContains(branch string) (string, bool) {
-	ret := _m.Called(branch)
-
-	var r0 string
-	var r1 bool
-	if rf, ok := ret.Get(0).(func(string) (string, bool)); ok {
-		return rf(branch)
-	}
-	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(branch)
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	if rf, ok := ret.Get(1).(func(string) bool); ok {
-		r1 = rf(branch)
-	} else {
-		r1 = ret.Get(1).(bool)
-	}
-
-	return r0, r1
-}
-
-// MockGitProvider_BranchExistsContains_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BranchExistsContains'
-type MockGitProvider_BranchExistsContains_Call struct {
-	*mock.Call
-}
-
-// BranchExistsContains is a helper method to define mock.On call
-//   - branch string
-func (_e *MockGitProvider_Expecter) BranchExistsContains(branch interface{}) *MockGitProvider_BranchExistsContains_Call {
-	return &MockGitProvider_BranchExistsContains_Call{Call: _e.mock.On("BranchExistsContains", branch)}
-}
-
-func (_c *MockGitProvider_BranchExistsContains_Call) Run(run func(branch string)) *MockGitProvider_BranchExistsContains_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
-	})
-	return _c
-}
-
-func (_c *MockGitProvider_BranchExistsContains_Call) Return(name string, exists bool) *MockGitProvider_BranchExistsContains_Call {
-	_c.Call.Return(name, exists)
-	return _c
-}
-
-func (_c *MockGitProvider_BranchExistsContains_Call) RunAndReturn(run func(string) (string, bool)) *MockGitProvider_BranchExistsContains_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CheckoutBranch provides a mock function with given fields: branch
 func (_m *MockGitProvider) CheckoutBranch(branch string) error {
 	ret := _m.Called(branch)
@@ -276,6 +224,58 @@ func (_c *MockGitProvider_FetchBranchFromOrigin_Call) Return(err error) *MockGit
 }
 
 func (_c *MockGitProvider_FetchBranchFromOrigin_Call) RunAndReturn(run func(string) error) *MockGitProvider_FetchBranchFromOrigin_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindBranch provides a mock function with given fields: substring
+func (_m *MockGitProvider) FindBranch(substring string) (string, bool) {
+	ret := _m.Called(substring)
+
+	var r0 string
+	var r1 bool
+	if rf, ok := ret.Get(0).(func(string) (string, bool)); ok {
+		return rf(substring)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(substring)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) bool); ok {
+		r1 = rf(substring)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	return r0, r1
+}
+
+// MockGitProvider_FindBranch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindBranch'
+type MockGitProvider_FindBranch_Call struct {
+	*mock.Call
+}
+
+// FindBranch is a helper method to define mock.On call
+//   - substring string
+func (_e *MockGitProvider_Expecter) FindBranch(substring interface{}) *MockGitProvider_FindBranch_Call {
+	return &MockGitProvider_FindBranch_Call{Call: _e.mock.On("FindBranch", substring)}
+}
+
+func (_c *MockGitProvider_FindBranch_Call) Run(run func(substring string)) *MockGitProvider_FindBranch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockGitProvider_FindBranch_Call) Return(branch string, exists bool) *MockGitProvider_FindBranch_Call {
+	_c.Call.Return(branch, exists)
+	return _c
+}
+
+func (_c *MockGitProvider_FindBranch_Call) RunAndReturn(run func(string) (string, bool)) *MockGitProvider_FindBranch_Call {
 	_c.Call.Return(run)
 	return _c
 }

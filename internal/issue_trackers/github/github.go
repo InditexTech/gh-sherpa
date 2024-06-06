@@ -17,9 +17,18 @@ var issuePattern = regexp.MustCompile(`^(?i:GH-)?(?P<issue_num>\d+)$`)
 
 var ErrIssueNotFound = fmt.Errorf("the issue was not found")
 
+var ErrIdIsPullRequestNumber = func(identifier string) error {
+	return fmt.Errorf("given identifier %s is a Pull Request number", identifier)
+}
+
+type githubCli interface {
+	Execute(result interface{}, command []string) error
+	domain.RepositoryProvider
+}
+
 type Github struct {
 	cfg Configuration
-	cli domain.GhCli
+	cli githubCli
 }
 
 type Configuration struct {
@@ -27,18 +36,29 @@ type Configuration struct {
 }
 
 type ghIssue struct {
-	Number int64
-	Title  string
-	Body   string
-	Labels []Label
-	Url    string
+	Number      int64
+	Title       string
+	Body        string
+	Labels      []Label
+	Url         string
+	PullRequest *ghPullRequest `json:"pull_request"`
 }
 
+func (i ghIssue) isPullRequest() bool {
+	return i.PullRequest != nil
+}
+
+type ghPullRequest map[string]any
+
 type Label struct {
-	Id          string
+	Id          int
 	Name        string
 	Description string
 	Color       string
+}
+
+var newGhCli = func() githubCli {
+	return &gh.Cli{}
 }
 
 // New returns a new Github issue tracker with the given configuration
@@ -46,12 +66,18 @@ func New(cfg Configuration) (*Github, error) {
 
 	return &Github{
 		cfg: cfg,
-		cli: &gh.Cli{},
+		cli: newGhCli(),
 	}, nil
 }
 
 func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
-	command := []string{"issue", "view", identifier, "--json", "labels,number,title,body,url"}
+	repo, err := g.cli.GetRepository()
+	if err != nil {
+		return nil, err
+	}
+
+	apiPath := fmt.Sprintf("/repos/%s/issues/%s", repo.NameWithOwner, identifier)
+	command := []string{"api", apiPath}
 
 	result := ghIssue{}
 
@@ -63,12 +89,18 @@ func (g *Github) GetIssue(identifier string) (issue domain.Issue, err error) {
 		return
 	}
 
+	if result.isPullRequest() {
+		return nil, ErrIdIsPullRequestNumber(identifier)
+	}
+
 	labels := make([]domain.Label, len(result.Labels))
 
 	for i, label := range result.Labels {
 		labels[i] = domain.Label{
-			Id:   label.Id,
-			Name: label.Name,
+			Id:          fmt.Sprintf("%d", label.Id),
+			Name:        label.Name,
+			Description: label.Description,
+			Color:       label.Color,
 		}
 	}
 

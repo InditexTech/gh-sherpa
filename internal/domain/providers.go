@@ -1,9 +1,5 @@
 package domain
 
-type GhCli interface {
-	Execute(result any, args []string) (err error)
-}
-
 type RepositoryProvider interface {
 	GetRepository() (repo *Repository, err error)
 }
