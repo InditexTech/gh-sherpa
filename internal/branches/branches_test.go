@@ -4,11 +4,109 @@ import (
 	"testing"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
+	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
+	domainFakes "github.com/InditexTech/gh-sherpa/internal/fakes/domain"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
+
+type BranchTestSuite struct {
+	suite.Suite
+	b                       *BranchProvider
+	userInteractionProvider *domainMocks.MockUserInteractionProvider
+	fakeIssue               *domainFakes.FakeIssue
+	defaultRepository       *domain.Repository
+}
+
+func TestBranchTestSuite(t *testing.T) {
+	suite.Run(t, new(BranchTestSuite))
+}
+
+func (s *BranchTestSuite) SetupSubTest() {
+	s.userInteractionProvider = &domainMocks.MockUserInteractionProvider{}
+
+	s.b = &BranchProvider{
+		cfg: Configuration{
+			Branches: config.Branches{
+				Prefixes: map[issue_types.IssueType]string{
+					issue_types.Bug: "bugfix",
+				},
+				MaxLength: 0,
+			},
+		},
+		UserInteraction: s.userInteractionProvider,
+	}
+
+	s.defaultRepository = &domain.Repository{
+		Name:             "test-name",
+		Owner:            "test-owner",
+		NameWithOwner:    "test-owner/test-name",
+		DefaultBranchRef: "main",
+	}
+
+	s.fakeIssue = domainFakes.NewFakeIssue("1", issue_types.Bug, domain.IssueTrackerTypeGithub)
+}
+
+func (s *BranchTestSuite) TestGetBranchName() {
+
+	s.Run("should return expected branch name", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return cropped branch", func() {
+		expectedBrachName := "bugfix/GH-1-my-title-is-too-long-and-it-sho"
+
+		s.fakeIssue.SetTitle("my title is too long and it should not matter")
+
+		s.b.cfg.Branches.MaxLength = 63
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return expected branch name when interactive", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title-from-interactive"
+
+		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(name string, validValues []string, variable *string, required bool) {
+			*variable = "fake title from interactive"
+		}).Return(nil).Once()
+
+		s.b.cfg.IsInteractive = true
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return cropped branch name when interactive", func() {
+		expectedBrachName := "bugfix/GH-1-this-is-a-very-long-fake-title"
+
+		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(name string, validValues []string, variable *string, required bool) {
+			*variable = "this is a very long fake title from interactive"
+		}).Return(nil).Once()
+
+		s.b.cfg.IsInteractive = true
+		s.b.cfg.Branches.MaxLength = 63
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+}
 
 func TestParseIssueContext(t *testing.T) {
 	tests := []struct {
