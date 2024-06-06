@@ -15,6 +15,9 @@ var validationErrorMessages = map[string]string{
 	"validIssueTypeKeys": "Keys must be a valid issue type. Check the documentation for the list of valid issue types",
 	"uniqueMapValues":    "Values must be unique across all keys. Check the default values for possible collisions",
 }
+var validationErroMessagesWithParam = map[string]string{
+	"gte": "Must be greater than or equal to %s",
+}
 
 func getPrettyErrors(validationErrors govalidator.ValidationErrors) string {
 	var buffer bytes.Buffer
@@ -23,8 +26,14 @@ func getPrettyErrors(validationErrors govalidator.ValidationErrors) string {
 		errKey := fieldErr.Namespace()
 		errMsg, ok := validationErrorMessages[fieldErr.Tag()]
 		if !ok {
-			errMsg = fmt.Sprintf(fallbackErrMessage, fieldErr.Field(), fieldErr.Tag())
+			errMsg, ok = validationErroMessagesWithParam[fieldErr.Tag()]
+			if !ok {
+				errMsg = fmt.Sprintf(fallbackErrMessage, fieldErr.Field(), fieldErr.Tag())
+			} else {
+				errMsg = fmt.Sprintf(errMsg, fieldErr.Param())
+			}
 		}
+
 		buffer.WriteString(fmt.Sprintf("- %s: %s\n", errKey, errMsg))
 	}
 
