@@ -27,8 +27,13 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 			return "", err
 		}
 
-		maxContextLen := calcIssueContextMaxLen(repo.NameWithOwner, branchType, formattedID)
-		promptIssueContext := fmt.Sprintf("additional description (optional). Truncate to %d chars", maxContextLen)
+		truncatePrompt := ""
+		maxContextLen := b.calcIssueContextMaxLen(repo.NameWithOwner, branchType, formattedID)
+		if maxContextLen > 0 {
+			truncatePrompt = fmt.Sprintf(" Truncate to %d chars", maxContextLen)
+		}
+
+		promptIssueContext := "additional description (optional)." + truncatePrompt
 		err = b.UserInteraction.SelectOrInput(promptIssueContext, []string{}, &issueSlug, false)
 		if err != nil {
 			return "", err
@@ -62,10 +67,10 @@ func (b BranchProvider) getBugFixBranchType() (branchType string) {
 	return branchType
 }
 
-func calcIssueContextMaxLen(repository string, branchType string, issueId string) (lenIssueContext int) {
+func (b BranchProvider) calcIssueContextMaxLen(repository string, branchType string, issueId string) (lenIssueContext int) {
 	preBranchName := fmt.Sprintf("%s/%s-", branchType, issueId)
 
-	if lenIssueContext = 63 - (len([]rune(repository)) + len([]rune(preBranchName))); lenIssueContext < 0 {
+	if lenIssueContext = b.cfg.MaxLength - (len([]rune(repository)) + len([]rune(preBranchName))); lenIssueContext < 0 {
 		lenIssueContext = 0
 	}
 

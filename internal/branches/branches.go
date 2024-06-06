@@ -114,7 +114,13 @@ func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType st
 		branchName = fmt.Sprintf("%s-%s", branchName, issueContext)
 	}
 
-	return strings.TrimSuffix(branchName[:min(63-len([]rune(repoNameWithOwner)), len([]rune(branchName)))], "-")
+	maxBranchNameLength := b.cfg.MaxLength - len([]rune(repoNameWithOwner))
+	if maxBranchNameLength > 0 {
+		branchNameLength := len([]rune(branchName))
+		branchName = branchName[:min(maxBranchNameLength, branchNameLength)]
+	}
+
+	return strings.TrimSuffix(branchName, "-")
 }
 
 // min returns the smallest of x or y.

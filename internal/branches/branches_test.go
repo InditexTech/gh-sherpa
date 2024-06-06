@@ -45,6 +45,7 @@ func TestFormatBranchName(t *testing.T) {
 		issueId              string
 		issueContext         string
 		branchPrefixOverride map[issue_types.IssueType]string
+		maxLength            int
 	}
 	tests := []struct {
 		name string
@@ -53,7 +54,14 @@ func TestFormatBranchName(t *testing.T) {
 	}{
 		{
 			name: "Does format branch name",
-			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title"},
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "my-title",
+				maxLength:    63,
+			},
+
 			want: "feature/GH-1-my-title",
 		},
 		{
@@ -64,12 +72,19 @@ func TestFormatBranchName(t *testing.T) {
 				issueId:              "GH-1",
 				issueContext:         "my-title",
 				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+				maxLength:            63,
 			},
 			want: "feat/GH-1-my-title",
 		},
 		{
 			name: "Does format long branch name",
-			args: args{repository: repositoryName, branchType: "feature", issueId: "GH-1", issueContext: "my-title-is-too-long-and-it-should-be-truncated"},
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "my-title-is-too-long-and-it-should-be-truncated",
+				maxLength:    63,
+			},
 			want: "feature/GH-1-my-title-is-too-long-and-it-s",
 		},
 		{
@@ -80,6 +95,7 @@ func TestFormatBranchName(t *testing.T) {
 				issueId:              "GH-1",
 				issueContext:         "my-title-is-too-long-and-it-should-be-truncated",
 				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "feat"},
+				maxLength:            63,
 			},
 			want: "feat/GH-1-my-title-is-too-long-and-it-shou",
 		},
@@ -91,8 +107,31 @@ func TestFormatBranchName(t *testing.T) {
 				issueId:              "GH-1",
 				issueContext:         "refactor-issue",
 				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Refactoring: ""},
+				maxLength:            63,
 			},
 			want: "refactoring/GH-1-refactor-issue",
+		},
+		{
+			name: "Does not crop the title if the maxLength is 0",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "this-is-a-very-long-title-that-will-not-be-cropped",
+				maxLength:    0,
+			},
+			want: "feature/GH-1-this-is-a-very-long-title-that-will-not-be-cropped",
+		},
+		{
+			name: "Does not crop the title if the maxLength is negative",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "this-is-a-very-long-title-that-will-not-be-cropped",
+				maxLength:    -1,
+			},
+			want: "feature/GH-1-this-is-a-very-long-title-that-will-not-be-cropped",
 		},
 	}
 
@@ -102,7 +141,8 @@ func TestFormatBranchName(t *testing.T) {
 			b := BranchProvider{
 				cfg: Configuration{
 					Branches: config.Branches{
-						Prefixes: tt.args.branchPrefixOverride,
+						Prefixes:  tt.args.branchPrefixOverride,
+						MaxLength: tt.args.maxLength,
 					},
 				},
 			}
