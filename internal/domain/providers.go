@@ -31,4 +31,3 @@ type GitProvider interface {
 type BranchProvider interface {
 	GetBranchName(issue Issue, repo Repository) (branchName string, err error)
 }
-
