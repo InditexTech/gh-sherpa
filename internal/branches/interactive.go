@@ -92,7 +92,7 @@ func (b BranchProvider) getBranchType(issueType issue_types.IssueType, issueTrac
 		return
 	}
 
-	if issueType == issue_types.Other || issueType == issue_types.Unknown {
+	if issueType == issue_types.Other || issueType == issue_types.Unknown || branchType == issue_types.Other.String() || branchType == issue_types.Unknown.String() {
 		err = askBranchTypeOther(&branchType, b.UserInteraction)
 		if err != nil {
 			return

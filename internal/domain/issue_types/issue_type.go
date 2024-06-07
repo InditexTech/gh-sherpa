@@ -52,22 +52,7 @@ func GetBugValues() []IssueType {
 }
 
 func GetAllValues() []IssueType {
-	return []IssueType{
-		Bugfix,
-		Dependency,
-		Deprecation,
-		Documentation,
-		Feature,
-		Hotfix,
-		Improvement,
-		Internal,
-		Refactoring,
-		Release,
-		Removal,
-		Revert,
-		Security,
-		Other,
-	}
+	return append(GetValidIssueTypes(), Other)
 }
 
 // ParseIssueType parses a string into an IssueType.
