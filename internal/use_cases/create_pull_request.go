@@ -112,7 +112,9 @@ func (cpr CreatePullRequest) Execute() error {
 		}
 	}
 
-	cpr.fetchBranch(currentBranch)
+	// Fetch branch to get the latest changes. We don't check the error because
+	// the branch may not exist in the remote repository.
+	_ = cpr.fetchBranch(currentBranch)
 
 	if branchExists && branchConfirmed {
 		if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
@@ -124,7 +126,10 @@ func (cpr CreatePullRequest) Execute() error {
 			return err
 		}
 
-		cpr.fetchBranch(currentBranch)
+		// After stablishing the branch, fetch it to get the latest chages.
+		// We don't check the error because the branch may not exist in the
+		// remote repository.
+		_ = cpr.fetchBranch(currentBranch)
 
 		cancel, err := cpr.createBranch(currentBranch, baseBranch)
 		if err != nil {
