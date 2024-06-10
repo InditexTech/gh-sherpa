@@ -70,7 +70,7 @@ func (u UserInteractionProvider) SelectOrInputPrompt(message string, validValues
 	return handleSurveyError(err)
 }
 
-// TODO: Do not use "kind/*" here, use the actual config to retriebe the label
+// TODO: Do not use "kind/*" here, use the actual config to retrieve the label
 func GetPromptMessageBranchType(branchType string, issueTrackerType domain.IssueTrackerType) string {
 	if issueTrackerType == domain.IssueTrackerTypeJira {
 		return fmt.Sprintf("Issue type '%s' found. What type of branch name do you want to create?", branchType)

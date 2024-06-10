@@ -33,7 +33,8 @@ func (s *BranchTestSuite) SetupSubTest() {
 		cfg: Configuration{
 			Branches: config.Branches{
 				Prefixes: map[issue_types.IssueType]string{
-					issue_types.Bug: "bugfix",
+					issue_types.Bug:     "bugfix",
+					issue_types.Feature: "feature",
 				},
 				MaxLength: 0,
 			},
@@ -74,7 +75,7 @@ func (s *BranchTestSuite) TestGetBranchName() {
 		s.Equal(expectedBrachName, branchName)
 	})
 
-	s.Run("should return expected branch name when interactive", func() {
+	s.Run("should return expected branch name when title is changed in interactive", func() {
 		expectedBrachName := "bugfix/GH-1-fake-title-from-interactive"
 
 		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
@@ -105,6 +106,57 @@ func (s *BranchTestSuite) TestGetBranchName() {
 
 		s.NoError(err)
 		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return branch name with when type is changed to bug issue type in interactive", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title"
+
+		s.fakeIssue.SetType(issue_types.Feature)
+		s.fakeIssue.SetTypeLabel("kind/feature")
+
+		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(message string, validValues []string, variable *string, required bool) {
+			*variable = "other"
+		}).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(message string, validValues []string, variable *string, required bool) {
+			*variable = "bugfix"
+		}).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		s.b.cfg.IsInteractive = true
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return branch name with when type is changed from bug issue type in interactive", func() {
+		expectedBrachName := "feature/GH-1-fake-title"
+
+		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(message string, validValues []string, variable *string, required bool) {
+			*variable = "other"
+		}).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Run(func(message string, validValues []string, variable *string, required bool) {
+			*variable = "feature"
+		}).Return(nil).Once()
+		s.userInteractionProvider.EXPECT().SelectOrInput(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+
+		s.b.cfg.IsInteractive = true
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return error when issue type could not be determined", func() {
+
+		s.fakeIssue.SetType("undetermined-type")
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.ErrorIs(err, ErrUndeterminedIssueType)
+		s.Empty(branchName)
 	})
 }
 

@@ -1,9 +1,16 @@
 package issue_types
 
+import "slices"
+
 type IssueType string
 
 func (it IssueType) String() string {
 	return string(it)
+}
+
+// Valid returns true if the IssueType is a valid one.
+func (it IssueType) Valid() bool {
+	return slices.Contains(GetValidIssueTypes(), it)
 }
 
 const (
