@@ -13,6 +13,16 @@ func ErrRemoteBranchAlreadyExists(branchName string) error {
 	return fmt.Errorf("there is already a remote branch named %s for this issue. Please checkout that branch", branchName)
 }
 
+// ErrFetchBranch is returned when the branch could not be fetched
+func ErrFetchBranch(branch string, err error) error {
+	return fmt.Errorf("could not fetch the branch %s: %w", branch, err)
+}
+
+// ErrPushChanges is returned when the remote branch could not be created
+func ErrPushChanges(branch string, err error) error {
+	return fmt.Errorf("could not push to remote branch %s: %w", branch, err)
+}
+
 // CreatePullRequestConfiguration contains the arguments for the CreatePullRequest use case
 type CreatePullRequestConfiguration struct {
 	IssueID         string
@@ -47,6 +57,9 @@ func (cpr CreatePullRequest) Execute() error {
 	baseBranch := cpr.Cfg.BaseBranch
 	if baseBranch == "" {
 		baseBranch = repo.DefaultBranchRef
+	}
+	if err := cpr.fetchBranch(baseBranch); err != nil {
+		return err
 	}
 
 	currentBranch, err := cpr.Git.GetCurrentBranch()
@@ -100,6 +113,10 @@ func (cpr CreatePullRequest) Execute() error {
 		}
 	}
 
+	// Fetch branch to get the latest changes. We don't check the error because
+	// the branch may not exist in the remote repository.
+	_ = cpr.fetchBranch(currentBranch)
+
 	if branchExists && branchConfirmed {
 		if err := cpr.Git.CheckoutBranch(currentBranch); err != nil {
 			return fmt.Errorf("could not switch to the branch because %w", err)
@@ -110,6 +127,11 @@ func (cpr CreatePullRequest) Execute() error {
 			return err
 		}
 
+		// After stablishing the branch, fetch it to get the latest changes.
+		// We don't check the error because the branch may not exist in the
+		// remote repository.
+		_ = cpr.fetchBranch(currentBranch)
+
 		cancel, err := cpr.createBranch(currentBranch, baseBranch)
 		if err != nil {
 			return err
@@ -117,10 +139,6 @@ func (cpr CreatePullRequest) Execute() error {
 		if cancel {
 			return nil
 		}
-	}
-
-	if cpr.Git.RemoteBranchExists(currentBranch) {
-		return ErrRemoteBranchAlreadyExists(currentBranch)
 	}
 
 	hasPendingCommits, err := cpr.hasPendingCommits(currentBranch)
@@ -139,7 +157,7 @@ func (cpr CreatePullRequest) Execute() error {
 		if !confirmed {
 			return nil
 		}
-	} else {
+	} else if !cpr.Git.RemoteBranchExists(currentBranch) {
 		if err = cpr.createEmptyCommit(); err != nil {
 			return fmt.Errorf("could not do the empty commit because %s", err)
 		}
@@ -184,7 +202,7 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 	// 19. PUSH CHANGES
 	err = cpr.Git.PushBranch(branchName)
 	if err != nil {
-		return fmt.Errorf("could not create the remote branch because %s", err)
+		return ErrPushChanges(branchName, err)
 	}
 
 	return
@@ -222,16 +240,19 @@ func (cpr *CreatePullRequest) hasPendingCommits(currentBranch string) (bool, err
 }
 
 func (cpr *CreatePullRequest) createNewLocalBranch(currentBranch string, baseBranch string) error {
-	// Check if the base branch will be fetched before the new branch is created
-	if cpr.Cfg.FetchFromOrigin {
-		if err := cpr.Git.FetchBranchFromOrigin(baseBranch); err != nil {
-			return fmt.Errorf("could not fetch the changes from base branch because %s", err)
-		}
-	}
-
 	// Create the new branch from the base branch
 	if err := cpr.Git.CheckoutNewBranchFromOrigin(currentBranch, baseBranch); err != nil {
 		return fmt.Errorf("could not create the local branch because %s", err)
+	}
+
+	return nil
+}
+
+func (cpr *CreatePullRequest) fetchBranch(branch string) error {
+	if cpr.Cfg.FetchFromOrigin {
+		if err := cpr.Git.FetchBranchFromOrigin(branch); err != nil {
+			return ErrFetchBranch(branch, err)
+		}
 	}
 
 	return nil
