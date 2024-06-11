@@ -20,7 +20,7 @@ func ErrFetchBranch(branch string, err error) error {
 
 // ErrPushChanges is returned when the remote branch could not be created
 func ErrPushChanges(branch string, err error) error {
-	return fmt.Errorf("could not create remote branch %s: %w", branch, err)
+	return fmt.Errorf("could not push to remote branch %s: %w", branch, err)
 }
 
 // CreatePullRequestConfiguration contains the arguments for the CreatePullRequest use case
