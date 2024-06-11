@@ -168,7 +168,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, "could not create remote branch "+branchName)
+		s.ErrorContains(err, "could not push to remote branch "+branchName)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
@@ -207,7 +207,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, "could not create remote branch "+s.defaultBranchName)
+		s.ErrorContains(err, "could not push to remote branch "+s.defaultBranchName)
 	})
 
 	s.Run("should error if could not create pull request", func() {
@@ -524,7 +524,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, "could not create remote branch "+branchName)
+		s.ErrorContains(err, "could not push to remote branch "+branchName)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
@@ -563,7 +563,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		err := s.uc.Execute()
 
-		s.ErrorContains(err, "could not create remote branch "+s.defaultBranchName)
+		s.ErrorContains(err, "could not push to remote branch "+s.defaultBranchName)
 	})
 
 	s.Run("should error if could not create pull request", func() {
