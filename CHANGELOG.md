@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2024-06-11
+
+### Added
+
+- [#94](https://github.com/InditexTech/gh-sherpa/issues/94) Branch naming not working for types other than feature
+- [#93](https://github.com/InditexTech/gh-sherpa/issues/93) Branch Name Length Control Configurable
+- [#82](https://github.com/InditexTech/gh-sherpa/issues/82) Add REUSE Compliance workflow
+
+### Refactored
+
+- [#91](https://github.com/InditexTech/gh-sherpa/issues/91) Refactor flow and extract nested functionality
+- [#90](https://github.com/InditexTech/gh-sherpa/issues/90) Refactor domain issue and avoid injection
+- [#86](https://github.com/InditexTech/gh-sherpa/issues/86) Use fakes instead of mocks for use case tests
+
+### Fixed
+
+- [#95](https://github.com/InditexTech/gh-sherpa/issues/95) Cannot create pull request if remote branch already exists
+- [#88](https://github.com/InditexTech/gh-sherpa/issues/88) Pull Request ID as Issue ID
+- [#81](https://github.com/InditexTech/gh-sherpa/issues/81) Prevent pushing local branch if remote branch already exists with the same name
+- [#79](https://github.com/InditexTech/gh-sherpa/issues/79) Warns about duplicated branches but that's not the case
+
 ## [1.1.1] - 2024-02-13
 
 ### Documentation
@@ -58,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.1.1...release/1.1.1
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.2.0...main
+[1.2.0]: https://github.com/InditexTech/gh-sherpa/compare/1.1.1...1.2.0
 [1.1.1]: https://github.com/InditexTech/gh-sherpa/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/InditexTech/gh-sherpa/compare/1.0.0...1.1.0
 [1.0.0]: https://github.com/InditexTech/gh-sherpa/commits/1.0.0
