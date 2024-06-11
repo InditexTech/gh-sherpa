@@ -95,7 +95,7 @@ func normalizeBranch(branchSlug string) string {
 	return branchSlug
 }
 
-// formatBranchName formats a branch name based on the issue type and the issue identifier.
+// formatBranchName formats a branch name based on the branch type and the issue identifier.
 // It overrides the branch prefix if the issue type is present in the branchPrefixOverride map.
 // If the prefix is empty, it uses the branch type as the prefix.
 func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType string, issueId string, issueContext string) (branchName string) {

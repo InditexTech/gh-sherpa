@@ -23,6 +23,14 @@ func (f *FakeIssue) SetTitle(title string) {
 	f.title = title
 }
 
+func (f *FakeIssue) SetType(issueType issue_types.IssueType) {
+	f.issueType = issueType
+}
+
+func (f *FakeIssue) SetTypeLabel(label string) {
+	f.typeLabel = label
+}
+
 func NewFakeIssue(id string, issueType issue_types.IssueType, issueTrackerType domain.IssueTrackerType) *FakeIssue {
 	return &FakeIssue{
 		id:               id,

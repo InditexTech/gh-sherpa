@@ -10,6 +10,9 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 )
 
+// ErrUndeterminedIssueType is returned when the issue type can't be determined
+var ErrUndeterminedIssueType = errors.New("undetermined issue type")
+
 // GetBranchName asks the user for a branch name in an interactive way
 func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository) (branchName string, err error) {
 	issueType := issue.Type()
@@ -42,13 +45,14 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 		issueSlug = normalizeBranch(issueSlug)
 
 	} else {
-		if issueType == issue_types.Other || issueType == issue_types.Unknown {
-			return "", errors.New("undetermined issue type")
-		}
-
 		// remap bug to bugfix
 		if issueType == issue_types.Bug {
 			branchType = b.getBugFixBranchType()
+			issueType = issue_types.Bugfix
+		}
+
+		if !issueType.Valid() || issueType == issue_types.Other || issueType == issue_types.Unknown {
+			return "", ErrUndeterminedIssueType
 		}
 	}
 
@@ -92,7 +96,7 @@ func (b BranchProvider) getBranchType(issueType issue_types.IssueType, issueTrac
 		return
 	}
 
-	if issueType == issue_types.Other || issueType == issue_types.Unknown {
+	if branchType == issue_types.Other.String() || branchType == issue_types.Unknown.String() {
 		err = askBranchTypeOther(&branchType, b.UserInteraction)
 		if err != nil {
 			return

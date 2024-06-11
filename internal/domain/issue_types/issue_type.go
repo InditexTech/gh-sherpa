@@ -1,9 +1,16 @@
 package issue_types
 
+import "slices"
+
 type IssueType string
 
 func (it IssueType) String() string {
 	return string(it)
+}
+
+// Valid returns true if the IssueType is a valid one.
+func (it IssueType) Valid() bool {
+	return slices.Contains(GetValidIssueTypes(), it)
 }
 
 const (
@@ -52,22 +59,7 @@ func GetBugValues() []IssueType {
 }
 
 func GetAllValues() []IssueType {
-	return []IssueType{
-		Bugfix,
-		Dependency,
-		Deprecation,
-		Documentation,
-		Feature,
-		Hotfix,
-		Improvement,
-		Internal,
-		Refactoring,
-		Release,
-		Removal,
-		Revert,
-		Security,
-		Other,
-	}
+	return append(GetValidIssueTypes(), Other)
 }
 
 // ParseIssueType parses a string into an IssueType.
