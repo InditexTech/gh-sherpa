@@ -18,6 +18,7 @@ func ErrFetchBranch(branch string, err error) error {
 	return fmt.Errorf("could not fetch the branch %s: %w", branch, err)
 }
 
+// ErrPushChanges is returned when the branch could not be pushed
 func ErrPushChanges(branch string, err error) error {
 	return fmt.Errorf("could not create remote branch %s: %w", branch, err)
 }
