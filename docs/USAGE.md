@@ -40,7 +40,7 @@ gh sherpa create-branch, cb [flags]
 #### Optional parameters
 
 * `--base`: Base branch for checkout. By default is the default branch.
-* `--no-fetch`: The base branch and current branch will not be fetched.
+* `--no-fetch`: Remote branches will not be fetched.
 * `--yes, -y`: The branch will be created without confirmation.
 
 ### Possible scenarios
@@ -81,7 +81,7 @@ gh sherpa create-pr, cpr [flags]
 
 * `--issue, -i`: GitHub or Jira issue identifier.
 * `--base`: Base branch for checkout. By default is the default branch.
-* `--no-fetch`: The base branch and current branch will not be fetched.
+* `--no-fetch`: Remote branches will not be fetched.
 * `--yes, -y`: The pull request will be created without confirmation.
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.

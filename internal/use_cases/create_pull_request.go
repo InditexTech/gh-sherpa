@@ -127,7 +127,7 @@ func (cpr CreatePullRequest) Execute() error {
 			return err
 		}
 
-		// After stablishing the branch, fetch it to get the latest chages.
+		// After stablishing the branch, fetch it to get the latest changes.
 		// We don't check the error because the branch may not exist in the
 		// remote repository.
 		_ = cpr.fetchBranch(currentBranch)
