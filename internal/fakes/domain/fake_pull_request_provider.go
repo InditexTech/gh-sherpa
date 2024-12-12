@@ -11,16 +11,16 @@ import (
 type FakePullRequestProvider struct {
 	PullRequests           map[string]*domain.PullRequest
 	PullRequestsWithErrors []string
-	CreatedPRs            []CreatedPR
+	CreatedPRs             []CreatedPR
 }
 
 type CreatedPR struct {
-	Title       string
-	Body        string
-	BaseBranch  string
-	HeadBranch  string
-	Draft       bool
-	Labels      []string
+	Title      string
+	Body       string
+	BaseBranch string
+	HeadBranch string
+	Draft      bool
+	Labels     []string
 }
 
 var _ domain.PullRequestProvider = (*FakePullRequestProvider)(nil)
@@ -29,7 +29,7 @@ func NewFakePullRequestProvider() *FakePullRequestProvider {
 	return &FakePullRequestProvider{
 		PullRequests:           map[string]*domain.PullRequest{},
 		PullRequestsWithErrors: []string{},
-		CreatedPRs:            []CreatedPR{},
+		CreatedPRs:             []CreatedPR{},
 	}
 }
 
@@ -61,12 +61,12 @@ func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, b
 	}
 
 	f.CreatedPRs = append(f.CreatedPRs, CreatedPR{
-		Title:       title,
-		Body:        body,
-		BaseBranch:  baseBranch,
-		HeadBranch:  headBranch,
-		Draft:       draft,
-		Labels:      labels,
+		Title:      title,
+		Body:       body,
+		BaseBranch: baseBranch,
+		HeadBranch: headBranch,
+		Draft:      draft,
+		Labels:     labels,
 	})
 
 	pr := &domain.PullRequest{

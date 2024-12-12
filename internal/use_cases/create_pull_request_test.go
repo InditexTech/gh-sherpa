@@ -366,7 +366,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.FromTemplate = true
 		s.uc.Cfg.IsInteractive = false
-		
+
 		expectedTemplate := "## Description\n\nPlease describe your changes..."
 		s.repositoryProvider.Template = expectedTemplate
 
@@ -387,7 +387,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.FromTemplate = true
 		s.uc.Cfg.IsInteractive = false
-		
+
 		s.repositoryProvider.Template = ""
 
 		err := s.uc.Execute()
@@ -406,7 +406,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.FromTemplate = true
 		s.uc.Cfg.IsInteractive = false
-		
+
 		s.repositoryProvider.TemplateError = fmt.Errorf("failed to read template")
 
 		err := s.uc.Execute()
