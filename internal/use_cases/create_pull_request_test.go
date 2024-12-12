@@ -358,6 +358,62 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.Error(err)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
+
+	s.Run("should use PR template when FromTemplate flag is set and template exists", func() {
+		branchName := "feature/GH-3-local-branch"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.uc.Cfg.FromTemplate = true
+		s.uc.Cfg.IsInteractive = false
+		
+		expectedTemplate := "## Description\n\nPlease describe your changes..."
+		s.repositoryProvider.Template = expectedTemplate
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.Equal(1, len(s.pullRequestProvider.CreatedPRs))
+		lastPR := s.pullRequestProvider.CreatedPRs[len(s.pullRequestProvider.CreatedPRs)-1]
+		s.Contains(lastPR.Body, expectedTemplate)
+		s.Contains(lastPR.Body, "Closes #3")
+	})
+
+	s.Run("should use default format when FromTemplate flag is set but no template exists", func() {
+		branchName := "feature/GH-3-local-branch"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.uc.Cfg.FromTemplate = true
+		s.uc.Cfg.IsInteractive = false
+		
+		s.repositoryProvider.Template = ""
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.Equal(1, len(s.pullRequestProvider.CreatedPRs))
+		lastPR := s.pullRequestProvider.CreatedPRs[len(s.pullRequestProvider.CreatedPRs)-1]
+		s.Equal("Closes #3", lastPR.Body)
+	})
+
+	s.Run("should handle template fetch error gracefully", func() {
+		branchName := "feature/GH-3-local-branch"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.uc.Cfg.FromTemplate = true
+		s.uc.Cfg.IsInteractive = false
+		
+		s.repositoryProvider.TemplateError = fmt.Errorf("failed to read template")
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.Contains(err.Error(), "error getting PR template")
+	})
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeUserInteractionProvider() *domainMocks.MockUserInteractionProvider {

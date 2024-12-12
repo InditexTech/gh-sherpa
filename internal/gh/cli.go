@@ -2,6 +2,7 @@ package gh
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -143,4 +144,64 @@ func (c *Cli) GetPullRequestForBranch(branchName string) (*domain.PullRequest, e
 	}
 
 	return &pr, nil
+}
+
+func (c *Cli) GetPullRequestTemplate() (template string, err error) {
+	// Lista de posibles ubicaciones de plantillas
+	templatePaths := []string{
+		".github/pull_request_template.md",
+		".github/PULL_REQUEST_TEMPLATE.md",
+		"docs/pull_request_template.md",
+		"docs/PULL_REQUEST_TEMPLATE.md",
+		"pull_request_template.md",
+		"PULL_REQUEST_TEMPLATE.md",
+	}
+
+	// También buscar en el directorio de múltiples plantillas
+	args := []string{"api", "/repos/{owner}/{repo}/contents/.github/PULL_REQUEST_TEMPLATE"}
+	stdout, stderr, err := gh.Exec(args...)
+	if err == nil && stderr.String() == "" {
+		var contents []struct {
+			Name     string `json:"name"`
+			Path     string `json:"path"`
+			Content  string `json:"content"`
+			Encoding string `json:"encoding"`
+		}
+		if err := json.Unmarshal(stdout.Bytes(), &contents); err == nil {
+			for _, content := range contents {
+				if strings.HasSuffix(content.Name, ".md") {
+					templatePaths = append(templatePaths, content.Path)
+				}
+			}
+		}
+	}
+
+	// Intentar obtener la plantilla de cada ubicación
+	for _, path := range templatePaths {
+		args := []string{"api", fmt.Sprintf("/repos/{owner}/{repo}/contents/%s", path)}
+		stdout, stderr, err := gh.Exec(args...)
+		if err == nil && stderr.String() == "" {
+			var response struct {
+				Content  string `json:"content"`
+				Encoding string `json:"encoding"`
+			}
+
+			if err := json.Unmarshal(stdout.Bytes(), &response); err != nil {
+				continue
+			}
+
+			// GitHub API returns content in base64
+			if response.Encoding == "base64" {
+				decoded, err := base64.StdEncoding.DecodeString(response.Content)
+				if err != nil {
+					continue
+				}
+				return string(decoded), nil
+			}
+			return response.Content, nil
+		}
+	}
+
+	// Si no se encuentra ninguna plantilla, retornar cadena vacía sin error
+	return "", nil
 }

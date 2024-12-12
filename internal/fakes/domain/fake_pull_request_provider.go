@@ -11,6 +11,16 @@ import (
 type FakePullRequestProvider struct {
 	PullRequests           map[string]*domain.PullRequest
 	PullRequestsWithErrors []string
+	CreatedPRs            []CreatedPR
+}
+
+type CreatedPR struct {
+	Title       string
+	Body        string
+	BaseBranch  string
+	HeadBranch  string
+	Draft       bool
+	Labels      []string
 }
 
 var _ domain.PullRequestProvider = (*FakePullRequestProvider)(nil)
@@ -19,6 +29,7 @@ func NewFakePullRequestProvider() *FakePullRequestProvider {
 	return &FakePullRequestProvider{
 		PullRequests:           map[string]*domain.PullRequest{},
 		PullRequestsWithErrors: []string{},
+		CreatedPRs:            []CreatedPR{},
 	}
 }
 
@@ -49,27 +60,22 @@ func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, b
 		return "", ErrPullRequestWithError
 	}
 
-	pr := f.PullRequests[headBranch]
-	if pr != nil && !pr.Closed {
-		return "", ErrPrAlreadyExists(headBranch)
-	}
-
-	prLabels := make([]domain.Label, len(labels))
-	for i, label := range labels {
-		prLabels[i] = domain.Label{
-			Id:   label,
-			Name: label,
-		}
-	}
-	pr = &domain.PullRequest{
+	f.CreatedPRs = append(f.CreatedPRs, CreatedPR{
 		Title:       title,
-		Number:      5,
-		State:       "OPEN",
-		Closed:      false,
-		Url:         "https://github.com/inditextech/gh-sherpa-test-repo/pulls/5",
+		Body:        body,
+		BaseBranch:  baseBranch,
+		HeadBranch:  headBranch,
+		Draft:       draft,
+		Labels:      labels,
+	})
+
+	pr := &domain.PullRequest{
+		Title:       title,
 		HeadRefName: headBranch,
 		BaseRefName: baseBranch,
-		Labels:      prLabels,
+		State:       "OPEN",
+		Closed:      false,
+		Url:         fmt.Sprintf("https://github.com/owner/repo/pull/%d", len(f.PullRequests)+1),
 	}
 
 	f.PullRequests[headBranch] = pr

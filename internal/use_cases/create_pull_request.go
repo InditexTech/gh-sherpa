@@ -31,6 +31,7 @@ type CreatePullRequestConfiguration struct {
 	DraftPR         bool
 	IsInteractive   bool
 	CloseIssue      bool
+	FromTemplate    bool
 }
 
 type CreatePullRequest struct {
@@ -213,11 +214,36 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 	case domain.IssueTrackerTypeGithub:
 		title = issue.Title()
 
-		keyword := "Related to"
-		if cpr.Cfg.CloseIssue {
-			keyword = "Closes"
+		if cpr.Cfg.FromTemplate {
+			// Get PR template if requested
+			template, err := cpr.RepositoryProvider.GetPullRequestTemplate()
+			if err != nil {
+				return "", "", fmt.Errorf("error getting PR template: %w", err)
+			}
+
+			// If template exists, use it as base and append issue reference
+			if template != "" {
+				keyword := "Related to"
+				if cpr.Cfg.CloseIssue {
+					keyword = "Closes"
+				}
+				body = fmt.Sprintf("%s\n\n%s #%s", template, keyword, issue.ID())
+			} else {
+				// If no template found, use default format
+				keyword := "Related to"
+				if cpr.Cfg.CloseIssue {
+					keyword = "Closes"
+				}
+				body = fmt.Sprintf("%s #%s", keyword, issue.ID())
+			}
+		} else {
+			// Use default format if template not requested
+			keyword := "Related to"
+			if cpr.Cfg.CloseIssue {
+				keyword = "Closes"
+			}
+			body = fmt.Sprintf("%s #%s", keyword, issue.ID())
 		}
-		body = fmt.Sprintf("%s #%s", keyword, issue.ID())
 
 	case domain.IssueTrackerTypeJira:
 		title = fmt.Sprintf("[%s] %s", issue.ID(), issue.Title())

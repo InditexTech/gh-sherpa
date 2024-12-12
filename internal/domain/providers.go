@@ -2,6 +2,7 @@ package domain
 
 type RepositoryProvider interface {
 	GetRepository() (repo *Repository, err error)
+	GetPullRequestTemplate() (template string, err error)
 }
 
 type PullRequestProvider interface {

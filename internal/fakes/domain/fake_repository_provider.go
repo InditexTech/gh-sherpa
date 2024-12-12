@@ -7,7 +7,9 @@ import (
 )
 
 type FakeRepositoryProvider struct {
-	Repository *domain.Repository
+	Repository    *domain.Repository
+	Template      string
+	TemplateError error
 }
 
 var _ domain.RepositoryProvider = (*FakeRepositoryProvider)(nil)
@@ -30,4 +32,11 @@ func (f *FakeRepositoryProvider) GetRepository() (repo *domain.Repository, err e
 		return f.Repository, nil
 	}
 	return nil, ErrRepositoryNotFound
+}
+
+func (f *FakeRepositoryProvider) GetPullRequestTemplate() (template string, err error) {
+	if f.TemplateError != nil {
+		return "", f.TemplateError
+	}
+	return f.Template, nil
 }

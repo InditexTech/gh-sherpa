@@ -33,6 +33,7 @@ type createPullRequestFlags struct {
 	NoDraft          bool
 	NoCloseIssue     bool
 	UseDefaultValues bool
+	FromTemplate     bool
 }
 
 var flags createPullRequestFlags
@@ -43,6 +44,7 @@ func init() {
 	Command.PersistentFlags().BoolVar(&flags.NoFetch, "no-fetch", false, "does not fetch the base branch")
 	Command.PersistentFlags().BoolVar(&flags.NoDraft, "no-draft", false, "create the pull request in ready for review mode")
 	Command.PersistentFlags().BoolVarP(&flags.NoCloseIssue, "no-close-issue", "n", false, "do not close the GitHub issue after merging the pull request")
+	Command.PersistentFlags().BoolVar(&flags.FromTemplate, "from-template", false, "create the pull request using the repository's pull request template")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) error {
@@ -83,6 +85,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		IsInteractive:   isInteractive,
 		DraftPR:         !flags.NoDraft,
 		CloseIssue:      !flags.NoCloseIssue,
+		FromTemplate:    flags.FromTemplate,
 	}
 	createPullRequestUseCase := use_cases.CreatePullRequest{
 		Cfg:                     createPullRequestConfig,

@@ -85,6 +85,7 @@ gh sherpa create-pr, cpr [flags]
 * `--yes, -y`: The pull request will be created without confirmation.
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
+* `--from-template`: Use a pull request template from the repository.
 
 ### Possible scenarios
 
@@ -120,4 +121,10 @@ gh sherpa create-pr --issue SHERPA-81 --base main
 
 ```sh
 gh sherpa create-pr --issue 750 --no-close-issue
+```
+
+#### Create a branch and pull request using pull request template
+
+```sh
+gh sherpa create-pr --issue 750 --from-template
 ```
