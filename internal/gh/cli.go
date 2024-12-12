@@ -147,7 +147,6 @@ func (c *Cli) GetPullRequestForBranch(branchName string) (*domain.PullRequest, e
 }
 
 func (c *Cli) GetPullRequestTemplate() (template string, err error) {
-	// Lista de posibles ubicaciones de plantillas
 	templatePaths := []string{
 		".github/pull_request_template.md",
 		".github/PULL_REQUEST_TEMPLATE.md",
@@ -157,7 +156,6 @@ func (c *Cli) GetPullRequestTemplate() (template string, err error) {
 		"PULL_REQUEST_TEMPLATE.md",
 	}
 
-	// También buscar en el directorio de múltiples plantillas
 	args := []string{"api", "/repos/{owner}/{repo}/contents/.github/PULL_REQUEST_TEMPLATE"}
 	stdout, stderr, err := gh.Exec(args...)
 	if err == nil && stderr.String() == "" {
@@ -176,7 +174,6 @@ func (c *Cli) GetPullRequestTemplate() (template string, err error) {
 		}
 	}
 
-	// Intentar obtener la plantilla de cada ubicación
 	for _, path := range templatePaths {
 		args := []string{"api", fmt.Sprintf("/repos/{owner}/{repo}/contents/%s", path)}
 		stdout, stderr, err := gh.Exec(args...)
@@ -190,7 +187,6 @@ func (c *Cli) GetPullRequestTemplate() (template string, err error) {
 				continue
 			}
 
-			// GitHub API returns content in base64
 			if response.Encoding == "base64" {
 				decoded, err := base64.StdEncoding.DecodeString(response.Content)
 				if err != nil {
@@ -202,6 +198,5 @@ func (c *Cli) GetPullRequestTemplate() (template string, err error) {
 		}
 	}
 
-	// Si no se encuentra ninguna plantilla, retornar cadena vacía sin error
 	return "", nil
 }
