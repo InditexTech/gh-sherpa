@@ -359,6 +359,46 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
+	s.Run("should create pull request with template", func() {
+		branchName := "feature/GH-3-template-test"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.uc.Cfg.FromTemplate = true
+		
+		expectedTemplate := "## Description\n\nPlease describe your changes..."
+		s.repositoryProvider.Template = expectedTemplate
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		prs := s.pullRequestProvider.CreatedPRs
+		s.Greater(len(prs), 0)
+		lastPR := prs[len(prs)-1]
+		s.Contains(lastPR.Body, expectedTemplate)
+		s.Contains(lastPR.Body, "Closes #3")
+	})
+
+	s.Run("should handle missing template", func() {
+		branchName := "feature/GH-3-no-template"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.uc.Cfg.FromTemplate = true
+		
+		s.repositoryProvider.Template = ""
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		prs := s.pullRequestProvider.CreatedPRs
+		s.Greater(len(prs), 0)
+		lastPR := prs[len(prs)-1]
+		s.Equal("Closes #3", lastPR.Body)
+	})
+
 	s.Run("should use PR template when FromTemplate flag is set and template exists", func() {
 		branchName := "feature/GH-3-local-branch"
 		s.gitProvider.CurrentBranch = branchName
@@ -413,6 +453,41 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.Error(err)
 		s.Contains(err.Error(), "error getting PR template")
+	})
+
+	s.Run("should handle template error", func() {
+		branchName := "feature/GH-3-template-error"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.uc.Cfg.FromTemplate = true
+		
+		s.repositoryProvider.TemplateError = fmt.Errorf("error reading template")
+
+		err := s.uc.Execute()
+
+		s.Error(err)
+		s.Contains(err.Error(), "error getting PR template")
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+	})
+
+	s.Run("should handle invalid template", func() {
+		branchName := "feature/GH-3-invalid-template"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.uc.Cfg.FromTemplate = true
+		
+		s.repositoryProvider.Template = "${invalid.variable}"
+
+		err := s.uc.Execute()
+
+		s.NoError(err) // Debería manejar plantillas inválidas sin error
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		prs := s.pullRequestProvider.CreatedPRs
+		s.Greater(len(prs), 0)
+		lastPR := prs[len(prs)-1]
+		s.Contains(lastPR.Body, "${invalid.variable}") // La plantilla inválida debería mantenerse como texto plano
 	})
 }
 
