@@ -365,7 +365,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.FromTemplate = true
-		
 		expectedTemplate := "## Description\n\nPlease describe your changes..."
 		s.repositoryProvider.Template = expectedTemplate
 
@@ -386,7 +385,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.FromTemplate = true
-		
 		s.repositoryProvider.Template = ""
 
 		err := s.uc.Execute()
@@ -461,7 +459,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.FromTemplate = true
-		
 		s.repositoryProvider.TemplateError = fmt.Errorf("error reading template")
 
 		err := s.uc.Execute()
@@ -477,7 +474,6 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.FromTemplate = true
-		
 		s.repositoryProvider.Template = "${invalid.variable}"
 
 		err := s.uc.Execute()
