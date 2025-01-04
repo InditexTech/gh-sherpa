@@ -13,6 +13,7 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/mocks"
 	domainMocks "github.com/InditexTech/gh-sherpa/internal/mocks/domain"
 	"github.com/InditexTech/gh-sherpa/internal/use_cases"
+	"github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

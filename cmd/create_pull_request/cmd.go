@@ -7,7 +7,7 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/InditexTech/gh-sherpa/internal/git"
-	"github.com/InditexTech/gh-sherpa/internal/interactive"
+	"github.com/charmbracelet/bubbletea"
 	"github.com/InditexTech/gh-sherpa/internal/issue_trackers"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 	"github.com/InditexTech/gh-sherpa/internal/use_cases"
@@ -61,7 +61,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	userInteraction := &interactive.UserInteractionProvider{}
+	userInteraction := &bubbletea.Program{}
 
 	isInteractive := !flags.UseDefaultValues
 

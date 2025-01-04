@@ -3,8 +3,8 @@ module github.com/InditexTech/gh-sherpa
 go 1.21
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/andygrunwald/go-jira v1.16.0
+	github.com/charmbracelet/bubbletea v0.23.2
 	github.com/cli/go-gh/v2 v2.4.0
 	github.com/go-playground/validator/v10 v10.16.0
 	github.com/jwalton/gchalk v1.3.0
