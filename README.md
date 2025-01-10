@@ -68,7 +68,7 @@ file to perform these mappings.
 ### Custom configuration
 
 Otherwise, if you wish customize the different issue types, branch prefixes, etc, so, you can **create your own
-configuration file** localed in `$HOME/.config/sherpa/config.yml` from the
+configuration file** located in `$HOME/.config/sherpa/config.yml` from the
 [default config file](internal/config/default-config.yml).
 
 > If you are **using Jira as issue tracker**, so, the first time you run a command it will ask you to configure Jira
