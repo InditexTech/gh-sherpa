@@ -13,7 +13,9 @@ TEST_REPORT_OUTPUT = ".local/test_report.ndjson"
 all: verify
 
 .PHONY: verify
-verify: id
+verify:
+	$(info $(M) Verifying...) @
+	id
 
 # -----------------------------------------------------------------------------
 # Build
