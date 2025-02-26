@@ -478,12 +478,12 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		err := s.uc.Execute()
 
-		s.NoError(err) // Debería manejar plantillas inválidas sin error
+		s.NoError(err) // Should handle invalid templates without error
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 		prs := s.pullRequestProvider.CreatedPRs
 		s.Greater(len(prs), 0)
 		lastPR := prs[len(prs)-1]
-		s.Contains(lastPR.Body, "${invalid.variable}") // La plantilla inválida debería mantenerse como texto plano
+		s.Contains(lastPR.Body, "${invalid.variable}") // The invalid template should be kept as plain text
 	})
 }
 

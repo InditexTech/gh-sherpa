@@ -17,7 +17,7 @@ type Cli struct{}
 func (c *Cli) GetRepository() (repo *domain.Repository, err error) {
 	baseCommand := []string{"repo", "view", "--json", "name,owner,nameWithOwner,defaultBranchRef"}
 
-	stdout, stderr, err := gh.Exec(baseCommand...)
+	stdout, stderr, err := Execute(baseCommand...)
 
 	if stderr.String() != "" {
 		return nil, errors.New(stderr.String())
@@ -75,7 +75,7 @@ var Execute = func(args ...string) (stdout, stderr bytes.Buffer, err error) {
 }
 
 var ExecuteStringResult = func(args []string) (result string, err error) {
-	stdout, stderr, err := gh.Exec(args...)
+	stdout, stderr, err := Execute(args...)
 	if err != nil {
 
 		err = fmt.Errorf("failed to run GitHub CLI command (%w)\n\nDetails:\n%s", err, stderr.String())
@@ -126,7 +126,7 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 func (c *Cli) GetPullRequestForBranch(branchName string) (*domain.PullRequest, error) {
 	command := []string{"pr", "view", branchName, "--json", "closed,number,state,title,url"}
 
-	stdout, stderr, err := gh.Exec(command...)
+	stdout, stderr, err := Execute(command...)
 	if strings.Contains(stderr.String(), "no pull requests found") {
 		return nil, nil
 	}
@@ -157,7 +157,7 @@ func (c *Cli) GetPullRequestTemplate() (template string, err error) {
 	}
 
 	args := []string{"api", "/repos/{owner}/{repo}/contents/.github/PULL_REQUEST_TEMPLATE"}
-	stdout, stderr, err := gh.Exec(args...)
+	stdout, stderr, err := Execute(args...)
 	if err == nil && stderr.String() == "" {
 		var contents []struct {
 			Name     string `json:"name"`
@@ -176,7 +176,7 @@ func (c *Cli) GetPullRequestTemplate() (template string, err error) {
 
 	for _, path := range templatePaths {
 		args := []string{"api", fmt.Sprintf("/repos/{owner}/{repo}/contents/%s", path)}
-		stdout, stderr, err := gh.Exec(args...)
+		stdout, stderr, err := Execute(args...)
 		if err == nil && stderr.String() == "" {
 			var response struct {
 				Content  string `json:"content"`
