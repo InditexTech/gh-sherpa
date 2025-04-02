@@ -48,9 +48,8 @@ type CreatePullRequest struct {
 	BranchProvider          domain.BranchProvider
 }
 
-// Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
-	// If a template was specified, verify it exists before continuing
+	// If a PR template was specified, verify it exists before continuing
 	if cpr.Cfg.TemplatePath != "" {
 		_, err := cpr.readTemplateFromRoot(cpr.Cfg.TemplatePath)
 		if err != nil {
@@ -303,21 +302,21 @@ func (cpr *CreatePullRequest) readTemplateFromRoot(templatePath string) (string,
 	if templatePath == "" {
 		return "", nil
 	}
-	
+
 	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", fmt.Errorf("error finding repository root: %w", err)
 	}
 	repoRoot := strings.TrimSpace(string(output))
-	
+
 	fullPath := filepath.Join(repoRoot, templatePath)
-	
+
 	content, err := os.ReadFile(fullPath)
 	if err != nil {
 		return "", fmt.Errorf("error reading template file %s: %w", fullPath, err)
 	}
-	
+
 	return string(content), nil
 }
 
@@ -327,17 +326,17 @@ func (cpr *CreatePullRequest) createPullRequestFromIssue(issue domain.Issue, bas
 	if err != nil {
 		return err
 	}
-	
+
 	// Variable for final body
 	finalBody := initialBody
-	
+
 	// If a template was specified, combine it with the initial body
 	if cpr.Cfg.TemplatePath != "" {
 		templateContent, err := cpr.readTemplateFromRoot(cpr.Cfg.TemplatePath)
 		if err != nil {
 			return fmt.Errorf("error reading PR template: %w", err)
 		}
-		
+
 		if templateContent != "" {
 			finalBody = initialBody + "\n\n" + templateContent
 		}
