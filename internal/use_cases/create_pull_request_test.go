@@ -358,6 +358,16 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.Error(err)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
+	
+	// PR Template tests
+	s.Run("should error if template path is invalid", func() {
+		s.uc.Cfg.TemplatePath = "non_existent_template.md"
+		
+		err := s.uc.Execute()
+		
+		s.ErrorContains(err, "error with PR template")
+	})
+	
 }
 
 func (s *CreateGithubPullRequestExecutionTestSuite) initializeUserInteractionProvider() *domainMocks.MockUserInteractionProvider {
@@ -713,6 +723,15 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.Error(err)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+	})
+	
+	// PR Template test for Jira
+	s.Run("should error if template path is invalid for Jira issue", func() {
+		s.uc.Cfg.TemplatePath = "non_existent_template.md"
+		
+		err := s.uc.Execute()
+		
+		s.ErrorContains(err, "error with PR template")
 	})
 }
 
