@@ -2,6 +2,10 @@ package use_cases
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -31,6 +35,7 @@ type CreatePullRequestConfiguration struct {
 	DraftPR         bool
 	IsInteractive   bool
 	CloseIssue      bool
+	TemplatePath    string
 }
 
 type CreatePullRequest struct {
@@ -45,6 +50,14 @@ type CreatePullRequest struct {
 
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
+	// If a template was specified, verify it exists before continuing
+	if cpr.Cfg.TemplatePath != "" {
+		_, err := cpr.readTemplateFromRoot(cpr.Cfg.TemplatePath)
+		if err != nil {
+			return fmt.Errorf("error with PR template: %w", err)
+		}
+	}
+
 	isInteractive := cpr.Cfg.IsInteractive
 	fromLocalBranch := cpr.Cfg.IssueID == ""
 
@@ -286,10 +299,48 @@ func (cpr *CreatePullRequest) createBranch(branch string, baseBranch string) (ca
 	return
 }
 
+func (cpr *CreatePullRequest) readTemplateFromRoot(templatePath string) (string, error) {
+	if templatePath == "" {
+		return "", nil
+	}
+	
+	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("error finding repository root: %w", err)
+	}
+	repoRoot := strings.TrimSpace(string(output))
+	
+	fullPath := filepath.Join(repoRoot, templatePath)
+	
+	content, err := os.ReadFile(fullPath)
+	if err != nil {
+		return "", fmt.Errorf("error reading template file %s: %w", fullPath, err)
+	}
+	
+	return string(content), nil
+}
+
 func (cpr *CreatePullRequest) createPullRequestFromIssue(issue domain.Issue, baseBranch string, headBranch string) error {
-	title, body, err := cpr.getPullRequestTitleAndBody(issue)
+	// Generate title and initial body with issue information
+	title, initialBody, err := cpr.getPullRequestTitleAndBody(issue)
 	if err != nil {
 		return err
+	}
+	
+	// Variable for final body
+	finalBody := initialBody
+	
+	// If a template was specified, combine it with the initial body
+	if cpr.Cfg.TemplatePath != "" {
+		templateContent, err := cpr.readTemplateFromRoot(cpr.Cfg.TemplatePath)
+		if err != nil {
+			return fmt.Errorf("error reading PR template: %w", err)
+		}
+		
+		if templateContent != "" {
+			finalBody = initialBody + "\n\n" + templateContent
+		}
 	}
 
 	labels := []string{}
@@ -298,7 +349,7 @@ func (cpr *CreatePullRequest) createPullRequestFromIssue(issue domain.Issue, bas
 		labels = append(labels, typeLabel)
 	}
 
-	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, body, baseBranch, headBranch, cpr.Cfg.DraftPR, labels)
+	prURL, err := cpr.PullRequestProvider.CreatePullRequest(title, finalBody, baseBranch, headBranch, cpr.Cfg.DraftPR, labels)
 	if err != nil {
 		return fmt.Errorf("could not create the pull request because %s", err)
 	}
