@@ -3,13 +3,12 @@ package use_cases
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
+	"github.com/go-git/go-git/v5"
 )
 
 // ErrRemoteBranchAlreadyExists is returned when the remote branch already exists
@@ -303,13 +302,20 @@ func (cpr *CreatePullRequest) readTemplateFromRoot(templatePath string) (string,
 		return "", nil
 	}
 
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	output, err := cmd.Output()
+	// Usar go-git para encontrar la raíz del repo
+	repo, err := git.PlainOpen(".")
 	if err != nil {
-		return "", fmt.Errorf("error finding repository root: %w", err)
+		return "", fmt.Errorf("error opening git repository: %w", err)
 	}
-	repoRoot := strings.TrimSpace(string(output))
-
+	
+	wt, err := repo.Worktree()
+	if err != nil {
+		return "", fmt.Errorf("error getting repository worktree: %w", err)
+	}
+	
+	// La raíz del repositorio es el directorio de trabajo del worktree
+	repoRoot := wt.Filesystem.Root()
+	
 	fullPath := filepath.Join(repoRoot, templatePath)
 
 	content, err := os.ReadFile(fullPath)
