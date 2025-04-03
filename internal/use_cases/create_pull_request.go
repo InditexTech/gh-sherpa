@@ -2,6 +2,8 @@ package use_cases
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -31,6 +33,7 @@ type CreatePullRequestConfiguration struct {
 	DraftPR         bool
 	IsInteractive   bool
 	CloseIssue      bool
+	TemplatePath    string
 }
 
 type CreatePullRequest struct {
@@ -209,6 +212,7 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 }
 
 func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
+	// Determine base title and issue reference body based on tracker type
 	switch issue.TrackerType() {
 	case domain.IssueTrackerTypeGithub:
 		title = issue.Title()
@@ -224,7 +228,36 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID(), issue.URL())
 
 	default:
-		err = fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
+		return "", "", fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
+	}
+
+	// If template path is provided, read and append it after the issue reference
+	if cpr.Cfg.TemplatePath != "" {
+		var templateContent []byte
+
+		// If not an absolute path, resolve from repository root
+		templatePath := cpr.Cfg.TemplatePath
+		if !filepath.IsAbs(templatePath) {
+			repoRoot, err := cpr.Git.GetRepositoryRoot()
+			if err != nil {
+				return "", "", fmt.Errorf("failed to determine repository root: %w", err)
+			}
+			templatePath = filepath.Join(repoRoot, templatePath)
+		}
+
+		// Check if template file exists
+		if _, statErr := os.Stat(templatePath); os.IsNotExist(statErr) {
+			return "", "", fmt.Errorf("template file does not exist: %s", cpr.Cfg.TemplatePath)
+		}
+
+		// Read template file
+		templateContent, err = os.ReadFile(templatePath)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to read template file: %w", err)
+		}
+
+		// Reference to issue first, then template content
+		body = body + "\n\n" + string(templateContent)
 	}
 
 	return

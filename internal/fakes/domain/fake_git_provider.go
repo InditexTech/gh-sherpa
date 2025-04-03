@@ -154,3 +154,7 @@ func (f *FakeGitProvider) PushBranch(branch string) (err error) {
 func (f *FakeGitProvider) IsCurrentBranch(branch string) bool {
 	return f.CurrentBranch == branch
 }
+
+func (f *FakeGitProvider) GetRepositoryRoot() (rootPath string, err error) {
+	return "/fake/repository/root", nil
+}
