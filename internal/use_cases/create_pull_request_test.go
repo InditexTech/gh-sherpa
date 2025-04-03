@@ -348,6 +348,50 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
+	s.Run("should validate template file at the beginning of execution", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/GH-3-template-test"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		
+		// Set invalid template path
+		s.uc.Cfg.TemplatePath = "non_existent_template.md"
+		
+		err := s.uc.Execute()
+		
+		// Should error early with template not found error
+		s.Error(err)
+		s.Contains(err.Error(), "template file does not exist")
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+	})
+
+	s.Run("should create pull request with template content", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/GH-3-valid-template"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		
+		// Set valid template path and disable CloseIssue flag to use "Related to" instead of "Closes"
+		dir, _ := os.Getwd()
+		templatePath := filepath.Join(dir, "testdata", "test_template.md")
+		s.uc.Cfg.TemplatePath = templatePath
+		s.uc.Cfg.CloseIssue = false
+		
+		err := s.uc.Execute()
+		
+		s.NoError(err)
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		
+		// Verify PR body content
+		body, exists := s.pullRequestProvider.GetPullRequestForBranchBody(branchName)
+		s.True(exists)
+		s.Contains(body, "Related to #3") // Issue reference appears first
+		s.Contains(body, "Template Content") // Template content follows
+		s.Contains(body, "This is a test PR template")
+	})
+
 	s.Run("should error if could not get issue", func() {
 		branchName := "feature/GH-6-with-no-remote-branch"
 		s.gitProvider.CurrentBranch = branchName
@@ -702,6 +746,49 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		err := s.uc.Execute()
 
 		s.NoError(err)
+	})
+
+	s.Run("should validate template file at the beginning of execution", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/PROJECTKEY-3-template-test"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		
+		// Set invalid template path
+		s.uc.Cfg.TemplatePath = "non_existent_template.md"
+		
+		err := s.uc.Execute()
+		
+		// Should error early with template not found error
+		s.Error(err)
+		s.Contains(err.Error(), "template file does not exist")
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+	})
+
+	s.Run("should create pull request with template content for Jira issue", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/PROJECTKEY-3-valid-template"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		
+		// Set valid template path
+		dir, _ := os.Getwd()
+		templatePath := filepath.Join(dir, "testdata", "test_template.md")
+		s.uc.Cfg.TemplatePath = templatePath
+		
+		err := s.uc.Execute()
+		
+		s.NoError(err)
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		
+		// Verify PR body content
+		body, exists := s.pullRequestProvider.GetPullRequestForBranchBody(branchName)
+		s.True(exists)
+		s.Contains(body, "Relates to [PROJECTKEY-3]") // Issue reference appears first
+		s.Contains(body, "Template Content") // Template content follows
+		s.Contains(body, "This is a test PR template")
 	})
 
 	s.Run("should error if could not get issue", func() {

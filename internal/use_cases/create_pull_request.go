@@ -46,8 +46,34 @@ type CreatePullRequest struct {
 	BranchProvider          domain.BranchProvider
 }
 
+func (cpr *CreatePullRequest) validateTemplateFile() error {
+	if cpr.Cfg.TemplatePath == "" {
+		return nil // No hay template que validar
+	}
+	
+	templatePath := cpr.Cfg.TemplatePath
+	if !filepath.IsAbs(templatePath) {
+		repoRoot, err := cpr.Git.GetRepositoryRoot()
+		if err != nil {
+			return fmt.Errorf("failed to determine repository root: %w", err)
+		}
+		templatePath = filepath.Join(repoRoot, templatePath)
+	}
+	
+	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		return fmt.Errorf("template file does not exist: %s", cpr.Cfg.TemplatePath)
+	}
+	
+	return nil
+}
+
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
+	// Validar template primero si se ha especificado
+	if err := cpr.validateTemplateFile(); err != nil {
+		return err
+	}
+
 	isInteractive := cpr.Cfg.IsInteractive
 	fromLocalBranch := cpr.Cfg.IssueID == ""
 
@@ -232,6 +258,7 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 	}
 
 	// If template path is provided, read and append it after the issue reference
+	// (we already validated that the file exists in validateTemplateFile)
 	if cpr.Cfg.TemplatePath != "" {
 		var templateContent []byte
 
@@ -245,12 +272,7 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 			templatePath = filepath.Join(repoRoot, templatePath)
 		}
 
-		// Check if template file exists
-		if _, statErr := os.Stat(templatePath); os.IsNotExist(statErr) {
-			return "", "", fmt.Errorf("template file does not exist: %s", cpr.Cfg.TemplatePath)
-		}
-
-		// Read template file
+		// Read template file (we know it exists because we checked in validateTemplateFile)
 		templateContent, err = os.ReadFile(templatePath)
 		if err != nil {
 			return "", "", fmt.Errorf("failed to read template file: %w", err)
