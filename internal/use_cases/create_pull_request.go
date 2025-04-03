@@ -48,9 +48,9 @@ type CreatePullRequest struct {
 
 func (cpr *CreatePullRequest) validateTemplateFile() error {
 	if cpr.Cfg.TemplatePath == "" {
-		return nil // No hay template que validar
+		return nil // No template to validate
 	}
-	
+
 	templatePath := cpr.Cfg.TemplatePath
 	if !filepath.IsAbs(templatePath) {
 		repoRoot, err := cpr.Git.GetRepositoryRoot()
@@ -59,17 +59,17 @@ func (cpr *CreatePullRequest) validateTemplateFile() error {
 		}
 		templatePath = filepath.Join(repoRoot, templatePath)
 	}
-	
+
 	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
 		return fmt.Errorf("template file does not exist: %s", cpr.Cfg.TemplatePath)
 	}
-	
+
 	return nil
 }
 
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
-	// Validar template primero si se ha especificado
+	// Validate template if specified
 	if err := cpr.validateTemplateFile(); err != nil {
 		return err
 	}
