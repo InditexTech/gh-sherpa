@@ -9,4 +9,5 @@ type PullRequest struct {
 	HeadRefName string
 	BaseRefName string
 	Labels      []Label
+	Body        string
 }

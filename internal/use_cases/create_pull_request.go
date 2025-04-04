@@ -1,7 +1,11 @@
 package use_cases
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -31,6 +35,7 @@ type CreatePullRequestConfiguration struct {
 	DraftPR         bool
 	IsInteractive   bool
 	CloseIssue      bool
+	TemplatePath    string
 }
 
 type CreatePullRequest struct {
@@ -43,8 +48,50 @@ type CreatePullRequest struct {
 	BranchProvider          domain.BranchProvider
 }
 
+func normalizeTemplatePath(git domain.GitProvider, path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+
+	if !filepath.IsAbs(path) {
+		repoRoot, err := git.GetRepositoryRoot()
+		if err != nil {
+			return "", fmt.Errorf("failed to determine repository root: %w", err)
+		}
+		path = filepath.Join(repoRoot, path)
+	}
+
+	return path, nil
+}
+
+func validateTemplateFile(templatePath string, git domain.GitProvider) error {
+	if templatePath == "" {
+		return nil // No template to validate
+	}
+
+	normalizedPath, err := normalizeTemplatePath(git, templatePath)
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(normalizedPath); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("template file does not exist: %s", templatePath)
+		}
+
+		return fmt.Errorf("error accessing template file %s: %w", templatePath, err)
+	}
+
+	return nil
+}
+
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
+	// Validate template if specified
+	if err := validateTemplateFile(cpr.Cfg.TemplatePath, cpr.Git); err != nil {
+		return err
+	}
+
 	isInteractive := cpr.Cfg.IsInteractive
 	fromLocalBranch := cpr.Cfg.IssueID == ""
 
@@ -209,6 +256,7 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 }
 
 func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
+	// Determine base title and issue reference body based on tracker type
 	switch issue.TrackerType() {
 	case domain.IssueTrackerTypeGithub:
 		title = issue.Title()
@@ -224,7 +272,28 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 		body = fmt.Sprintf("Relates to [%s](%s)", issue.ID(), issue.URL())
 
 	default:
-		err = fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
+		return "", "", fmt.Errorf("issue tracker %s is not supported", issue.TrackerType())
+	}
+
+	// If template path is provided, read and append it after the issue reference
+	// (we already validated that the file exists in validateTemplateFile)
+	if cpr.Cfg.TemplatePath != "" {
+		var templateContent []byte
+
+		// Get normalized template path (absolute path)
+		templatePath, err := normalizeTemplatePath(cpr.Git, cpr.Cfg.TemplatePath)
+		if err != nil {
+			return "", "", err
+		}
+
+		// Read template file (we know it exists because we checked in validateTemplateFile)
+		templateContent, err = os.ReadFile(templatePath)
+		if err != nil {
+			return "", "", fmt.Errorf("failed to read template file: %w", err)
+		}
+
+		// Reference to issue first, then template content
+		body = body + "\n\n" + string(templateContent)
 	}
 
 	return
