@@ -48,13 +48,13 @@ type CreatePullRequest struct {
 	BranchProvider          domain.BranchProvider
 }
 
-func (cpr *CreatePullRequest) normalizeTemplatePath(path string) (string, error) {
+func normalizeTemplatePath(git domain.GitProvider, path string) (string, error) {
 	if path == "" {
 		return "", nil
 	}
 
 	if !filepath.IsAbs(path) {
-		repoRoot, err := cpr.Git.GetRepositoryRoot()
+		repoRoot, err := git.GetRepositoryRoot()
 		if err != nil {
 			return "", fmt.Errorf("failed to determine repository root: %w", err)
 		}
@@ -64,22 +64,22 @@ func (cpr *CreatePullRequest) normalizeTemplatePath(path string) (string, error)
 	return path, nil
 }
 
-func (cpr *CreatePullRequest) validateTemplateFile() error {
-	if cpr.Cfg.TemplatePath == "" {
+func validateTemplateFile(templatePath string, git domain.GitProvider) error {
+	if templatePath == "" {
 		return nil // No template to validate
 	}
 
-	templatePath, err := cpr.normalizeTemplatePath(cpr.Cfg.TemplatePath)
+	normalizedPath, err := normalizeTemplatePath(git, templatePath)
 	if err != nil {
 		return err
 	}
 
-	if _, err := os.Stat(templatePath); err != nil {
+	if _, err := os.Stat(normalizedPath); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return fmt.Errorf("template file does not exist: %s", cpr.Cfg.TemplatePath)
+			return fmt.Errorf("template file does not exist: %s", templatePath)
 		}
 
-		return fmt.Errorf("error accessing template file %s: %w", cpr.Cfg.TemplatePath, err)
+		return fmt.Errorf("error accessing template file %s: %w", templatePath, err)
 	}
 
 	return nil
@@ -88,7 +88,7 @@ func (cpr *CreatePullRequest) validateTemplateFile() error {
 // Execute executes the create pull request use case
 func (cpr CreatePullRequest) Execute() error {
 	// Validate template if specified
-	if err := cpr.validateTemplateFile(); err != nil {
+	if err := validateTemplateFile(cpr.Cfg.TemplatePath, cpr.Git); err != nil {
 		return err
 	}
 
@@ -281,7 +281,7 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 		var templateContent []byte
 
 		// Get normalized template path (absolute path)
-		templatePath, err := cpr.normalizeTemplatePath(cpr.Cfg.TemplatePath)
+		templatePath, err := normalizeTemplatePath(cpr.Git, cpr.Cfg.TemplatePath)
 		if err != nil {
 			return "", "", err
 		}
