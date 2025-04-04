@@ -1,7 +1,9 @@
 package use_cases
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -46,22 +48,38 @@ type CreatePullRequest struct {
 	BranchProvider          domain.BranchProvider
 }
 
+func (cpr *CreatePullRequest) normalizeTemplatePath(path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+
+	if !filepath.IsAbs(path) {
+		repoRoot, err := cpr.Git.GetRepositoryRoot()
+		if err != nil {
+			return "", fmt.Errorf("failed to determine repository root: %w", err)
+		}
+		path = filepath.Join(repoRoot, path)
+	}
+
+	return path, nil
+}
+
 func (cpr *CreatePullRequest) validateTemplateFile() error {
 	if cpr.Cfg.TemplatePath == "" {
 		return nil // No template to validate
 	}
 
-	templatePath := cpr.Cfg.TemplatePath
-	if !filepath.IsAbs(templatePath) {
-		repoRoot, err := cpr.Git.GetRepositoryRoot()
-		if err != nil {
-			return fmt.Errorf("failed to determine repository root: %w", err)
-		}
-		templatePath = filepath.Join(repoRoot, templatePath)
+	templatePath, err := cpr.normalizeTemplatePath(cpr.Cfg.TemplatePath)
+	if err != nil {
+		return err
 	}
 
-	if _, err := os.Stat(templatePath); os.IsNotExist(err) {
-		return fmt.Errorf("template file does not exist: %s", cpr.Cfg.TemplatePath)
+	if _, err := os.Stat(templatePath); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("template file does not exist: %s", cpr.Cfg.TemplatePath)
+		}
+
+		return fmt.Errorf("error accessing template file %s: %w", cpr.Cfg.TemplatePath, err)
 	}
 
 	return nil
@@ -262,14 +280,10 @@ func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (ti
 	if cpr.Cfg.TemplatePath != "" {
 		var templateContent []byte
 
-		// If not an absolute path, resolve from repository root
-		templatePath := cpr.Cfg.TemplatePath
-		if !filepath.IsAbs(templatePath) {
-			repoRoot, err := cpr.Git.GetRepositoryRoot()
-			if err != nil {
-				return "", "", fmt.Errorf("failed to determine repository root: %w", err)
-			}
-			templatePath = filepath.Join(repoRoot, templatePath)
+		// Get normalized template path (absolute path)
+		templatePath, err := cpr.normalizeTemplatePath(cpr.Cfg.TemplatePath)
+		if err != nil {
+			return "", "", err
 		}
 
 		// Read template file (we know it exists because we checked in validateTemplateFile)
