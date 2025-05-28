@@ -120,7 +120,9 @@ func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType st
 		branchName = branchName[:min(maxBranchNameLength, branchNameLength)]
 	}
 
-	return strings.TrimSuffix(branchName, "-")
+	// Remove all trailing dashes to ensure branches never end with a dash
+	trailingDashPattern := regexp.MustCompile(`-+$`)
+	return trailingDashPattern.ReplaceAllString(branchName, "")
 }
 
 // min returns the smallest of x or y.

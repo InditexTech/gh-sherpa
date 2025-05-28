@@ -283,6 +283,39 @@ func TestFormatBranchName(t *testing.T) {
 			},
 			want: "feature/GH-1-this-is-a-very-long-title-that-will-not-be-cropped",
 		},
+		{
+			name: "Does not end with dash when truncating at single dash",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "JIRA-123",
+				issueContext: "back-do-something",
+				maxLength:    43, // "InditexTech/gh-sherpa" (21) + "feature/JIRA-123-back-" (22) = 43, so this truncates to "feature/JIRA-123-back-"
+			},
+			want: "feature/JIRA-123-back",
+		},
+		{
+			name: "Does not end with dash when truncating at multiple dashes",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "JIRA-123",
+				issueContext: "back--user",
+				maxLength:    44, // This will truncate to "feature/JIRA-123-back--" and should become "feature/JIRA-123-back"
+			},
+			want: "feature/JIRA-123-back",
+		},
+		{
+			name: "Does not end with dash when truncating at multiple consecutive dashes",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "JIRA-123",
+				issueContext: "back---user-do-something",
+				maxLength:    45, // This will truncate to "feature/JIRA-123-back---" and should become "feature/JIRA-123-back"
+			},
+			want: "feature/JIRA-123-back",
+		},
 	}
 
 	for _, tt := range tests {
@@ -346,3 +379,5 @@ func TestNew(t *testing.T) {
 	})
 	//TODO: Add test cases when validation is implemented
 }
+
+
