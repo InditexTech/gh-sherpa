@@ -379,5 +379,3 @@ func TestNew(t *testing.T) {
 	})
 	//TODO: Add test cases when validation is implemented
 }
-
-
