@@ -12,7 +12,7 @@ env:
 
 jobs:
   verify:
-    if: github.event.pull_request.merged == true
+    if: ${{ github.event.pull_request.merged == true && vars.IS_INDITEXTECH_REPO == 'true' }}
     name: Verify
     runs-on: ubuntu-latest
     steps:
