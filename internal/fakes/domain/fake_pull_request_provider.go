@@ -26,6 +26,15 @@ func (f *FakePullRequestProvider) AddPullRequest(branchName string, pr domain.Pu
 	f.PullRequests[branchName] = &pr
 }
 
+// GetLastCreatedPR returns the last pull request created for a branch
+func (f *FakePullRequestProvider) GetPullRequestForBranchBody(branch string) (body string, exists bool) {
+	pr := f.PullRequests[branch]
+	if pr == nil {
+		return "", false
+	}
+	return pr.Body, true
+}
+
 func (f *FakePullRequestProvider) HasPullRequestForBranch(branch string) bool {
 	pr := f.PullRequests[branch]
 
@@ -70,6 +79,7 @@ func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, b
 		HeadRefName: headBranch,
 		BaseRefName: baseBranch,
 		Labels:      prLabels,
+		Body:        body,
 	}
 
 	f.PullRequests[headBranch] = pr

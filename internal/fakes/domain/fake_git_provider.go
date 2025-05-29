@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 
@@ -153,4 +154,14 @@ func (f *FakeGitProvider) PushBranch(branch string) (err error) {
 
 func (f *FakeGitProvider) IsCurrentBranch(branch string) bool {
 	return f.CurrentBranch == branch
+}
+
+func (f *FakeGitProvider) GetRepositoryRoot() (rootPath string, err error) {
+	// In the tests, we want it to return the current working directory so that relative paths
+	// are resolved correctly to the real files in testdata/
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	return dir, nil
 }

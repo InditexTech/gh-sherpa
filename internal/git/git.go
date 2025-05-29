@@ -191,3 +191,14 @@ func CommitSigningEnabled() bool {
 
 	return err == nil && strings.Contains(stdout, "true")
 }
+
+func (p *Provider) GetRepositoryRoot() (rootPath string, err error) {
+	args := []string{"rev-parse", "--show-toplevel"}
+
+	out, err := runGitCommand(args...)
+	if err != nil {
+		return "", fmt.Errorf("failed to get repository root: %w", err)
+	}
+
+	return strings.TrimSpace(out), nil
+}

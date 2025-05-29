@@ -26,6 +26,7 @@ type GitProvider interface {
 	RemoteBranchExists(branch string) (exists bool)
 	CommitEmpty(message string) (err error)
 	PushBranch(branch string) (err error)
+	GetRepositoryRoot() (rootPath string, err error)
 }
 
 type BranchProvider interface {
