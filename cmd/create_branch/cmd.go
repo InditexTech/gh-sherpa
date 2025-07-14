@@ -1,10 +1,13 @@
 package create_branch
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
+	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/fork"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/InditexTech/gh-sherpa/internal/git"
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
@@ -31,6 +34,8 @@ type createBranchFlags struct {
 	BaseValue        string
 	NoFetchValue     bool
 	UseDefaultValues bool
+	ForkValue        bool
+	ForkNameValue    string
 }
 
 var flags = createBranchFlags{}
@@ -46,6 +51,8 @@ func init() {
 
 	Command.PersistentFlags().StringVarP(&flags.BaseValue, "base", "b", "", "base branch for checkout. Use the default branch of the repository if it is not set")
 	Command.PersistentFlags().BoolVar(&flags.NoFetchValue, "no-fetch", false, "does not fetch the base branch")
+	Command.PersistentFlags().BoolVar(&flags.ForkValue, "fork", false, "automatically set up fork for external contributors")
+	Command.PersistentFlags().StringVar(&flags.ForkNameValue, "fork-name", "", "specify custom fork organization/user (e.g. MyOrg/gh-sherpa)")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) (err error) {
@@ -61,6 +68,14 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	userInteraction := &interactive.UserInteractionProvider{}
 
 	isInteractive := !flags.UseDefaultValues
+
+	ghCli := &gh.Cli{}
+
+	if flags.ForkValue {
+		if err := setupFork(cfg, ghCli, userInteraction, isInteractive); err != nil {
+			return err
+		}
+	}
 
 	branchProviderCfg := branches.Configuration{
 		Branches:      cfg.Branches,
@@ -80,7 +95,7 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	createBranch := use_cases.CreateBranch{
 		Cfg:                     createBranchConfig,
 		Git:                     &git.Provider{},
-		RepositoryProvider:      &gh.Cli{},
+		RepositoryProvider:      ghCli,
 		IssueTrackerProvider:    issueTrackers,
 		UserInteractionProvider: userInteraction,
 		BranchProvider:          branchProvider,
@@ -93,6 +108,42 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	return
+}
+
+func setupFork(cfg config.Configuration, ghCli *gh.Cli, userInteraction domain.UserInteractionProvider, isInteractive bool) error {
+	forkName := flags.ForkNameValue
+	if forkName == "" && cfg.Github.ForkOrganization != "" {
+		// We'll construct the fork name once we know the repo name
+		// This will be handled by the fork manager
+	}
+
+	forkCfg := fork.Configuration{
+		DefaultOrganization: cfg.Github.ForkOrganization,
+		IsInteractive:       isInteractive,
+	}
+
+	forkManager := fork.NewManager(
+		forkCfg,
+		ghCli,
+		&git.Provider{},
+		userInteraction,
+		ghCli,
+	)
+
+	result, err := forkManager.SetupFork(forkName)
+	if err != nil {
+		return err
+	}
+
+	if result.WasAlreadyConfigured {
+		return nil
+	}
+
+	if result.ForkCreated {
+		fmt.Printf("✓ Ready to start working on issue #%s!\n", flags.IssueValue)
+	}
+
+	return nil
 }
 
 func preRunCommand(cmd *cobra.Command, _ []string) error {
