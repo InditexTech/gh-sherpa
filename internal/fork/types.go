@@ -2,20 +2,20 @@ package fork
 
 type Configuration struct {
 	DefaultOrganization string
-	IsInteractive bool
+	IsInteractive       bool
 }
 
 type ForkSetupResult struct {
 	WasAlreadyConfigured bool
-	ForkCreated bool
-	ForkName string
-	UpstreamName string
+	ForkCreated          bool
+	ForkName             string
+	UpstreamName         string
 }
 
 type ForkStatus struct {
-	IsInFork bool
+	IsInFork          bool
 	HasCorrectRemotes bool
 	HasCorrectDefault bool
-	ForkName string
-	UpstreamName string
+	ForkName          string
+	UpstreamName      string
 }

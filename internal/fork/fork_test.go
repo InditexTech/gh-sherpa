@@ -24,17 +24,17 @@ type mockGitProvider struct {
 	fetchError error
 }
 
-func (m *mockGitProvider) BranchExists(branch string) bool                         { return false }
-func (m *mockGitProvider) FetchBranchFromOrigin(branch string) error              { return m.fetchError }
-func (m *mockGitProvider) CheckoutNewBranchFromOrigin(branch, base string) error  { return nil }
-func (m *mockGitProvider) GetCurrentBranch() (string, error)                      { return "main", nil }
-func (m *mockGitProvider) FindBranch(substring string) (string, bool)             { return "", false }
-func (m *mockGitProvider) CheckoutBranch(branch string) error                     { return nil }
-func (m *mockGitProvider) GetCommitsToPush(branch string) ([]string, error)       { return nil, nil }
-func (m *mockGitProvider) RemoteBranchExists(branch string) bool                  { return false }
-func (m *mockGitProvider) CommitEmpty(message string) error                       { return nil }
-func (m *mockGitProvider) PushBranch(branch string) error                         { return nil }
-func (m *mockGitProvider) GetRepositoryRoot() (string, error)                     { return "/tmp", nil }
+func (m *mockGitProvider) BranchExists(branch string) bool                       { return false }
+func (m *mockGitProvider) FetchBranchFromOrigin(branch string) error             { return m.fetchError }
+func (m *mockGitProvider) CheckoutNewBranchFromOrigin(branch, base string) error { return nil }
+func (m *mockGitProvider) GetCurrentBranch() (string, error)                     { return "main", nil }
+func (m *mockGitProvider) FindBranch(substring string) (string, bool)            { return "", false }
+func (m *mockGitProvider) CheckoutBranch(branch string) error                    { return nil }
+func (m *mockGitProvider) GetCommitsToPush(branch string) ([]string, error)      { return nil, nil }
+func (m *mockGitProvider) RemoteBranchExists(branch string) bool                 { return false }
+func (m *mockGitProvider) CommitEmpty(message string) error                      { return nil }
+func (m *mockGitProvider) PushBranch(branch string) error                        { return nil }
+func (m *mockGitProvider) GetRepositoryRoot() (string, error)                    { return "/tmp", nil }
 
 type mockUserInteractionProvider struct {
 	confirmationResult bool
@@ -57,12 +57,12 @@ func (m *mockUserInteractionProvider) SelectOrInput(name string, validValues []s
 }
 
 type mockForkProvider struct {
-	isRepositoryFork       bool
-	isRepositoryForkError  error
-	createForkError        error
-	setDefaultRepoError    error
-	remoteConfiguration    map[string]string
-	remoteConfigError      error
+	isRepositoryFork      bool
+	isRepositoryForkError error
+	createForkError       error
+	setDefaultRepoError   error
+	remoteConfiguration   map[string]string
+	remoteConfigError     error
 }
 
 func (m *mockForkProvider) IsRepositoryFork() (bool, error) {

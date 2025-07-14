@@ -115,8 +115,8 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 func setupFork(cfg config.Configuration, ghCli *gh.Cli, userInteraction domain.UserInteractionProvider, isInteractive bool) error {
 	forkName := flags.ForkNameValue
 	if forkName == "" && cfg.Github.ForkOrganization != "" {
-		// We'll construct the fork name once we know the repo name
-		// This will be handled by the fork manager
+		// Fork name will be constructed by the fork manager using the default organization
+		forkName = cfg.Github.ForkOrganization
 	}
 
 	forkCfg := fork.Configuration{
