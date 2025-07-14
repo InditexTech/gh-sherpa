@@ -144,3 +144,70 @@ func (c *Cli) GetPullRequestForBranch(branchName string) (*domain.PullRequest, e
 
 	return &pr, nil
 }
+
+func (c *Cli) IsRepositoryFork() (bool, error) {
+	command := []string{"repo", "view", "--json", "isFork"}
+
+	stdout, stderr, err := gh.Exec(command...)
+	if stderr.String() != "" {
+		return false, fmt.Errorf("error checking fork status: %s", stderr.String())
+	}
+	if err != nil {
+		return false, err
+	}
+
+	var result struct {
+		IsFork bool `json:"isFork"`
+	}
+
+	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+		return false, err
+	}
+
+	return result.IsFork, nil
+}
+
+func (c *Cli) CreateFork(forkName string) error {
+	args := []string{"repo", "fork", "--remote"}
+
+	if forkName != "" {
+		parts := strings.Split(forkName, "/")
+		if len(parts) == 2 {
+			args = append(args, "--org", parts[0])
+		}
+	}
+
+	_, stderr, err := gh.Exec(args...)
+	if stderr.String() != "" {
+		return fmt.Errorf("error creating fork: %s", stderr.String())
+	}
+
+	return err
+}
+
+func (c *Cli) SetDefaultRepository(repo string) error {
+	args := []string{"repo", "set-default", repo}
+
+	_, stderr, err := gh.Exec(args...)
+	if stderr.String() != "" {
+		return fmt.Errorf("error setting default repository: %s", stderr.String())
+	}
+
+	return err
+}
+
+func (c *Cli) GetRemoteConfiguration() (map[string]string, error) {
+	remotes := make(map[string]string)
+
+	originResult, err := ExecuteStringResult([]string{"git", "remote", "get-url", "origin"})
+	if err == nil {
+		remotes["origin"] = strings.TrimSpace(originResult)
+	}
+
+	upstreamResult, err := ExecuteStringResult([]string{"git", "remote", "get-url", "upstream"})
+	if err == nil {
+		remotes["upstream"] = strings.TrimSpace(upstreamResult)
+	}
+
+	return remotes, nil
+}
