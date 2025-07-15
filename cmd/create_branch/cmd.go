@@ -1,13 +1,11 @@
 package create_branch
 
 import (
-	"fmt"
 	"os"
 
+	"github.com/InditexTech/gh-sherpa/cmd/common"
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
-	"github.com/InditexTech/gh-sherpa/internal/domain"
-	"github.com/InditexTech/gh-sherpa/internal/fork"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/InditexTech/gh-sherpa/internal/git"
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
@@ -72,7 +70,7 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	ghCli := &gh.Cli{}
 
 	if flags.ForkValue {
-		if err := setupFork(cfg, ghCli, userInteraction, isInteractive); err != nil {
+		if err := common.SetupForkForCommand(cfg, flags.ForkNameValue, flags.IssueValue, ghCli, userInteraction, isInteractive, "issue"); err != nil {
 			return err
 		}
 	}
@@ -110,41 +108,6 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	return
 }
 
-func setupFork(cfg config.Configuration, ghCli *gh.Cli, userInteraction domain.UserInteractionProvider, isInteractive bool) error {
-	forkName := flags.ForkNameValue
-	if forkName == "" && cfg.Github.ForkOrganization != "" {
-		// Fork name will be constructed by the fork manager using the default organization
-		forkName = cfg.Github.ForkOrganization
-	}
-
-	forkCfg := fork.Configuration{
-		DefaultOrganization: cfg.Github.ForkOrganization,
-		IsInteractive:       isInteractive,
-	}
-
-	forkManager := fork.NewManager(
-		forkCfg,
-		ghCli,
-		&git.Provider{},
-		userInteraction,
-		ghCli,
-	)
-
-	result, err := forkManager.SetupFork(forkName)
-	if err != nil {
-		return err
-	}
-
-	if result.WasAlreadyConfigured {
-		return nil
-	}
-
-	if result.ForkCreated {
-		fmt.Printf("✓ Ready to start working on issue #%s!\n", flags.IssueValue)
-	}
-
-	return nil
-}
 
 func preRunCommand(cmd *cobra.Command, _ []string) error {
 	if cmd.Flags().Lookup("no-fetch").Changed {
