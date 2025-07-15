@@ -398,7 +398,7 @@ func TestDetectForkStatus_ForkViaAPI_NoRemotes(t *testing.T) {
 	gitProvider := &mockGitProvider{}
 	userProvider := &mockUserInteractionProvider{}
 	forkProvider := &mockForkProvider{
-		isRepositoryFork: true,
+		isRepositoryFork:    true,
 		remoteConfiguration: map[string]string{
 			// No remotes at all - should trigger fallback to API
 		},
@@ -444,7 +444,7 @@ func TestDetectForkStatus_APIError_ContinuesWithRemoteDetection(t *testing.T) {
 	forkProvider := &mockForkProvider{
 		isRepositoryFork:      false,
 		isRepositoryForkError: errors.New("API error"),
-		remoteConfiguration: map[string]string{
+		remoteConfiguration:   map[string]string{
 			// No remotes configured
 		},
 	}

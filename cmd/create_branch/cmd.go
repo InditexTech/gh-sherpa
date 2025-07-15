@@ -108,7 +108,6 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	return
 }
 
-
 func preRunCommand(cmd *cobra.Command, _ []string) error {
 	if cmd.Flags().Lookup("no-fetch").Changed {
 		if err := cmd.MarkFlagRequired("issue"); err != nil {
