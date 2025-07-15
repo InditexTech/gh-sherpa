@@ -294,3 +294,224 @@ func TestSetupFork_CreateForkError(t *testing.T) {
 		t.Errorf("Expected specific error message, got %v", err)
 	}
 }
+
+func TestDetectForkStatus_ForkViaAPI_WithCorrectRemotes(t *testing.T) {
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "user",
+		NameWithOwner:    "user/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			// No origin/upstream in first check, so it falls back to API
+			"origin":   "https://github.com/user/gh-sherpa.git",
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true")
+	}
+
+	if !status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be true")
+	}
+
+	if status.ForkName != "user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'user/gh-sherpa', got %s", status.ForkName)
+	}
+
+	if status.UpstreamName != "InditexTech/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be 'InditexTech/gh-sherpa', got %s", status.UpstreamName)
+	}
+}
+
+func TestDetectForkStatus_ForkViaAPI_WithoutCorrectRemotes(t *testing.T) {
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "user",
+		NameWithOwner:    "user/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			// Only origin, no upstream - should trigger fallback to API
+			"origin": "https://github.com/user/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true")
+	}
+
+	if status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be false")
+	}
+
+	if status.ForkName != "user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'user/gh-sherpa', got %s", status.ForkName)
+	}
+
+	if status.UpstreamName != "" {
+		t.Errorf("Expected UpstreamName to be empty, got %s", status.UpstreamName)
+	}
+}
+
+func TestDetectForkStatus_ForkViaAPI_NoRemotes(t *testing.T) {
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "user",
+		NameWithOwner:    "user/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			// No remotes at all - should trigger fallback to API
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true")
+	}
+
+	if status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be false")
+	}
+
+	if status.ForkName != "user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'user/gh-sherpa', got %s", status.ForkName)
+	}
+
+	if status.UpstreamName != "" {
+		t.Errorf("Expected UpstreamName to be empty, got %s", status.UpstreamName)
+	}
+}
+
+func TestDetectForkStatus_APIError_ContinuesWithRemoteDetection(t *testing.T) {
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "user",
+		NameWithOwner:    "user/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork:      false,
+		isRepositoryForkError: errors.New("API error"),
+		remoteConfiguration: map[string]string{
+			// No remotes configured
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if status.IsInFork {
+		t.Error("Expected IsInFork to be false when API fails and no remotes configured")
+	}
+
+	if status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be false")
+	}
+}
+
+func TestSetupFork_InForkButRemotesNotConfigured(t *testing.T) {
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "user",
+		NameWithOwner:    "user/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			// Only origin, no upstream - so remotes are not correctly configured
+			"origin": "https://github.com/user/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	result, err := manager.SetupFork("")
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Should not be marked as already configured since remotes are incorrect
+	if result.WasAlreadyConfigured {
+		t.Error("Expected WasAlreadyConfigured to be false when remotes are not configured correctly")
+	}
+
+	// Should not have created a fork since we're already in one
+	if result.ForkCreated {
+		t.Error("Expected ForkCreated to be false since we're already in a fork")
+	}
+
+	// Should have the correct fork name
+	if result.ForkName != "user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'user/gh-sherpa', got %s", result.ForkName)
+	}
+
+	// Should have set the upstream name from the original repo
+	if result.UpstreamName != "user/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be set, got %s", result.UpstreamName)
+	}
+}
