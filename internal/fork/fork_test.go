@@ -517,7 +517,7 @@ func TestSetupFork_InForkButRemotesNotConfigured(t *testing.T) {
 }
 
 func TestDetectForkStatus_ForkViaAPI_RemotesConfiguredInSecondCheck(t *testing.T) {
-	// Este test cubre específicamente la rama dentro de "else if isInFork" 
+	// Este test cubre específicamente la rama dentro de "else if isInFork"
 	// donde se verifica si los remotes están configurados correctamente
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
@@ -571,7 +571,7 @@ func TestDetectForkStatus_ForkViaAPI_RemotesConfiguredInSecondCheck(t *testing.T
 }
 
 func TestDetectForkStatus_ForkViaAPI_CorrectRemotesButWrongConfiguration(t *testing.T) {
-	// Este test verifica el caso donde tenemos origin y upstream, pero la configuración 
+	// Este test verifica el caso donde tenemos origin y upstream, pero la configuración
 	// no es la correcta para un fork (por example, upstream apunta al mismo repo que origin)
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
