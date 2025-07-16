@@ -190,7 +190,7 @@ func (c *Cli) SetDefaultRepository(repo string) error {
 		return fmt.Errorf("error setting default repository: %s", err.Error())
 	}
 
-	return err
+	return nil
 }
 
 func (c *Cli) GetRemoteConfiguration() (map[string]string, error) {
