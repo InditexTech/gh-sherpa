@@ -3,7 +3,6 @@ package gh
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -156,151 +155,258 @@ func TestCli_GetRemoteConfiguration(t *testing.T) {
 	}
 }
 
-func TestCreateFork_ArgumentConstruction(t *testing.T) {
+func TestCli_CreateFork(t *testing.T) {
 	tests := []struct {
 		name         string
 		forkName     string
+		mockResult   string
+		mockError    error
 		expectedArgs []string
+		wantErr      bool
 	}{
 		{
-			name:         "No organization specified",
+			name:         "Success - No organization specified",
 			forkName:     "",
+			mockResult:   "✓ Created fork user/repo\n✓ Added remote \"origin\"",
+			mockError:    nil,
 			expectedArgs: []string{"repo", "fork", "--remote"},
+			wantErr:      false,
 		},
 		{
-			name:         "Organization specified",
+			name:         "Success - Organization specified",
 			forkName:     "MyOrg/repo-name",
+			mockResult:   "✓ Created fork MyOrg/repo-name\n✓ Added remote \"origin\"",
+			mockError:    nil,
 			expectedArgs: []string{"repo", "fork", "--remote", "--org", "MyOrg"},
+			wantErr:      false,
 		},
 		{
-			name:         "Invalid format (single part)",
+			name:         "Success - Invalid format (single part)",
 			forkName:     "just-a-name",
+			mockResult:   "✓ Created fork user/repo\n✓ Added remote \"origin\"",
+			mockError:    nil,
 			expectedArgs: []string{"repo", "fork", "--remote"},
+			wantErr:      false,
 		},
 		{
-			name:         "Multiple parts but invalid",
+			name:         "Success - Multiple parts but invalid",
 			forkName:     "org/repo/extra",
+			mockResult:   "✓ Created fork user/repo\n✓ Added remote \"origin\"",
+			mockError:    nil,
 			expectedArgs: []string{"repo", "fork", "--remote"},
+			wantErr:      false,
+		},
+		{
+			name:         "Error - Repository not found",
+			forkName:     "invalid/repo",
+			mockResult:   "",
+			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nrepository not found"),
+			expectedArgs: []string{"repo", "fork", "--remote", "--org", "invalid"},
+			wantErr:      true,
+		},
+		{
+			name:         "Error - Permission denied",
+			forkName:     "private/repo",
+			mockResult:   "",
+			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\npermission denied"),
+			expectedArgs: []string{"repo", "fork", "--remote", "--org", "private"},
+			wantErr:      true,
+		},
+		{
+			name:         "Error - Fork already exists",
+			forkName:     "MyOrg/existing-fork",
+			mockResult:   "",
+			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nfork already exists"),
+			expectedArgs: []string{"repo", "fork", "--remote", "--org", "MyOrg"},
+			wantErr:      true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test the argument construction logic
-			args := []string{"repo", "fork", "--remote"}
+			c := &Cli{}
 
-			if tt.forkName != "" {
-				parts := strings.Split(tt.forkName, "/")
-				if len(parts) == 2 {
-					args = append(args, "--org", parts[0])
-				}
+			var capturedArgs []string
+			originalExecuteStringResult := ExecuteStringResult
+			defer func() { ExecuteStringResult = originalExecuteStringResult }()
+
+			ExecuteStringResult = func(args []string) (result string, err error) {
+				capturedArgs = args
+				return tt.mockResult, tt.mockError
 			}
 
-			assert.Equal(t, tt.expectedArgs, args)
+			err := c.CreateFork(tt.forkName)
+
+			// Verify the arguments passed to ExecuteStringResult
+			assert.Equal(t, tt.expectedArgs, capturedArgs)
+
+			// Verify the error behavior
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
-func TestCli_SetDefaultRepository_ArgumentConstruction(t *testing.T) {
+func TestCli_SetDefaultRepository(t *testing.T) {
 	tests := []struct {
 		name         string
 		repo         string
+		mockResult   string
+		mockError    error
 		expectedArgs []string
+		wantErr      bool
 	}{
 		{
-			name:         "Standard repository",
+			name:         "Success - Standard repository",
 			repo:         "InditexTech/gh-sherpa",
+			mockResult:   "",
+			mockError:    nil,
 			expectedArgs: []string{"repo", "set-default", "InditexTech/gh-sherpa"},
+			wantErr:      false,
 		},
 		{
-			name:         "User repository",
+			name:         "Success - User repository",
 			repo:         "user/another-repo",
+			mockResult:   "",
+			mockError:    nil,
 			expectedArgs: []string{"repo", "set-default", "user/another-repo"},
+			wantErr:      false,
 		},
 		{
-			name:         "Repository with special characters",
-			repo:         "org/repo-name_with.special-chars",
-			expectedArgs: []string{"repo", "set-default", "org/repo-name_with.special-chars"},
+			name:         "Error - Repository not found",
+			repo:         "invalid/repo",
+			mockResult:   "",
+			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nrepository not found"),
+			expectedArgs: []string{"repo", "set-default", "invalid/repo"},
+			wantErr:      true,
 		},
 		{
-			name:         "Empty repository string",
-			repo:         "",
-			expectedArgs: []string{"repo", "set-default", ""},
+			name:         "Error - Authentication required",
+			repo:         "private/repo",
+			mockResult:   "",
+			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nauthentication required"),
+			expectedArgs: []string{"repo", "set-default", "private/repo"},
+			wantErr:      true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test the argument construction logic
-			args := []string{"repo", "set-default", tt.repo}
-			assert.Equal(t, tt.expectedArgs, args)
+			c := &Cli{}
+
+			var capturedArgs []string
+			originalExecuteStringResult := ExecuteStringResult
+			defer func() { ExecuteStringResult = originalExecuteStringResult }()
+
+			ExecuteStringResult = func(args []string) (result string, err error) {
+				capturedArgs = args
+				return tt.mockResult, tt.mockError
+			}
+
+			err := c.SetDefaultRepository(tt.repo)
+
+			// Verify the arguments passed to ExecuteStringResult
+			assert.Equal(t, tt.expectedArgs, capturedArgs)
+
+			// Verify the error behavior
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
 		})
 	}
 }
 
-func TestCli_SetDefaultRepository_ErrorHandling(t *testing.T) {
+func TestCli_IsRepositoryFork(t *testing.T) {
 	tests := []struct {
-		name          string
-		stderrOutput  string
-		expectedError string
+		name         string
+		mockResult   string
+		mockError    error
+		expectedArgs []string
+		expectedFork bool
+		wantErr      bool
 	}{
 		{
-			name:          "Error with stderr output",
-			stderrOutput:  "repository not found",
-			expectedError: "error setting default repository: repository not found",
+			name:         "Success - Repository is a fork",
+			mockResult:   `{"isFork":true}`,
+			mockError:    nil,
+			expectedArgs: []string{"repo", "view", "--json", "isFork"},
+			expectedFork: true,
+			wantErr:      false,
 		},
 		{
-			name:          "Error with authentication message",
-			stderrOutput:  "authentication required",
-			expectedError: "error setting default repository: authentication required",
+			name:         "Success - Repository is not a fork",
+			mockResult:   `{"isFork":false}`,
+			mockError:    nil,
+			expectedArgs: []string{"repo", "view", "--json", "isFork"},
+			expectedFork: false,
+			wantErr:      false,
 		},
 		{
-			name:          "Error with invalid format",
-			stderrOutput:  "expected the \"[HOST/]OWNER/REPO\" format",
-			expectedError: "error setting default repository: expected the \"[HOST/]OWNER/REPO\" format",
+			name:         "Error - Repository not found",
+			mockResult:   "",
+			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nrepository not found"),
+			expectedArgs: []string{"repo", "view", "--json", "isFork"},
+			expectedFork: false,
+			wantErr:      true,
+		},
+		{
+			name:         "Error - Authentication required",
+			mockResult:   "",
+			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nauthentication required"),
+			expectedArgs: []string{"repo", "view", "--json", "isFork"},
+			expectedFork: false,
+			wantErr:      true,
+		},
+		{
+			name:         "Success - Fork status with additional fields",
+			mockResult:   `{"isFork":true,"name":"my-repo","owner":{"login":"user"}}`,
+			mockError:    nil,
+			expectedArgs: []string{"repo", "view", "--json", "isFork"},
+			expectedFork: true,
+			wantErr:      false,
+		},
+		{
+			name:         "Error - Invalid JSON response",
+			mockResult:   `{"isFork":true,invalid}`,
+			mockError:    nil,
+			expectedArgs: []string{"repo", "view", "--json", "isFork"},
+			expectedFork: false,
+			wantErr:      true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Test error message formatting
-			err := fmt.Errorf("error setting default repository: %s", tt.stderrOutput)
-			assert.Equal(t, tt.expectedError, err.Error())
+			c := &Cli{}
+
+			var capturedArgs []string
+			originalExecuteStringResult := ExecuteStringResult
+			defer func() { ExecuteStringResult = originalExecuteStringResult }()
+
+			ExecuteStringResult = func(args []string) (result string, err error) {
+				capturedArgs = args
+				return tt.mockResult, tt.mockError
+			}
+
+			isFork, err := c.IsRepositoryFork()
+
+			// Verify the arguments passed to ExecuteStringResult
+			assert.Equal(t, tt.expectedArgs, capturedArgs)
+
+			// Verify the error behavior
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedFork, isFork)
+			}
 		})
 	}
-}
-
-func TestCli_SetDefaultRepository_Logic(t *testing.T) {
-	// Test the method logic without mocking gh.Exec (which is difficult to mock)
-	// This tests the error handling and argument preparation
-	// Test argument construction for different repository formats
-	testCases := []struct {
-		repo string
-		args []string
-	}{
-		{"owner/repo", []string{"repo", "set-default", "owner/repo"}},
-		{"org/project-name", []string{"repo", "set-default", "org/project-name"}},
-		{"user/repo_with_underscores", []string{"repo", "set-default", "user/repo_with_underscores"}},
-	}
-
-	for _, tc := range testCases {
-		args := []string{"repo", "set-default", tc.repo}
-		assert.Equal(t, tc.args, args, "Arguments should match expected format for repo: %s", tc.repo)
-	}
-
-	// Test error message formatting
-	testError := "some error message"
-	expectedError := fmt.Errorf("error setting default repository: %s", testError)
-	assert.Equal(t, "error setting default repository: some error message", expectedError.Error())
-}
-
-func TestIsRepositoryFork_ArgumentConstruction(t *testing.T) {
-	// Test that the correct command arguments are constructed
-	expectedArgs := []string{"repo", "view", "--json", "isFork"}
-
-	// This tests the command structure without executing
-	args := []string{"repo", "view", "--json", "isFork"}
-	assert.Equal(t, expectedArgs, args)
 }
 
 func TestGetRemoteConfiguration_Logic(t *testing.T) {

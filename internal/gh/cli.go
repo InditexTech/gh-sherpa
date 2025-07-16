@@ -148,10 +148,7 @@ func (c *Cli) GetPullRequestForBranch(branchName string) (*domain.PullRequest, e
 func (c *Cli) IsRepositoryFork() (bool, error) {
 	command := []string{"repo", "view", "--json", "isFork"}
 
-	stdout, stderr, err := gh.Exec(command...)
-	if stderr.String() != "" {
-		return false, fmt.Errorf("error checking fork status: %s", stderr.String())
-	}
+	jsonResult, err := ExecuteStringResult(command)
 	if err != nil {
 		return false, err
 	}
@@ -160,7 +157,7 @@ func (c *Cli) IsRepositoryFork() (bool, error) {
 		IsFork bool `json:"isFork"`
 	}
 
-	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+	if err := json.Unmarshal([]byte(jsonResult), &result); err != nil {
 		return false, err
 	}
 
@@ -177,20 +174,20 @@ func (c *Cli) CreateFork(forkName string) error {
 		}
 	}
 
-	_, stderr, err := gh.Exec(args...)
-	if stderr.String() != "" {
-		return fmt.Errorf("error creating fork: %s", stderr.String())
+	_, err := ExecuteStringResult(args)
+	if err != nil {
+		return fmt.Errorf("error creating fork: %s", err.Error())
 	}
 
-	return err
+	return nil
 }
 
 func (c *Cli) SetDefaultRepository(repo string) error {
 	args := []string{"repo", "set-default", repo}
 
-	_, stderr, err := gh.Exec(args...)
-	if stderr.String() != "" {
-		return fmt.Errorf("error setting default repository: %s", stderr.String())
+	_, err := ExecuteStringResult(args)
+	if err != nil {
+		return fmt.Errorf("error setting default repository: %s", err.Error())
 	}
 
 	return err
