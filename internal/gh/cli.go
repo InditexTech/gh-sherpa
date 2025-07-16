@@ -84,6 +84,21 @@ var ExecuteStringResult = func(args []string) (result string, err error) {
 	return
 }
 
+// executeGitCommand executes git commands directly (not through gh CLI)
+var executeGitCommand = func(args ...string) (string, error) {
+	// Prepare args for gh.Exec
+	allArgs := make([]string, len(args)+1)
+	allArgs[0] = "git"
+	copy(allArgs[1:], args)
+
+	stdout, stderr, err := gh.Exec(allArgs...)
+	if err != nil {
+		return "", fmt.Errorf("failed to run git command 'git %s': %v\nDetails: %s", strings.Join(args, " "), err, stderr.String())
+	}
+
+	return stdout.String(), nil
+}
+
 func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prURL string, err error) {
 	args := []string{"pr", "create"}
 
@@ -196,12 +211,12 @@ func (c *Cli) SetDefaultRepository(repo string) error {
 func (c *Cli) GetRemoteConfiguration() (map[string]string, error) {
 	remotes := make(map[string]string)
 
-	originResult, err := ExecuteStringResult([]string{"git", "remote", "get-url", "origin"})
+	originResult, err := executeGitCommand("remote", "get-url", "origin")
 	if err == nil {
 		remotes["origin"] = strings.TrimSpace(originResult)
 	}
 
-	upstreamResult, err := ExecuteStringResult([]string{"git", "remote", "get-url", "upstream"})
+	upstreamResult, err := executeGitCommand("remote", "get-url", "upstream")
 	if err == nil {
 		remotes["upstream"] = strings.TrimSpace(upstreamResult)
 	}

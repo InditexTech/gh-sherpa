@@ -132,16 +132,16 @@ func TestCli_GetRemoteConfiguration(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Cli{}
 
-			originalExecuteStringResult := ExecuteStringResult
-			defer func() { ExecuteStringResult = originalExecuteStringResult }()
+			originalExecuteGitCommand := executeGitCommand
+			defer func() { executeGitCommand = originalExecuteGitCommand }()
 
-			ExecuteStringResult = func(args []string) (result string, err error) {
+			executeGitCommand = func(args ...string) (result string, err error) {
 				// Check if this is a git remote get-url origin command
-				if len(args) >= 4 && args[0] == "git" && args[1] == "remote" && args[2] == "get-url" && args[3] == "origin" {
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "origin" {
 					return tt.originResponse, tt.originError
 				}
 				// Check if this is a git remote get-url upstream command
-				if len(args) >= 4 && args[0] == "git" && args[1] == "remote" && args[2] == "get-url" && args[3] == "upstream" {
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
 					return tt.upstreamResponse, tt.upstreamError
 				}
 				return "", errors.New("unexpected command")
@@ -413,14 +413,14 @@ func TestGetRemoteConfiguration_Logic(t *testing.T) {
 	// This test already works well, so we'll keep a simplified version
 	c := &Cli{}
 
-	originalExecuteStringResult := ExecuteStringResult
-	defer func() { ExecuteStringResult = originalExecuteStringResult }()
+	originalExecuteGitCommand := executeGitCommand
+	defer func() { executeGitCommand = originalExecuteGitCommand }()
 
-	ExecuteStringResult = func(args []string) (result string, err error) {
-		if len(args) >= 4 && args[0] == "git" && args[1] == "remote" && args[2] == "get-url" && args[3] == "origin" {
+	executeGitCommand = func(args ...string) (result string, err error) {
+		if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "origin" {
 			return "https://github.com/user/repo.git\n", nil
 		}
-		if len(args) >= 4 && args[0] == "git" && args[1] == "remote" && args[2] == "get-url" && args[3] == "upstream" {
+		if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
 			return "https://github.com/upstream/repo.git\n", nil
 		}
 		return "", nil
