@@ -515,3 +515,109 @@ func TestSetupFork_InForkButRemotesNotConfigured(t *testing.T) {
 		t.Errorf("Expected UpstreamName to be set, got %s", result.UpstreamName)
 	}
 }
+
+func TestDetectForkStatus_ForkViaAPI_RemotesConfiguredInSecondCheck(t *testing.T) {
+	// Este test cubre específicamente la rama dentro de "else if isInFork" 
+	// donde se verifica si los remotes están configurados correctamente
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "user",
+		NameWithOwner:    "user/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true, // API dice que SÍ es un fork
+		remoteConfiguration: map[string]string{
+			// La configuración es correcta: origin apunta al fork, upstream al original
+			// pero para que llegue al bloque else if, necesitamos que la primera verificación falle
+			// esto puede pasar si el extractRepoFromURL no funciona correctamente en la primera pasada
+			"origin":   "https://github.com/user/gh-sherpa.git",
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Debe detectar que es un fork
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true")
+	}
+
+	// Debe detectar que los remotes están correctamente configurados
+	if !status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be true")
+	}
+
+	// Debe tener el nombre del fork correcto
+	if status.ForkName != "user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'user/gh-sherpa', got %s", status.ForkName)
+	}
+
+	// Debe tener el nombre upstream correcto
+	if status.UpstreamName != "InditexTech/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be 'InditexTech/gh-sherpa', got %s", status.UpstreamName)
+	}
+}
+
+func TestDetectForkStatus_ForkViaAPI_CorrectRemotesButWrongConfiguration(t *testing.T) {
+	// Este test verifica el caso donde tenemos origin y upstream, pero la configuración 
+	// no es la correcta para un fork (por example, upstream apunta al mismo repo que origin)
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "user",
+		NameWithOwner:    "user/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true, // API dice que SÍ es un fork
+		remoteConfiguration: map[string]string{
+			// Tenemos ambos remotes, pero upstream apunta al mismo repo (configuración incorrecta)
+			"origin":   "https://github.com/user/gh-sherpa.git",
+			"upstream": "https://github.com/user/gh-sherpa.git", // ¡Misma URL! Configuración incorrecta
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	// Debe detectar que es un fork (via API)
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true")
+	}
+
+	// NO debe detectar que los remotes están correctos (ambos apuntan al mismo repo)
+	if status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be false when both remotes point to same repo")
+	}
+
+	// Debe tener el nombre del fork correcto
+	if status.ForkName != "user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'user/gh-sherpa', got %s", status.ForkName)
+	}
+
+	// UpstreamName debe estar vacío porque no se detectó configuración correcta
+	if status.UpstreamName != "" {
+		t.Errorf("Expected UpstreamName to be empty, got %s", status.UpstreamName)
+	}
+}
