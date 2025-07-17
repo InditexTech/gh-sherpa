@@ -56,7 +56,13 @@ func (p *Provider) BranchExists(branch string) bool {
 }
 
 func (p *Provider) FetchBranchFromOrigin(branch string) (err error) {
-	args := []string{"fetch", "origin", branch}
+	// In fork context, fetch from upstream to get the latest base branch
+	remote := "origin"
+	if p.hasUpstreamRemote() {
+		remote = "upstream"
+	}
+
+	args := []string{"fetch", remote, branch}
 
 	_, err = runGitCommand(args...)
 
@@ -64,7 +70,13 @@ func (p *Provider) FetchBranchFromOrigin(branch string) (err error) {
 }
 
 func (p *Provider) CheckoutNewBranchFromOrigin(branch string, base string) (err error) {
-	args := []string{"checkout", "--no-track", "-b", branch, "origin/" + base}
+	// Check if we're in a fork context (upstream remote exists)
+	remote := "origin"
+	if p.hasUpstreamRemote() {
+		remote = "upstream"
+	}
+
+	args := []string{"checkout", "--no-track", "-b", branch, remote + "/" + base}
 
 	_, err = runGitCommand(args...)
 
@@ -201,4 +213,11 @@ func (p *Provider) GetRepositoryRoot() (rootPath string, err error) {
 	}
 
 	return strings.TrimSpace(out), nil
+}
+
+// hasUpstreamRemote checks if the upstream remote exists
+func (p *Provider) hasUpstreamRemote() bool {
+	args := []string{"remote", "get-url", "upstream"}
+	_, err := runGitCommand(args...)
+	return err == nil
 }
