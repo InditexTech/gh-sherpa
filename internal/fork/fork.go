@@ -114,8 +114,13 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 
 	result := &ForkSetupResult{}
 
-	// If fork is already properly configured, return early
+	// If fork is already properly configured, check if it matches the requested fork
 	if status.IsInFork && status.HasCorrectRemotes {
+		// If a custom fork name is specified, validate it matches the current fork
+		if customForkName != "" && customForkName != status.ForkName {
+			return nil, fmt.Errorf("fork mismatch: repository is already configured with fork '%s', but you requested '%s'. Please use the existing fork or reconfigure the repository", status.ForkName, customForkName)
+		}
+
 		fmt.Printf("Fork already configured, creating branch...\n")
 		result.WasAlreadyConfigured = true
 		result.ForkName = status.ForkName
