@@ -68,9 +68,9 @@ func (m *Manager) DetectForkStatus() (*ForkStatus, error) {
 		logging.Debugf("Origin repo: %s, Upstream repo: %s", originRepo, upstreamRepo)
 
 		// We're in a properly configured fork setup if:
-		// 1. Origin points to current repo (the fork)
-		// 2. Upstream points to a different repo (the original)
-		if originRepo == repo.NameWithOwner && upstreamRepo != repo.NameWithOwner {
+		// 1. Origin points to a different repo (the fork)
+		// 2. Upstream points to current repo (the original)
+		if originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner {
 			status.IsInFork = true
 			status.HasCorrectRemotes = true
 			status.ForkName = originRepo
@@ -94,7 +94,7 @@ func (m *Manager) DetectForkStatus() (*ForkStatus, error) {
 		if hasOrigin && hasUpstream {
 			originRepo := extractRepoFromURL(origin)
 			upstreamRepo := extractRepoFromURL(upstream)
-			if originRepo == repo.NameWithOwner && upstreamRepo != repo.NameWithOwner {
+			if originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner {
 				status.HasCorrectRemotes = true
 				status.UpstreamName = upstreamRepo
 			}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -84,14 +85,15 @@ var ExecuteStringResult = func(args []string) (result string, err error) {
 	return
 }
 
-// executeGitCommand executes git commands directly (not through gh CLI)
+// executeGitCommand executes git commands directly using exec.Command
 var executeGitCommand = func(args ...string) (string, error) {
-	// Prepare args for gh.Exec
-	allArgs := make([]string, len(args)+1)
-	allArgs[0] = "git"
-	copy(allArgs[1:], args)
+	cmd := exec.Command("git", args...)
 
-	stdout, stderr, err := gh.Exec(allArgs...)
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
 	if err != nil {
 		return "", fmt.Errorf("failed to run git command 'git %s': %v\nDetails: %s", strings.Join(args, " "), err, stderr.String())
 	}
