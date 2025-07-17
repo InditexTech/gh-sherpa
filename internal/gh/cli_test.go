@@ -50,6 +50,15 @@ func TestCli_CreatePullRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Cli{}
 
+			// Mock the git command execution to avoid fork detection
+			originalExecuteGitCommand := executeGitCommand
+			defer func() { executeGitCommand = originalExecuteGitCommand }()
+
+			executeGitCommand = func(args ...string) (result string, err error) {
+				// Return empty results to simulate no upstream remote (non-fork scenario)
+				return "", errors.New("remote not found")
+			}
+
 			var executeArgs []string
 			ExecuteStringResult = func(args []string) (result string, err error) {
 				executeArgs = args

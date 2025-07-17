@@ -109,7 +109,12 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 	}
 
 	if headBranch != "" {
-		args = append(args, "-H", headBranch)
+		// Check if we're in a fork context and format head branch accordingly
+		formattedHeadBranch, err := c.formatHeadBranchForFork(headBranch)
+		if err != nil {
+			return "", fmt.Errorf("failed to format head branch: %w", err)
+		}
+		args = append(args, "-H", formattedHeadBranch)
 	}
 
 	if draft {
@@ -224,4 +229,22 @@ func (c *Cli) GetRemoteConfiguration() (map[string]string, error) {
 	}
 
 	return remotes, nil
+}
+
+func (c *Cli) formatHeadBranchForFork(headBranch string) (string, error) {
+	remotes, err := c.GetRemoteConfiguration()
+	if err != nil {
+		return headBranch, nil
+	}
+
+	if _, hasUpstream := remotes["upstream"]; hasUpstream {
+		repo, err := c.GetRepository()
+		if err != nil {
+			return headBranch, nil
+		}
+
+		return fmt.Sprintf("%s:%s", repo.Owner, headBranch), nil
+	}
+
+	return headBranch, nil
 }
