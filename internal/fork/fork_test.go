@@ -944,6 +944,51 @@ func TestSetupFork_ForkMatch_SameCustomForkName(t *testing.T) {
 	}
 }
 
+func TestDetectForkStatus_FallbackBranch_RemotesCorrectlyConfigured(t *testing.T) {
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/fork-owner/gh-sherpa.git",
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true when fork detected via API")
+	}
+
+	if !status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be true when originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner in fallback")
+	}
+
+	if status.UpstreamName != "InditexTech/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be 'InditexTech/gh-sherpa', got %s", status.UpstreamName)
+	}
+
+	if status.ForkName != "fork-owner/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'fork-owner/gh-sherpa' (from remote detection), got %s", status.ForkName)
+	}
+}
+
 func TestSetupFork_NoCustomForkName_ExistingFork(t *testing.T) {
 	// Test when no custom fork name is provided and fork already exists (should succeed)
 	repo := &domain.Repository{
