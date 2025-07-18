@@ -76,6 +76,170 @@ func TestCli_CreatePullRequest(t *testing.T) {
 	}
 }
 
+func TestCli_formatHeadBranchForFork(t *testing.T) {
+	tests := []struct {
+		name             string
+		headBranch       string
+		originResponse   string
+		originError      error
+		upstreamResponse string
+		upstreamError    error
+		expectedResult   string
+		wantErr          bool
+	}{
+		{
+			name:             "Success - Fork context with HTTPS origin",
+			headBranch:       "feature/new-feature",
+			originResponse:   "https://github.com/user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/InditexTech/gh-sherpa.git\n",
+			upstreamError:    nil,
+			expectedResult:   "user:feature/new-feature",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Fork context with SSH origin",
+			headBranch:       "bugfix/fix-issue",
+			originResponse:   "git@github.com:fork-user/awesome-repo.git\n",
+			originError:      nil,
+			upstreamResponse: "git@github.com:original/awesome-repo.git\n",
+			upstreamError:    nil,
+			expectedResult:   "fork-user:bugfix/fix-issue",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Complex organization name in fork",
+			headBranch:       "hotfix/urgent-fix",
+			originResponse:   "https://github.com/my.fork.org/project.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/upstream.org/project.git\n",
+			upstreamError:    nil,
+			expectedResult:   "my.fork.org:hotfix/urgent-fix",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Branch with special characters",
+			headBranch:       "feature/user-auth_v2",
+			originResponse:   "https://github.com/dev-team/app.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/main-org/app.git\n",
+			upstreamError:    nil,
+			expectedResult:   "dev-team:feature/user-auth_v2",
+			wantErr:          false,
+		},
+		{
+			name:             "Non-fork context - No upstream remote",
+			headBranch:       "feature/new-feature",
+			originResponse:   "https://github.com/user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "",
+			upstreamError:    errors.New("upstream not found"),
+			expectedResult:   "feature/new-feature",
+			wantErr:          false,
+		},
+		{
+			name:             "Non-fork context - No origin remote",
+			headBranch:       "feature/test",
+			originResponse:   "",
+			originError:      errors.New("origin not found"),
+			upstreamResponse: "https://github.com/upstream/repo.git\n",
+			upstreamError:    nil,
+			expectedResult:   "feature/test",
+			wantErr:          false,
+		},
+		{
+			name:             "Fork context - No origin remote",
+			headBranch:       "feature/test",
+			originResponse:   "",
+			originError:      errors.New("origin not found"),
+			upstreamResponse: "https://github.com/upstream/repo.git\n",
+			upstreamError:    nil,
+			expectedResult:   "feature/test",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Origin URL without .git suffix",
+			headBranch:       "develop",
+			originResponse:   "https://github.com/fork-owner/project\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/original-owner/project\n",
+			upstreamError:    nil,
+			expectedResult:   "fork-owner:develop",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Origin URL with extra whitespace",
+			headBranch:       "main",
+			originResponse:   "  https://github.com/my-fork/repo.git  \n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/original/repo.git\n",
+			upstreamError:    nil,
+			expectedResult:   "my-fork:main",
+			wantErr:          false,
+		},
+		{
+			name:             "Edge case - Empty branch name",
+			headBranch:       "",
+			originResponse:   "https://github.com/user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/upstream/repo.git\n",
+			upstreamError:    nil,
+			expectedResult:   "user:",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Username with hyphens and numbers",
+			headBranch:       "feature/api-v2",
+			originResponse:   "https://github.com/user-123/my-project.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/company/my-project.git\n",
+			upstreamError:    nil,
+			expectedResult:   "user-123:feature/api-v2",
+			wantErr:          false,
+		},
+		{
+			name:             "Git command error handling",
+			headBranch:       "feature/test",
+			originResponse:   "",
+			originError:      errors.New("git command failed"),
+			upstreamResponse: "",
+			upstreamError:    errors.New("git command failed"),
+			expectedResult:   "feature/test",
+			wantErr:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Cli{}
+
+			originalExecuteGitCommand := executeGitCommand
+			defer func() { executeGitCommand = originalExecuteGitCommand }()
+
+			executeGitCommand = func(args ...string) (result string, err error) {
+				// Check if this is a git remote get-url origin command
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "origin" {
+					return tt.originResponse, tt.originError
+				}
+				// Check if this is a git remote get-url upstream command
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+					return tt.upstreamResponse, tt.upstreamError
+				}
+				return "", errors.New("unexpected command")
+			}
+
+			result, err := c.formatHeadBranchForFork(tt.headBranch)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedResult, result)
+			}
+		})
+	}
+}
+
 func TestCli_GetRemoteConfiguration(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -443,4 +607,145 @@ func TestGetRemoteConfiguration_Logic(t *testing.T) {
 		"upstream": "https://github.com/upstream/repo.git",
 	}
 	assert.Equal(t, expected, result)
+}
+
+func TestCli_getUpstreamRepository(t *testing.T) {
+	tests := []struct {
+		name             string
+		originResponse   string
+		originError      error
+		upstreamResponse string
+		upstreamError    error
+		expectedRepo     string
+		wantErr          bool
+		expectedErrMsg   string
+	}{
+		{
+			name:             "Success - HTTPS upstream URL",
+			originResponse:   "https://github.com/user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/InditexTech/gh-sherpa.git\n",
+			upstreamError:    nil,
+			expectedRepo:     "InditexTech/gh-sherpa",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - SSH upstream URL",
+			originResponse:   "git@github.com:user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "git@github.com:InditexTech/gh-sherpa.git\n",
+			upstreamError:    nil,
+			expectedRepo:     "InditexTech/gh-sherpa",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - upstream URL without .git suffix",
+			originResponse:   "https://github.com/user/repo\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/InditexTech/gh-sherpa\n",
+			upstreamError:    nil,
+			expectedRepo:     "InditexTech/gh-sherpa",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - upstream URL with extra whitespace",
+			originResponse:   "https://github.com/user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "  https://github.com/InditexTech/gh-sherpa.git  \n",
+			upstreamError:    nil,
+			expectedRepo:     "InditexTech/gh-sherpa",
+			wantErr:          false,
+		},
+		{
+			name:             "Error - No upstream remote found",
+			originResponse:   "https://github.com/user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "",
+			upstreamError:    errors.New("upstream not found"),
+			expectedRepo:     "",
+			wantErr:          true,
+			expectedErrMsg:   "no upstream remote found",
+		},
+		{
+			name:             "Error - Git command fails for both remotes",
+			originResponse:   "",
+			originError:      errors.New("origin not found"),
+			upstreamResponse: "",
+			upstreamError:    errors.New("upstream not found"),
+			expectedRepo:     "",
+			wantErr:          true,
+			expectedErrMsg:   "no upstream remote found",
+		},
+		{
+			name:             "Success - Complex organization names",
+			originResponse:   "https://github.com/my-fork-org/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/my.upstream.org/awesome-repo.git\n",
+			upstreamError:    nil,
+			expectedRepo:     "my.upstream.org/awesome-repo",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Different user upstream",
+			originResponse:   "https://github.com/fork-user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "git@github.com:original-author/repo.git\n",
+			upstreamError:    nil,
+			expectedRepo:     "original-author/repo",
+			wantErr:          false,
+		},
+		{
+			name:             "Success - Repository with special characters",
+			originResponse:   "https://github.com/user/my-fork.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/upstream/my_awesome-repo.123.git\n",
+			upstreamError:    nil,
+			expectedRepo:     "upstream/my_awesome-repo.123",
+			wantErr:          false,
+		},
+		{
+			name:             "Error - Only origin exists, no upstream",
+			originResponse:   "https://github.com/user/repo.git\n",
+			originError:      nil,
+			upstreamResponse: "",
+			upstreamError:    errors.New("fatal: No such remote 'upstream'"),
+			expectedRepo:     "",
+			wantErr:          true,
+			expectedErrMsg:   "no upstream remote found",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Cli{}
+
+			originalExecuteGitCommand := executeGitCommand
+			defer func() { executeGitCommand = originalExecuteGitCommand }()
+
+			executeGitCommand = func(args ...string) (result string, err error) {
+				// Check if this is a git remote get-url origin command
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "origin" {
+					return tt.originResponse, tt.originError
+				}
+				// Check if this is a git remote get-url upstream command
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+					return tt.upstreamResponse, tt.upstreamError
+				}
+				return "", errors.New("unexpected command")
+			}
+
+			repo, err := c.getUpstreamRepository()
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedErrMsg != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
+				assert.Equal(t, tt.expectedRepo, repo)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedRepo, repo)
+			}
+		})
+	}
 }
