@@ -719,7 +719,7 @@ func TestDetectForkStatus_RemotesCorrectlyConfigured_ViaRemoteDetection(t *testi
 	forkProvider := &mockForkProvider{
 		isRepositoryFork: false, // Testing remote-based detection, not API
 		remoteConfiguration: map[string]string{
-			"origin":   "https://github.com/user/gh-sherpa.git",     // Different from repo.NameWithOwner
+			"origin":   "https://github.com/user/gh-sherpa.git",        // Different from repo.NameWithOwner
 			"upstream": "https://github.com/InditexTech/gh-sherpa.git", // Same as repo.NameWithOwner
 		},
 	}
@@ -803,8 +803,8 @@ func TestDetectForkStatus_RemotesIncorrectlyConfigured_UpstreamDifferentFromRepo
 	forkProvider := &mockForkProvider{
 		isRepositoryFork: false,
 		remoteConfiguration: map[string]string{
-			"origin":   "https://github.com/user/gh-sherpa.git",        // Different from repo.NameWithOwner
-			"upstream": "https://github.com/different/gh-sherpa.git",   // Different from repo.NameWithOwner
+			"origin":   "https://github.com/user/gh-sherpa.git",      // Different from repo.NameWithOwner
+			"upstream": "https://github.com/different/gh-sherpa.git", // Different from repo.NameWithOwner
 		},
 	}
 
@@ -827,7 +827,7 @@ func TestDetectForkStatus_RemotesIncorrectlyConfigured_UpstreamDifferentFromRepo
 }
 
 func TestDetectForkStatus_ForkViaAPI_RemotesCorrectlyConfiguredInSecondaryCheck(t *testing.T) {
-	// Test the specific condition in the API fallback section: 
+	// Test the specific condition in the API fallback section:
 	// originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
