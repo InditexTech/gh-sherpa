@@ -6,6 +6,7 @@ import (
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
+	"github.com/InditexTech/gh-sherpa/internal/utils"
 )
 
 type Manager struct {
@@ -62,8 +63,8 @@ func (m *Manager) DetectForkStatus() (*ForkStatus, error) {
 	upstream, hasUpstream := remotes["upstream"]
 
 	if hasOrigin && hasUpstream {
-		originRepo := extractRepoFromURL(origin)
-		upstreamRepo := extractRepoFromURL(upstream)
+		originRepo := utils.ExtractRepoFromURL(origin)
+		upstreamRepo := utils.ExtractRepoFromURL(upstream)
 
 		logging.Debugf("Origin repo: %s, Upstream repo: %s", originRepo, upstreamRepo)
 
@@ -92,8 +93,8 @@ func (m *Manager) DetectForkStatus() (*ForkStatus, error) {
 
 		// Even if it's a fork via API, check if remotes are configured
 		if hasOrigin && hasUpstream {
-			originRepo := extractRepoFromURL(origin)
-			upstreamRepo := extractRepoFromURL(upstream)
+			originRepo := utils.ExtractRepoFromURL(origin)
+			upstreamRepo := utils.ExtractRepoFromURL(upstream)
 			if originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner {
 				status.HasCorrectRemotes = true
 				status.UpstreamName = upstreamRepo
@@ -211,25 +212,4 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 	}
 
 	return result, nil
-}
-
-func extractRepoFromURL(url string) string {
-
-	if strings.Contains(url, "github.com") {
-		parts := strings.Split(url, "/")
-		if len(parts) >= 2 {
-			owner := parts[len(parts)-2]
-			repo := parts[len(parts)-1]
-
-			repo = strings.TrimSuffix(repo, ".git")
-
-			if strings.Contains(owner, ":") {
-				owner = strings.Split(owner, ":")[1]
-			}
-
-			return fmt.Sprintf("%s/%s", owner, repo)
-		}
-	}
-
-	return url
 }

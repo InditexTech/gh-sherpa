@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/utils"
 	"github.com/cli/go-gh/v2"
 )
 
@@ -141,9 +142,6 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 		args = append(args, "-l", label)
 	}
 
-	// Debug: Print the command being executed
-	fmt.Printf("[DEBUG] Executing GitHub CLI command: gh %s\n", strings.Join(args, " "))
-
 	result, err := ExecuteStringResult(args)
 
 	if err != nil {
@@ -266,28 +264,7 @@ func (c *Cli) getUpstreamRepository() (string, error) {
 	}
 
 	// Extract repository name from upstream URL
-	return c.extractRepoFromURL(upstream), nil
-}
-
-// extractRepoFromURL extracts owner/repo from a git URL
-func (c *Cli) extractRepoFromURL(url string) string {
-	if strings.Contains(url, "github.com") {
-		parts := strings.Split(url, "/")
-		if len(parts) >= 2 {
-			owner := parts[len(parts)-2]
-			repo := parts[len(parts)-1]
-
-			repo = strings.TrimSuffix(repo, ".git")
-
-			if strings.Contains(owner, ":") {
-				owner = strings.Split(owner, ":")[1]
-			}
-
-			return fmt.Sprintf("%s/%s", owner, repo)
-		}
-	}
-
-	return url
+	return utils.ExtractRepoFromURL(upstream), nil
 }
 
 func (c *Cli) formatHeadBranchForFork(headBranch string) (string, error) {
@@ -303,7 +280,7 @@ func (c *Cli) formatHeadBranchForFork(headBranch string) (string, error) {
 			return headBranch, nil
 		}
 
-		forkRepoName := c.extractRepoFromURL(origin)
+		forkRepoName := utils.ExtractRepoFromURL(origin)
 		// Extract only the owner part (before the slash)
 		parts := strings.Split(forkRepoName, "/")
 		if len(parts) >= 1 {
