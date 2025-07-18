@@ -76,6 +76,147 @@ func TestCli_CreatePullRequest(t *testing.T) {
 	}
 }
 
+func TestCli_CreatePullRequest_InForkContext(t *testing.T) {
+	tests := []struct {
+		name             string
+		title            string
+		body             string
+		baseBranch       string
+		headBranch       string
+		draft            bool
+		labels           []string
+		originResponse   string
+		originError      error
+		upstreamResponse string
+		upstreamError    error
+		expectedArgs     []string
+		wantPrURL        string
+		wantErr          bool
+	}{
+		{
+			name:             "CreatePR in fork context with upstream repo",
+			title:            "Test PR",
+			body:             "Test body",
+			baseBranch:       "main",
+			headBranch:       "feature/test",
+			draft:            false,
+			labels:           []string{},
+			originResponse:   "https://github.com/user/gh-sherpa.git\n",
+			originError:      nil,
+			upstreamResponse: "https://github.com/InditexTech/gh-sherpa.git\n",
+			upstreamError:    nil,
+			expectedArgs:     []string{"pr", "create", "-B", "main", "-H", "user:feature/test", "--repo", "InditexTech/gh-sherpa", "-t", "Test PR", "-b", "Test body"},
+			wantPrURL:        "https://github.com/InditexTech/gh-sherpa/pulls/1",
+			wantErr:          false,
+		},
+		{
+			name:             "CreatePR in fork context with upstream repo error",
+			title:            "Test PR",
+			body:             "Test body",
+			baseBranch:       "main",
+			headBranch:       "feature/test",
+			draft:            false,
+			labels:           []string{},
+			originResponse:   "https://github.com/user/gh-sherpa.git\n",
+			originError:      nil,
+			upstreamResponse: "",
+			upstreamError:    errors.New("upstream not found"),
+			expectedArgs:     []string{"pr", "create", "-B", "main", "-H", "feature/test", "-t", "Test PR", "-b", "Test body"},
+			wantPrURL:        "https://github.com/InditexTech/gh-sherpa/pulls/1",
+			wantErr:          false,
+		},
+		{
+			name:             "CreatePR in fork context with empty upstream repo",
+			title:            "Test PR",
+			body:             "Test body",
+			baseBranch:       "main",
+			headBranch:       "feature/test",
+			draft:            false,
+			labels:           []string{},
+			originResponse:   "https://github.com/user/gh-sherpa.git\n",
+			originError:      nil,
+			upstreamResponse: "\n",
+			upstreamError:    nil,
+			expectedArgs:     []string{"pr", "create", "-B", "main", "-H", "user:feature/test", "-t", "Test PR", "-b", "Test body"},
+			wantPrURL:        "https://github.com/InditexTech/gh-sherpa/pulls/1",
+			wantErr:          false,
+		},
+		{
+			name:             "CreatePR in fork context with SSH upstream",
+			title:            "Test PR",
+			body:             "Test body",
+			baseBranch:       "main",
+			headBranch:       "feature/test",
+			draft:            true,
+			labels:           []string{"enhancement", "fork"},
+			originResponse:   "git@github.com:user/gh-sherpa.git\n",
+			originError:      nil,
+			upstreamResponse: "git@github.com:InditexTech/gh-sherpa.git\n",
+			upstreamError:    nil,
+			expectedArgs:     []string{"pr", "create", "-B", "main", "-H", "user:feature/test", "--repo", "InditexTech/gh-sherpa", "-d", "-t", "Test PR", "-b", "Test body", "-l", "enhancement", "-l", "fork"},
+			wantPrURL:        "https://github.com/InditexTech/gh-sherpa/pulls/1",
+			wantErr:          false,
+		},
+		{
+			name:             "CreatePR non-fork context (no upstream)",
+			title:            "Test PR",
+			body:             "Test body",
+			baseBranch:       "main",
+			headBranch:       "feature/test",
+			draft:            false,
+			labels:           []string{},
+			originResponse:   "https://github.com/InditexTech/gh-sherpa.git\n",
+			originError:      nil,
+			upstreamResponse: "",
+			upstreamError:    errors.New("upstream not found"),
+			expectedArgs:     []string{"pr", "create", "-B", "main", "-H", "feature/test", "-t", "Test PR", "-b", "Test body"},
+			wantPrURL:        "https://github.com/InditexTech/gh-sherpa/pulls/1",
+			wantErr:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Cli{}
+
+			originalExecuteGitCommand := executeGitCommand
+			defer func() { executeGitCommand = originalExecuteGitCommand }()
+
+			executeGitCommand = func(args ...string) (result string, err error) {
+				// Check if this is a git remote get-url origin command
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "origin" {
+					return tt.originResponse, tt.originError
+				}
+				// Check if this is a git remote get-url upstream command
+				if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+					return tt.upstreamResponse, tt.upstreamError
+				}
+				return "", errors.New("unexpected command")
+			}
+
+			var executeArgs []string
+			originalExecuteStringResult := ExecuteStringResult
+			defer func() { ExecuteStringResult = originalExecuteStringResult }()
+
+			ExecuteStringResult = func(args []string) (result string, err error) {
+				executeArgs = args
+				return "https://github.com/InditexTech/gh-sherpa/pulls/1\n", nil
+			}
+
+			gotPrURL, err := c.CreatePullRequest(tt.title, tt.body, tt.baseBranch, tt.headBranch, tt.draft, tt.labels)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedArgs, executeArgs)
+			assert.Equal(t, tt.wantPrURL, gotPrURL)
+		})
+	}
+}
+
 func TestCli_formatHeadBranchForFork(t *testing.T) {
 	tests := []struct {
 		name             string
@@ -205,6 +346,16 @@ func TestCli_formatHeadBranchForFork(t *testing.T) {
 			upstreamResponse: "",
 			upstreamError:    errors.New("git command failed"),
 			expectedResult:   "feature/test",
+			wantErr:          false,
+		},
+		{
+			name:             "GetRemoteConfiguration error - return original branch",
+			headBranch:       "feature/error-handling",
+			originResponse:   "",
+			originError:      errors.New("fatal: not a git repository"),
+			upstreamResponse: "",
+			upstreamError:    errors.New("fatal: not a git repository"),
+			expectedResult:   "feature/error-handling",
 			wantErr:          false,
 		},
 	}
@@ -712,6 +863,16 @@ func TestCli_getUpstreamRepository(t *testing.T) {
 			expectedRepo:     "",
 			wantErr:          true,
 			expectedErrMsg:   "no upstream remote found",
+		},
+		{
+			name:             "Error - GetRemoteConfiguration fails",
+			originResponse:   "",
+			originError:      errors.New("fatal: not a git repository (or any of the parent directories): .git"),
+			upstreamResponse: "",
+			upstreamError:    errors.New("fatal: not a git repository (or any of the parent directories): .git"),
+			expectedRepo:     "",
+			wantErr:          true,
+			expectedErrMsg:   "", // No specific error message needed, just that an error occurs
 		},
 	}
 
