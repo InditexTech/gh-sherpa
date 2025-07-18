@@ -3,6 +3,7 @@ package create_pull_request
 import (
 	"fmt"
 
+	"github.com/InditexTech/gh-sherpa/cmd/common"
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
@@ -34,6 +35,8 @@ type createPullRequestFlags struct {
 	NoCloseIssue     bool
 	UseDefaultValues bool
 	TemplatePath     string
+	ForkValue        bool
+	ForkNameValue    string
 }
 
 var flags createPullRequestFlags
@@ -45,6 +48,8 @@ func init() {
 	Command.PersistentFlags().BoolVar(&flags.NoDraft, "no-draft", false, "create the pull request in ready for review mode")
 	Command.PersistentFlags().BoolVarP(&flags.NoCloseIssue, "no-close-issue", "n", false, "do not close the GitHub issue after merging the pull request")
 	Command.PersistentFlags().StringVar(&flags.TemplatePath, "template", "", "path to a pull request template file")
+	Command.PersistentFlags().BoolVar(&flags.ForkValue, "fork", false, "automatically set up fork for external contributors")
+	Command.PersistentFlags().StringVar(&flags.ForkNameValue, "fork-name", "", "specify custom fork organization/user (e.g. MyOrg/gh-sherpa)")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) error {
@@ -77,6 +82,12 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	ghCliProvider := &gh.Cli{}
+
+	if flags.ForkValue {
+		if err := common.SetupForkForCommand(cfg, flags.ForkNameValue, flags.IssueID, ghCliProvider, userInteraction, isInteractive, "pull request"); err != nil {
+			return err
+		}
+	}
 
 	createPullRequestConfig := use_cases.CreatePullRequestConfiguration{
 		IssueID:         flags.IssueID,

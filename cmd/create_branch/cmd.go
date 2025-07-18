@@ -3,6 +3,7 @@ package create_branch
 import (
 	"os"
 
+	"github.com/InditexTech/gh-sherpa/cmd/common"
 	"github.com/InditexTech/gh-sherpa/internal/branches"
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
@@ -31,6 +32,8 @@ type createBranchFlags struct {
 	BaseValue        string
 	NoFetchValue     bool
 	UseDefaultValues bool
+	ForkValue        bool
+	ForkNameValue    string
 }
 
 var flags = createBranchFlags{}
@@ -46,6 +49,8 @@ func init() {
 
 	Command.PersistentFlags().StringVarP(&flags.BaseValue, "base", "b", "", "base branch for checkout. Use the default branch of the repository if it is not set")
 	Command.PersistentFlags().BoolVar(&flags.NoFetchValue, "no-fetch", false, "does not fetch the base branch")
+	Command.PersistentFlags().BoolVar(&flags.ForkValue, "fork", false, "automatically set up fork for external contributors")
+	Command.PersistentFlags().StringVar(&flags.ForkNameValue, "fork-name", "", "specify custom fork organization/user (e.g. MyOrg/gh-sherpa)")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) (err error) {
@@ -61,6 +66,14 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	userInteraction := &interactive.UserInteractionProvider{}
 
 	isInteractive := !flags.UseDefaultValues
+
+	ghCli := &gh.Cli{}
+
+	if flags.ForkValue {
+		if err := common.SetupForkForCommand(cfg, flags.ForkNameValue, flags.IssueValue, ghCli, userInteraction, isInteractive, "issue"); err != nil {
+			return err
+		}
+	}
 
 	branchProviderCfg := branches.Configuration{
 		Branches:      cfg.Branches,
@@ -80,7 +93,7 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	createBranch := use_cases.CreateBranch{
 		Cfg:                     createBranchConfig,
 		Git:                     &git.Provider{},
-		RepositoryProvider:      &gh.Cli{},
+		RepositoryProvider:      ghCli,
 		IssueTrackerProvider:    issueTrackers,
 		UserInteractionProvider: userInteraction,
 		BranchProvider:          branchProvider,

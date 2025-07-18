@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
+	"github.com/InditexTech/gh-sherpa/internal/utils"
 	"github.com/cli/go-gh/v2"
 )
 
@@ -84,6 +86,28 @@ var ExecuteStringResult = func(args []string) (result string, err error) {
 	return
 }
 
+// executeGitCommand executes git commands directly using exec.Command
+var executeGitCommand = func(args ...string) (string, error) {
+	// Find the full path to git executable for security
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		return "", fmt.Errorf("git executable not found in PATH: %v", err)
+	}
+
+	cmd := exec.Command(gitPath, args...)
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err = cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("failed to run git command 'git %s': %v\nDetails: %s", strings.Join(args, " "), err, stderr.String())
+	}
+
+	return stdout.String(), nil
+}
+
 func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prURL string, err error) {
 	args := []string{"pr", "create"}
 
@@ -92,7 +116,21 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 	}
 
 	if headBranch != "" {
-		args = append(args, "-H", headBranch)
+		// Check if we're in a fork context and format head branch accordingly
+		formattedHeadBranch, err := c.formatHeadBranchForFork(headBranch)
+		if err != nil {
+			return "", fmt.Errorf("failed to format head branch: %w", err)
+		}
+		args = append(args, "-H", formattedHeadBranch)
+	}
+
+	// In fork context, we need to specify the base repository explicitly
+	if c.isInForkContext() {
+		// Get upstream repository name for base
+		upstreamRepo, err := c.getUpstreamRepository()
+		if err == nil && upstreamRepo != "" {
+			args = append(args, "--repo", upstreamRepo)
+		}
 	}
 
 	if draft {
@@ -143,4 +181,119 @@ func (c *Cli) GetPullRequestForBranch(branchName string) (*domain.PullRequest, e
 	}
 
 	return &pr, nil
+}
+
+func (c *Cli) IsRepositoryFork() (bool, error) {
+	command := []string{"repo", "view", "--json", "isFork"}
+
+	jsonResult, err := ExecuteStringResult(command)
+	if err != nil {
+		return false, err
+	}
+
+	var result struct {
+		IsFork bool `json:"isFork"`
+	}
+
+	if err := json.Unmarshal([]byte(jsonResult), &result); err != nil {
+		return false, err
+	}
+
+	return result.IsFork, nil
+}
+
+func (c *Cli) CreateFork(forkName string) error {
+	args := []string{"repo", "fork", "--remote"}
+
+	if forkName != "" {
+		parts := strings.Split(forkName, "/")
+		if len(parts) == 2 {
+			args = append(args, "--org", parts[0])
+		}
+	}
+
+	_, err := ExecuteStringResult(args)
+	if err != nil {
+		return fmt.Errorf("error creating fork: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (c *Cli) SetDefaultRepository(repo string) error {
+	args := []string{"repo", "set-default", repo}
+
+	_, err := ExecuteStringResult(args)
+	if err != nil {
+		return fmt.Errorf("error setting default repository: %s", err.Error())
+	}
+
+	return nil
+}
+
+func (c *Cli) GetRemoteConfiguration() (map[string]string, error) {
+	remotes := make(map[string]string)
+
+	originResult, err := executeGitCommand("remote", "get-url", "origin")
+	if err == nil {
+		remotes["origin"] = strings.TrimSpace(originResult)
+	}
+
+	upstreamResult, err := executeGitCommand("remote", "get-url", "upstream")
+	if err == nil {
+		remotes["upstream"] = strings.TrimSpace(upstreamResult)
+	}
+
+	return remotes, nil
+}
+
+// isInForkContext checks if we're working in a fork context
+func (c *Cli) isInForkContext() bool {
+	remotes, err := c.GetRemoteConfiguration()
+	if err != nil {
+		return false
+	}
+	_, hasUpstream := remotes["upstream"]
+	return hasUpstream
+}
+
+// getUpstreamRepository gets the upstream repository name from git remote
+func (c *Cli) getUpstreamRepository() (string, error) {
+	remotes, err := c.GetRemoteConfiguration()
+	if err != nil {
+		return "", err
+	}
+
+	upstream, hasUpstream := remotes["upstream"]
+	if !hasUpstream {
+		return "", fmt.Errorf("no upstream remote found")
+	}
+
+	// Extract repository name from upstream URL
+	return utils.ExtractRepoFromURL(upstream), nil
+}
+
+func (c *Cli) formatHeadBranchForFork(headBranch string) (string, error) {
+	remotes, err := c.GetRemoteConfiguration()
+	if err != nil {
+		return headBranch, nil
+	}
+
+	if _, hasUpstream := remotes["upstream"]; hasUpstream {
+		// In fork context, get the fork owner from origin remote
+		origin, hasOrigin := remotes["origin"]
+		if !hasOrigin {
+			return headBranch, nil
+		}
+
+		forkRepoName := utils.ExtractRepoFromURL(origin)
+		// Extract only the owner part (before the slash)
+		parts := strings.Split(forkRepoName, "/")
+		if len(parts) >= 1 {
+			forkOwner := parts[0]
+			return fmt.Sprintf("%s:%s", forkOwner, headBranch), nil
+		}
+	}
+
+	return headBranch, nil
 }
