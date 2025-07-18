@@ -703,3 +703,282 @@ func TestSetupFork_CreateForkOtherError(t *testing.T) {
 		t.Errorf("Expected specific error message, got %v", err)
 	}
 }
+
+func TestDetectForkStatus_RemotesCorrectlyConfigured_ViaRemoteDetection(t *testing.T) {
+	// Test the specific condition: originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: false, // Testing remote-based detection, not API
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/user/gh-sherpa.git",     // Different from repo.NameWithOwner
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git", // Same as repo.NameWithOwner
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true when remotes are properly configured")
+	}
+
+	if !status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be true when origin != repo and upstream == repo")
+	}
+
+	if status.ForkName != "user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'user/gh-sherpa', got %s", status.ForkName)
+	}
+
+	if status.UpstreamName != "InditexTech/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be 'InditexTech/gh-sherpa', got %s", status.UpstreamName)
+	}
+}
+
+func TestDetectForkStatus_RemotesIncorrectlyConfigured_OriginSameAsRepo(t *testing.T) {
+	// Test when origin is same as repo.NameWithOwner (should not be detected as properly configured fork)
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: false,
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/InditexTech/gh-sherpa.git", // Same as repo.NameWithOwner
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git", // Same as repo.NameWithOwner
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if status.IsInFork {
+		t.Error("Expected IsInFork to be false when origin is same as current repo")
+	}
+
+	if status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be false when origin is same as current repo")
+	}
+}
+
+func TestDetectForkStatus_RemotesIncorrectlyConfigured_UpstreamDifferentFromRepo(t *testing.T) {
+	// Test when upstream is different from repo.NameWithOwner (should not be detected as properly configured fork)
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: false,
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/user/gh-sherpa.git",        // Different from repo.NameWithOwner
+			"upstream": "https://github.com/different/gh-sherpa.git",   // Different from repo.NameWithOwner
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if status.IsInFork {
+		t.Error("Expected IsInFork to be false when upstream is different from current repo")
+	}
+
+	if status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be false when upstream is different from current repo")
+	}
+}
+
+func TestDetectForkStatus_ForkViaAPI_RemotesCorrectlyConfiguredInSecondaryCheck(t *testing.T) {
+	// Test the specific condition in the API fallback section: 
+	// originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true, // Fork detected via API
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/user/gh-sherpa.git",        // Different from repo.NameWithOwner
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git", // Same as repo.NameWithOwner
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	status, err := manager.DetectForkStatus()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if !status.IsInFork {
+		t.Error("Expected IsInFork to be true when detected via API")
+	}
+
+	if !status.HasCorrectRemotes {
+		t.Error("Expected HasCorrectRemotes to be true when remotes are correctly configured in secondary check")
+	}
+
+	if status.UpstreamName != "InditexTech/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be set to 'InditexTech/gh-sherpa', got %s", status.UpstreamName)
+	}
+}
+
+func TestSetupFork_ForkMismatch_DifferentCustomForkName(t *testing.T) {
+	// Test the specific condition: customForkName != "" && customForkName != status.ForkName
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/existing-user/gh-sherpa.git", // Current fork
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	// Try to setup with a different fork name than the existing one
+	_, err := manager.SetupFork("different-user/gh-sherpa")
+
+	if err == nil {
+		t.Error("Expected error when custom fork name doesn't match existing fork")
+	}
+
+	expectedError := "fork mismatch: repository is already configured with fork 'existing-user/gh-sherpa', but you requested 'different-user/gh-sherpa'. Please use the existing fork or reconfigure the repository"
+	if err.Error() != expectedError {
+		t.Errorf("Expected specific error message, got %v", err)
+	}
+}
+
+func TestSetupFork_ForkMatch_SameCustomForkName(t *testing.T) {
+	// Test when custom fork name matches existing fork (should succeed)
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/existing-user/gh-sherpa.git", // Current fork
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	// Try to setup with the same fork name as the existing one
+	result, err := manager.SetupFork("existing-user/gh-sherpa")
+
+	if err != nil {
+		t.Errorf("Expected no error when custom fork name matches existing fork, got %v", err)
+	}
+
+	if !result.WasAlreadyConfigured {
+		t.Error("Expected WasAlreadyConfigured to be true when fork names match")
+	}
+
+	if result.ForkName != "existing-user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'existing-user/gh-sherpa', got %s", result.ForkName)
+	}
+}
+
+func TestSetupFork_NoCustomForkName_ExistingFork(t *testing.T) {
+	// Test when no custom fork name is provided and fork already exists (should succeed)
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork: true,
+		remoteConfiguration: map[string]string{
+			"origin":   "https://github.com/existing-user/gh-sherpa.git",
+			"upstream": "https://github.com/InditexTech/gh-sherpa.git",
+		},
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	// Setup without custom fork name
+	result, err := manager.SetupFork("")
+
+	if err != nil {
+		t.Errorf("Expected no error when no custom fork name provided, got %v", err)
+	}
+
+	if !result.WasAlreadyConfigured {
+		t.Error("Expected WasAlreadyConfigured to be true")
+	}
+
+	if result.ForkName != "existing-user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'existing-user/gh-sherpa', got %s", result.ForkName)
+	}
+}
