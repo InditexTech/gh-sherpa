@@ -121,8 +121,8 @@ func TestDetectForkStatus_NotAFork(t *testing.T) {
 func TestDetectForkStatus_IsFork(t *testing.T) {
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
-		Owner:            "user",
-		NameWithOwner:    "user/gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}
 
@@ -166,8 +166,8 @@ func TestDetectForkStatus_IsFork(t *testing.T) {
 func TestSetupFork_AlreadyConfigured(t *testing.T) {
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
-		Owner:            "user",
-		NameWithOwner:    "user/gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}
 
@@ -298,8 +298,8 @@ func TestSetupFork_CreateForkError(t *testing.T) {
 func TestDetectForkStatus_ForkViaAPI_WithCorrectRemotes(t *testing.T) {
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
-		Owner:            "user",
-		NameWithOwner:    "user/gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}
 
@@ -508,8 +508,8 @@ func TestSetupFork_InForkButRemotesNotConfigured(t *testing.T) {
 func TestDetectForkStatus_ForkViaAPI_RemotesConfiguredInSecondCheck(t *testing.T) {
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
-		Owner:            "user",
-		NameWithOwner:    "user/gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
 		DefaultBranchRef: "main",
 	}
 
