@@ -3,8 +3,6 @@ package gh
 import (
 	"errors"
 	"fmt"
-	"os/exec"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -914,150 +912,33 @@ func TestCli_getUpstreamRepository(t *testing.T) {
 }
 
 func Test_executeGitCommand(t *testing.T) {
-	// Save the original function to restore after tests
-	originalExecuteGitCommand := executeGitCommand
-
 	tests := []struct {
-		name         string
-		args         []string
-		mockLookPath func(file string) (string, error)
-		mockCommand  func(name string, arg ...string) *exec.Cmd
-		wantStdout   string
-		wantErr      bool
-		errContains  string
+		name        string
+		args        []string
+		wantErr     bool
+		errContains string
 	}{
 		{
-			name: "Success - git status command",
-			args: []string{"status", "--porcelain"},
-			mockLookPath: func(file string) (string, error) {
-				if file == "git" {
-					return "/usr/bin/git", nil
-				}
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout: "M  internal/gh/cli.go\n",
-			wantErr:    false,
+			name:    "Success - git version command",
+			args:    []string{"version"},
+			wantErr: false,
 		},
 		{
-			name: "Success - git branch command",
-			args: []string{"branch", "--show-current"},
-			mockLookPath: func(file string) (string, error) {
-				if file == "git" {
-					return "/usr/bin/git", nil
-				}
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout: "main\n",
-			wantErr:    false,
-		},
-		{
-			name: "Success - empty output",
-			args: []string{"diff", "--name-only"},
-			mockLookPath: func(file string) (string, error) {
-				if file == "git" {
-					return "/usr/bin/git", nil
-				}
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout: "",
-			wantErr:    false,
-		},
-		{
-			name: "Error - git executable not found",
-			args: []string{"status"},
-			mockLookPath: func(file string) (string, error) {
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout:  "",
+			name:        "Error - git invalid command",
+			args:        []string{"this-is-not-a-valid-git-command"},
 			wantErr:     true,
-			errContains: "git executable not found in PATH",
+			errContains: "failed to run git command",
 		},
 		{
-			name: "Error - git command fails",
-			args: []string{"invalid-command"},
-			mockLookPath: func(file string) (string, error) {
-				if file == "git" {
-					return "/usr/bin/git", nil
-				}
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout:  "",
-			wantErr:     true,
-			errContains: "failed to run git command 'git invalid-command'",
-		},
-		{
-			name: "Success - complex git command with multiple args",
-			args: []string{"log", "--oneline", "--max-count=5", "--pretty=format:%h %s"},
-			mockLookPath: func(file string) (string, error) {
-				if file == "git" {
-					return "/usr/bin/git", nil
-				}
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout: "abc1234 Initial commit\ndef5678 Add feature\n",
-			wantErr:    false,
-		},
-		{
-			name: "Success - git remote command",
-			args: []string{"remote", "get-url", "origin"},
-			mockLookPath: func(file string) (string, error) {
-				if file == "git" {
-					return "/usr/bin/git", nil
-				}
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout: "https://github.com/user/repo.git\n",
-			wantErr:    false,
-		},
-		{
-			name: "Error - git command with stderr output",
-			args: []string{"checkout", "nonexistent-branch"},
-			mockLookPath: func(file string) (string, error) {
-				if file == "git" {
-					return "/usr/bin/git", nil
-				}
-				return "", fmt.Errorf("executable file not found in $PATH")
-			},
-			wantStdout:  "",
-			wantErr:     true,
-			errContains: "error: pathspec 'nonexistent-branch' did not match any file(s) known to git",
+			name:    "Success - git config list command",
+			args:    []string{"config", "--list", "--global"},
+			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a mock function that simulates the git command behavior
-			executeGitCommand = func(args ...string) (string, error) {
-				// Mock exec.LookPath
-				gitPath, err := tt.mockLookPath("git")
-				if err != nil {
-					return "", fmt.Errorf("git executable not found in PATH: %v", err)
-				}
-
-				// Simulate different command behaviors based on the test case
-				switch {
-				case tt.name == "Success - git status command" && len(args) >= 1 && args[0] == "status":
-					return tt.wantStdout, nil
-				case tt.name == "Success - git branch command" && len(args) >= 1 && args[0] == "branch":
-					return tt.wantStdout, nil
-				case tt.name == "Success - empty output":
-					return tt.wantStdout, nil
-				case tt.name == "Success - complex git command with multiple args" && len(args) >= 1 && args[0] == "log":
-					return tt.wantStdout, nil
-				case tt.name == "Success - git remote command" && len(args) >= 2 && args[0] == "remote" && args[1] == "get-url":
-					return tt.wantStdout, nil
-				case tt.name == "Error - git command fails" && len(args) >= 1 && args[0] == "invalid-command":
-					return "", fmt.Errorf("failed to run git command 'git %s': exit status 1\nDetails: git: 'invalid-command' is not a git command", strings.Join(args, " "))
-				case tt.name == "Error - git command with stderr output" && len(args) >= 2 && args[0] == "checkout":
-					return "", fmt.Errorf("failed to run git command 'git %s': exit status 1\nDetails: error: pathspec 'nonexistent-branch' did not match any file(s) known to git", strings.Join(args, " "))
-				default:
-					// Use the actual git path in the error message for consistency
-					_ = gitPath
-					return "", fmt.Errorf("unexpected command: %v", args)
-				}
-			}
-
-			// Execute the function under test
+			// Execute the actual function (not mocked)
 			result, err := executeGitCommand(tt.args...)
 
 			// Verify results
@@ -1066,14 +947,13 @@ func Test_executeGitCommand(t *testing.T) {
 				if tt.errContains != "" {
 					assert.Contains(t, err.Error(), tt.errContains)
 				}
-				assert.Equal(t, tt.wantStdout, result)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.wantStdout, result)
+				// For version command, we expect output. For config, it might be empty if no global config
+				if tt.name == "Success - git version command" {
+					assert.NotEmpty(t, result)
+				}
 			}
 		})
 	}
-
-	// Restore the original function
-	executeGitCommand = originalExecuteGitCommand
 }
