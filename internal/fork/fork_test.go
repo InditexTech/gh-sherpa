@@ -944,22 +944,23 @@ func TestSetupFork_ForkMatch_SameCustomForkName(t *testing.T) {
 	}
 }
 
-func TestDetectForkStatus_FallbackBranch_RemotesCorrectlyConfigured(t *testing.T) {
+func TestDetectForkStatus_FallbackBranch_APIFork_WithCorrectRemotesInSecondCheck(t *testing.T) {
 	repo := &domain.Repository{
 		Name:             "gh-sherpa",
-		Owner:            "InditexTech",
-		NameWithOwner:    "InditexTech/gh-sherpa",
+		Owner:            "different-owner",
+		NameWithOwner:    "different-owner/gh-sherpa",
 		DefaultBranchRef: "main",
 	}
 
 	repoProvider := &mockRepositoryProvider{repo: repo}
 	gitProvider := &mockGitProvider{}
 	userProvider := &mockUserInteractionProvider{}
+
 	forkProvider := &mockForkProvider{
 		isRepositoryFork: true,
 		remoteConfiguration: map[string]string{
-			"origin":   "https://github.com/fork-owner/gh-sherpa.git",
-			"upstream": "https://github.com/InditexTech/gh-sherpa.git",
+			"origin":   "https://github.com/fork-user/gh-sherpa.git",
+			"upstream": "https://github.com/different-owner/gh-sherpa.git",
 		},
 	}
 
@@ -977,15 +978,15 @@ func TestDetectForkStatus_FallbackBranch_RemotesCorrectlyConfigured(t *testing.T
 	}
 
 	if !status.HasCorrectRemotes {
-		t.Error("Expected HasCorrectRemotes to be true when originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner in fallback")
+		t.Error("Expected HasCorrectRemotes to be true from fallback branch: originRepo != repo.NameWithOwner && upstreamRepo == repo.NameWithOwner")
 	}
 
-	if status.UpstreamName != "InditexTech/gh-sherpa" {
-		t.Errorf("Expected UpstreamName to be 'InditexTech/gh-sherpa', got %s", status.UpstreamName)
+	if status.ForkName != "fork-user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'fork-user/gh-sherpa' (from remote detection), got %s", status.ForkName)
 	}
 
-	if status.ForkName != "fork-owner/gh-sherpa" {
-		t.Errorf("Expected ForkName to be 'fork-owner/gh-sherpa' (from remote detection), got %s", status.ForkName)
+	if status.UpstreamName != "different-owner/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be 'different-owner/gh-sherpa' (set by fallback branch), got %s", status.UpstreamName)
 	}
 }
 
