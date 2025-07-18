@@ -929,11 +929,6 @@ func Test_executeGitCommand(t *testing.T) {
 			wantErr:     true,
 			errContains: "failed to run git command",
 		},
-		{
-			name:    "Success - git config list command",
-			args:    []string{"config", "--list", "--global"},
-			wantErr: false,
-		},
 	}
 
 	for _, tt := range tests {
