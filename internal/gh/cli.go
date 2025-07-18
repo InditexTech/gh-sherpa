@@ -88,13 +88,19 @@ var ExecuteStringResult = func(args []string) (result string, err error) {
 
 // executeGitCommand executes git commands directly using exec.Command
 var executeGitCommand = func(args ...string) (string, error) {
-	cmd := exec.Command("git", args...)
+	// Find the full path to git executable for security
+	gitPath, err := exec.LookPath("git")
+	if err != nil {
+		return "", fmt.Errorf("git executable not found in PATH: %v", err)
+	}
+
+	cmd := exec.Command(gitPath, args...)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		return "", fmt.Errorf("failed to run git command 'git %s': %v\nDetails: %s", strings.Join(args, " "), err, stderr.String())
 	}
