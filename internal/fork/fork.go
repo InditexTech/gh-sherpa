@@ -20,6 +20,7 @@ type Manager struct {
 type ForkProvider interface {
 	IsRepositoryFork() (bool, error)
 	CreateFork(forkName string) error
+	ForkExists(forkName string) (bool, error)
 	SetDefaultRepository(repo string) error
 	GetRemoteConfiguration() (map[string]string, error)
 }
@@ -139,57 +140,10 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 		forkName = fmt.Sprintf("%s/%s", m.cfg.DefaultOrganization, repo.Name)
 	}
 
-	// Only try to create fork if we're not in a fork yet
-	if !status.IsInFork {
-		fmt.Printf("No fork detected. Creating fork")
-		if forkName != "" {
-			fmt.Printf(" %s", logging.PaintInfo(forkName))
-		}
-		fmt.Println("...")
-
-		if m.cfg.IsInteractive {
-			confirmed, err := m.userInteractionProvider.AskUserForConfirmation(
-				"Do you want to create a fork and configure it for development?", true)
-			if err != nil {
-				return nil, err
-			}
-			if !confirmed {
-				return nil, fmt.Errorf("fork creation cancelled by user")
-			}
-		}
-
-		if err := m.ghCli.CreateFork(forkName); err != nil {
-			// Check if error is about fork already existing
-			if strings.Contains(err.Error(), "already exists") {
-				logging.PrintWarn("Fork already exists, continuing with setup...")
-				result.ForkCreated = false
-			} else {
-				return nil, fmt.Errorf("failed to create fork: %w", err)
-			}
-		} else {
-			fmt.Printf("✓ Fork created successfully\n")
-			result.ForkCreated = true
-		}
-
-		// Determine the fork name for result
-		if forkName == "" {
-			updatedStatus, err := m.DetectForkStatus()
-			if err != nil {
-				return nil, fmt.Errorf("failed to detect fork status after creation: %w", err)
-			}
-			result.ForkName = updatedStatus.ForkName
-		} else {
-			result.ForkName = forkName
-		}
-	} else {
-		// We're in a fork but remotes might not be configured correctly
-		result.ForkName = status.ForkName
-		if !status.HasCorrectRemotes {
-			fmt.Printf("Fork detected but remotes need configuration...\n")
-		}
+	if err := m.handleForkCreation(status, forkName, result); err != nil {
+		return nil, err
 	}
 
-	// Only do remote setup if remotes are not correctly configured
 	if !status.HasCorrectRemotes {
 		fmt.Printf("Setting up remotes (origin: fork, upstream: original)...\n")
 
@@ -212,4 +166,108 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 	}
 
 	return result, nil
+}
+
+func (m *Manager) handleForkCreation(status *ForkStatus, forkName string, result *ForkSetupResult) error {
+	if !status.IsInFork {
+		return m.createNewFork(forkName, result)
+	}
+
+	result.ForkName = status.ForkName
+	if !status.HasCorrectRemotes {
+		fmt.Printf("Fork detected but remotes need configuration...\n")
+	}
+	return nil
+}
+
+func (m *Manager) createNewFork(forkName string, result *ForkSetupResult) error {
+	if forkName != "" {
+		return m.createNamedFork(forkName, result)
+	}
+	return m.createDefaultFork(result)
+}
+
+func (m *Manager) createNamedFork(forkName string, result *ForkSetupResult) error {
+	exists, err := m.ghCli.ForkExists(forkName)
+	if err != nil {
+		return fmt.Errorf("failed to check if fork exists: %w", err)
+	}
+
+	if exists {
+		fmt.Printf("Fork %s already exists, configuring for use...\n", forkName)
+		result.ForkCreated = false
+		result.ForkName = forkName
+		return nil
+	}
+
+	return m.performForkCreation(forkName, result)
+}
+
+func (m *Manager) createDefaultFork(result *ForkSetupResult) error {
+	fmt.Printf("No fork detected. Creating fork...")
+
+	if err := m.requestUserConfirmation(); err != nil {
+		return err
+	}
+
+	return m.executeForkCreation("", result)
+}
+
+func (m *Manager) performForkCreation(forkName string, result *ForkSetupResult) error {
+	fmt.Printf("No fork detected. Creating fork")
+	if forkName != "" {
+		fmt.Printf(" %s", logging.PaintInfo(forkName))
+	}
+	fmt.Println("...")
+
+	if err := m.requestUserConfirmation(); err != nil {
+		return err
+	}
+
+	return m.executeForkCreation(forkName, result)
+}
+
+func (m *Manager) requestUserConfirmation() error {
+	if m.cfg.IsInteractive {
+		confirmed, err := m.userInteractionProvider.AskUserForConfirmation(
+			"Do you want to create a fork and configure it for development?", true)
+		if err != nil {
+			return err
+		}
+		if !confirmed {
+			return fmt.Errorf("fork creation cancelled by user")
+		}
+	}
+	return nil
+}
+
+func (m *Manager) executeForkCreation(forkName string, result *ForkSetupResult) error {
+	if err := m.ghCli.CreateFork(forkName); err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			logging.PrintWarn("Fork already exists, continuing with setup...")
+			result.ForkCreated = false
+		} else {
+			return fmt.Errorf("failed to create fork: %w", err)
+		}
+	} else {
+		fmt.Printf("✓ Fork created successfully\n")
+		result.ForkCreated = true
+	}
+
+	if forkName != "" {
+		result.ForkName = forkName
+	} else {
+		return m.updateForkNameFromStatus(result)
+	}
+
+	return nil
+}
+
+func (m *Manager) updateForkNameFromStatus(result *ForkSetupResult) error {
+	updatedStatus, err := m.DetectForkStatus()
+	if err != nil {
+		return fmt.Errorf("failed to detect fork status after creation: %w", err)
+	}
+	result.ForkName = updatedStatus.ForkName
+	return nil
 }

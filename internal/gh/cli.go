@@ -202,7 +202,27 @@ func (c *Cli) IsRepositoryFork() (bool, error) {
 	return result.IsFork, nil
 }
 
+type ForkAlreadyExistsError struct {
+	ForkName string
+}
+
+func (e ForkAlreadyExistsError) Error() string {
+	return fmt.Sprintf("fork %s already exists", e.ForkName)
+}
+
 func (c *Cli) CreateFork(forkName string) error {
+	// Check if the specific fork already exists before trying to create it
+	if forkName != "" {
+		exists, err := c.ForkExists(forkName)
+		if err != nil {
+			// If we can't check, log warning but continue with creation attempt
+			fmt.Printf("Warning: Could not verify if fork exists: %v\n", err)
+		} else if exists {
+			fmt.Printf("Fork %s already exists, skipping creation...\n", forkName)
+			return ForkAlreadyExistsError{ForkName: forkName}
+		}
+	}
+
 	args := []string{"repo", "fork", "--remote"}
 
 	if forkName != "" {
@@ -218,6 +238,29 @@ func (c *Cli) CreateFork(forkName string) error {
 	}
 
 	return nil
+}
+
+func (c *Cli) ForkExists(forkName string) (bool, error) {
+	if forkName == "" {
+		return false, fmt.Errorf("fork name cannot be empty")
+	}
+
+	// Use gh repo view to check if the fork repository exists
+	args := []string{"repo", "view", forkName, "--json", "name"}
+
+	_, err := ExecuteStringResult(args)
+	if err != nil {
+		// If the command fails, the repository doesn't exist or we don't have access
+		if strings.Contains(err.Error(), "not found") ||
+			strings.Contains(err.Error(), "Could not resolve to a Repository") {
+			return false, nil
+		}
+		// Other errors (network, auth, etc.) should be returned
+		return false, err
+	}
+
+	// If the command succeeds, the repository exists
+	return true, nil
 }
 
 func (c *Cli) SetDefaultRepository(repo string) error {

@@ -2,6 +2,7 @@ package fork
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -63,6 +64,8 @@ type mockForkProvider struct {
 	setDefaultRepoError   error
 	remoteConfiguration   map[string]string
 	remoteConfigError     error
+	forkExists            bool
+	forkExistsError       error
 }
 
 func (m *mockForkProvider) IsRepositoryFork() (bool, error) {
@@ -71,6 +74,10 @@ func (m *mockForkProvider) IsRepositoryFork() (bool, error) {
 
 func (m *mockForkProvider) CreateFork(forkName string) error {
 	return m.createForkError
+}
+
+func (m *mockForkProvider) ForkExists(forkName string) (bool, error) {
+	return m.forkExists, m.forkExistsError
 }
 
 func (m *mockForkProvider) SetDefaultRepository(repo string) error {
@@ -1026,5 +1033,131 @@ func TestSetupFork_NoCustomForkName_ExistingFork(t *testing.T) {
 
 	if result.ForkName != "existing-user/gh-sherpa" {
 		t.Errorf("Expected ForkName to be 'existing-user/gh-sherpa', got %s", result.ForkName)
+	}
+}
+
+func TestSetupFork_ForkExistsCheck_SkipsCreation(t *testing.T) {
+	// Test the specific scenario from the user's issue: when --fork-name specifies an existing fork,
+	// it should detect it exists and skip creation rather than creating fork-1
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{confirmationResult: true}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork:    false, // Not currently in a fork
+		remoteConfiguration: map[string]string{},
+		forkExists:          true, // The specified fork already exists
+		forkExistsError:     nil,
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	// This simulates: gh sherpa create-pr --fork --fork-name=carlosmmesa-test-org/gh-sherpa
+	// where carlosmmesa-test-org/gh-sherpa already exists
+	result, err := manager.SetupFork("carlosmmesa-test-org/gh-sherpa")
+
+	if err != nil {
+		t.Errorf("Expected no error when fork exists, got %v", err)
+	}
+
+	// Should not have been configured already (since we're not in fork context initially)
+	if result.WasAlreadyConfigured {
+		t.Error("Expected WasAlreadyConfigured to be false since we weren't in fork context initially")
+	}
+
+	// Should not have created a new fork since it already exists
+	if result.ForkCreated {
+		t.Error("Expected ForkCreated to be false since fork already exists")
+	}
+
+	if result.ForkName != "carlosmmesa-test-org/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'carlosmmesa-test-org/gh-sherpa', got %s", result.ForkName)
+	}
+
+	if result.UpstreamName != "InditexTech/gh-sherpa" {
+		t.Errorf("Expected UpstreamName to be 'InditexTech/gh-sherpa', got %s", result.UpstreamName)
+	}
+}
+
+func TestSetupFork_ForkExistsCheck_ForkDoesNotExist(t *testing.T) {
+	// Test when fork existence check returns false (fork doesn't exist) - should create it
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{confirmationResult: true}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork:    false,
+		remoteConfiguration: map[string]string{},
+		forkExists:          false, // Fork doesn't exist
+		forkExistsError:     nil,
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	result, err := manager.SetupFork("new-user/gh-sherpa")
+
+	if err != nil {
+		t.Errorf("Expected no error when creating new fork, got %v", err)
+	}
+
+	if result.WasAlreadyConfigured {
+		t.Error("Expected WasAlreadyConfigured to be false")
+	}
+
+	// Should have created the fork since it didn't exist
+	if !result.ForkCreated {
+		t.Error("Expected ForkCreated to be true since fork didn't exist")
+	}
+
+	if result.ForkName != "new-user/gh-sherpa" {
+		t.Errorf("Expected ForkName to be 'new-user/gh-sherpa', got %s", result.ForkName)
+	}
+}
+
+func TestSetupFork_ForkExistsCheck_Error(t *testing.T) {
+	// Test when fork existence check returns an error - should return error instead of continuing
+	repo := &domain.Repository{
+		Name:             "gh-sherpa",
+		Owner:            "InditexTech",
+		NameWithOwner:    "InditexTech/gh-sherpa",
+		DefaultBranchRef: "main",
+	}
+
+	repoProvider := &mockRepositoryProvider{repo: repo}
+	gitProvider := &mockGitProvider{}
+	userProvider := &mockUserInteractionProvider{confirmationResult: true}
+	forkProvider := &mockForkProvider{
+		isRepositoryFork:    false,
+		remoteConfiguration: map[string]string{},
+		forkExists:          false,
+		forkExistsError:     errors.New("network error checking fork existence"),
+	}
+
+	cfg := Configuration{IsInteractive: true}
+	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
+
+	_, err := manager.SetupFork("user/gh-sherpa")
+
+	// Should fail when fork existence check fails
+	if err == nil {
+		t.Error("Expected error when fork existence check fails")
+	}
+
+	if !strings.Contains(err.Error(), "network error checking fork existence") {
+		t.Errorf("Expected error to contain fork existence check error, got %v", err)
 	}
 }
