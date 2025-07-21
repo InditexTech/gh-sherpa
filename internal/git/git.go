@@ -140,7 +140,15 @@ func (p *Provider) CheckoutBranch(branch string) (err error) {
 func (p *Provider) GetCommitsToPush(branch string) ([]string, error) {
 	commits := []string{}
 
-	args := []string{"log", "--pretty=format:'%h %s'", branch, "--not", "--remotes=origin"}
+	// Determine which remote to use based on fork context
+	remote := "origin"
+	if p.hasUpstreamRemote() {
+		// In fork context, we need to check against upstream remote
+		// to determine if there are actual new commits beyond the fork
+		remote = "upstream"
+	}
+
+	args := []string{"log", "--pretty=format:'%h %s'", branch, "--not", "--remotes=" + remote}
 
 	out, err := runGitCommand(args...)
 	if err != nil {
