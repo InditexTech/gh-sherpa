@@ -481,68 +481,84 @@ func TestCli_GetRemoteConfiguration(t *testing.T) {
 
 func TestCli_CreateFork(t *testing.T) {
 	tests := []struct {
-		name         string
-		forkName     string
-		mockResult   string
-		mockError    error
-		expectedArgs []string
-		wantErr      bool
+		name             string
+		forkName         string
+		forkExistsError  error
+		forkExistsResult string
+		mockResult       string
+		mockError        error
+		expectedArgs     []string
+		wantErr          bool
 	}{
 		{
-			name:         "Success - No organization specified",
-			forkName:     "",
-			mockResult:   "✓ Created fork user/repo\n✓ Added remote \"origin\"",
-			mockError:    nil,
-			expectedArgs: []string{"repo", "fork", "--remote"},
-			wantErr:      false,
+			name:             "Success - No organization specified",
+			forkName:         "",
+			forkExistsError:  nil,
+			forkExistsResult: "",
+			mockResult:       "✓ Created fork user/repo\n✓ Added remote \"origin\"",
+			mockError:        nil,
+			expectedArgs:     []string{"repo", "fork", "--remote"},
+			wantErr:          false,
 		},
 		{
-			name:         "Success - Organization specified",
-			forkName:     "MyOrg/repo-name",
-			mockResult:   "✓ Created fork MyOrg/repo-name\n✓ Added remote \"origin\"",
-			mockError:    nil,
-			expectedArgs: []string{"repo", "fork", "--remote", "--org", "MyOrg"},
-			wantErr:      false,
+			name:             "Success - Organization specified",
+			forkName:         "MyOrg/repo-name",
+			forkExistsError:  errors.New("Could not resolve to a Repository"),
+			forkExistsResult: "",
+			mockResult:       "✓ Created fork MyOrg/repo-name\n✓ Added remote \"origin\"",
+			mockError:        nil,
+			expectedArgs:     []string{"repo", "fork", "--remote", "--org", "MyOrg"},
+			wantErr:          false,
 		},
 		{
-			name:         "Success - Invalid format (single part)",
-			forkName:     "just-a-name",
-			mockResult:   "✓ Created fork user/repo\n✓ Added remote \"origin\"",
-			mockError:    nil,
-			expectedArgs: []string{"repo", "fork", "--remote"},
-			wantErr:      false,
+			name:             "Success - Invalid format (single part)",
+			forkName:         "just-a-name",
+			forkExistsError:  errors.New("Could not resolve to a Repository"),
+			forkExistsResult: "",
+			mockResult:       "✓ Created fork user/repo\n✓ Added remote \"origin\"",
+			mockError:        nil,
+			expectedArgs:     []string{"repo", "fork", "--remote"},
+			wantErr:          false,
 		},
 		{
-			name:         "Success - Multiple parts but invalid",
-			forkName:     "org/repo/extra",
-			mockResult:   "✓ Created fork user/repo\n✓ Added remote \"origin\"",
-			mockError:    nil,
-			expectedArgs: []string{"repo", "fork", "--remote"},
-			wantErr:      false,
+			name:             "Success - Multiple parts but invalid",
+			forkName:         "org/repo/extra",
+			forkExistsError:  errors.New("Could not resolve to a Repository"),
+			forkExistsResult: "",
+			mockResult:       "✓ Created fork user/repo\n✓ Added remote \"origin\"",
+			mockError:        nil,
+			expectedArgs:     []string{"repo", "fork", "--remote"},
+			wantErr:          false,
 		},
 		{
-			name:         "Error - Repository not found",
-			forkName:     "invalid/repo",
-			mockResult:   "",
-			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nrepository not found"),
-			expectedArgs: []string{"repo", "fork", "--remote", "--org", "invalid"},
-			wantErr:      true,
+			name:             "Error - Repository not found",
+			forkName:         "invalid/repo",
+			forkExistsError:  errors.New("Could not resolve to a Repository"),
+			forkExistsResult: "",
+			mockResult:       "",
+			mockError:        fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nrepository not found"),
+			expectedArgs:     []string{"repo", "fork", "--remote", "--org", "invalid"},
+			wantErr:          true,
 		},
 		{
-			name:         "Error - Permission denied",
-			forkName:     "private/repo",
-			mockResult:   "",
-			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\npermission denied"),
-			expectedArgs: []string{"repo", "fork", "--remote", "--org", "private"},
-			wantErr:      true,
+			name:             "Error - Permission denied",
+			forkName:         "private/repo",
+			forkExistsError:  fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\npermission denied"),
+			forkExistsResult: "",
+			mockResult:       "",
+			mockError:        fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\npermission denied"),
+			expectedArgs:     []string{"repo", "fork", "--remote", "--org", "private"},
+			wantErr:          true,
 		},
 		{
-			name:         "Error - Fork already exists",
-			forkName:     "MyOrg/existing-fork",
-			mockResult:   "",
-			mockError:    fmt.Errorf("failed to run GitHub CLI command (exit status 1)\n\nDetails:\nfork already exists"),
-			expectedArgs: []string{"repo", "fork", "--remote", "--org", "MyOrg"},
-			wantErr:      true,
+			name:             "Fork already exists - Configure remotes",
+			forkName:         "MyOrg/existing-fork",
+			forkExistsError:  nil,
+			forkExistsResult: `{"name":"existing-fork"}`,
+			mockResult:       "",
+			mockError:        nil,
+			expectedArgs:     []string(nil),
+			wantErr:          true,
 		},
 	}
 
@@ -554,14 +570,39 @@ func TestCli_CreateFork(t *testing.T) {
 			originalExecuteStringResult := ExecuteStringResult
 			defer func() { ExecuteStringResult = originalExecuteStringResult }()
 
+			// Mock git command for remote configuration
+			originalExecuteGitCommand := executeGitCommand
+			defer func() { executeGitCommand = originalExecuteGitCommand }()
+
+			executeGitCommand = func(args ...string) (result string, err error) {
+				// Mock git remote commands for ConfigureRemotesForExistingFork
+				if len(args) >= 2 && args[0] == "remote" && args[1] == "set-url" {
+					return "", nil
+				}
+				if len(args) >= 2 && args[0] == "remote" && args[1] == "add" {
+					return "", nil
+				}
+				return "", errors.New("unexpected git command")
+			}
+
+			callCount := 0
 			ExecuteStringResult = func(args []string) (result string, err error) {
-				capturedArgs = args
-				return tt.mockResult, tt.mockError
+				callCount++
+				// Handle ForkExists check (repo view) - only when forkName is not empty
+				if tt.forkName != "" && len(args) >= 2 && args[0] == "repo" && args[1] == "view" {
+					return tt.forkExistsResult, tt.forkExistsError
+				}
+				// Handle fork creation (repo fork)
+				if len(args) >= 2 && args[0] == "repo" && args[1] == "fork" {
+					capturedArgs = args
+					return tt.mockResult, tt.mockError
+				}
+				return "", fmt.Errorf("unexpected call: %v", args)
 			}
 
 			err := c.CreateFork(tt.forkName)
 
-			// Verify the arguments passed to ExecuteStringResult
+			// Verify the arguments passed to ExecuteStringResult for fork creation
 			assert.Equal(t, tt.expectedArgs, capturedArgs)
 
 			// Verify the error behavior

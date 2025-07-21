@@ -126,7 +126,6 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 
 	// In fork context, we need to specify the base repository explicitly
 	if c.isInForkContext() {
-		// Get upstream repository name for base
 		upstreamRepo, err := c.getUpstreamRepository()
 		if err == nil && upstreamRepo != "" {
 			args = append(args, "--repo", upstreamRepo)
@@ -211,14 +210,15 @@ func (e ForkAlreadyExistsError) Error() string {
 }
 
 func (c *Cli) CreateFork(forkName string) error {
-	// Check if the specific fork already exists before trying to create it
 	if forkName != "" {
 		exists, err := c.ForkExists(forkName)
 		if err != nil {
-			// If we can't check, log warning but continue with creation attempt
 			fmt.Printf("Warning: Could not verify if fork exists: %v\n", err)
 		} else if exists {
-			fmt.Printf("Fork %s already exists, skipping creation...\n", forkName)
+			fmt.Printf("Fork %s already exists, configuring remotes...\n", forkName)
+			if err := c.ConfigureRemotesForExistingFork(forkName); err != nil {
+				return fmt.Errorf("failed to configure remotes for existing fork: %w", err)
+			}
 			return ForkAlreadyExistsError{ForkName: forkName}
 		}
 	}
@@ -240,26 +240,48 @@ func (c *Cli) CreateFork(forkName string) error {
 	return nil
 }
 
+func (c *Cli) ConfigureRemotesForExistingFork(forkName string) error {
+	repo, err := c.GetRepository()
+	if err != nil {
+		return fmt.Errorf("failed to get repository info: %w", err)
+	}
+
+	forkURL := fmt.Sprintf("https://github.com/%s.git", forkName)
+	originalURL := fmt.Sprintf("https://github.com/%s.git", repo.NameWithOwner)
+
+	if _, err := executeGitCommand("remote", "set-url", "origin", forkURL); err != nil {
+		return fmt.Errorf("failed to set origin to fork: %w", err)
+	}
+
+	if _, err := executeGitCommand("remote", "add", "upstream", originalURL); err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			if _, err := executeGitCommand("remote", "set-url", "upstream", originalURL); err != nil {
+				return fmt.Errorf("failed to set upstream URL: %w", err)
+			}
+		} else {
+			return fmt.Errorf("failed to add upstream: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (c *Cli) ForkExists(forkName string) (bool, error) {
 	if forkName == "" {
 		return false, fmt.Errorf("fork name cannot be empty")
 	}
 
-	// Use gh repo view to check if the fork repository exists
 	args := []string{"repo", "view", forkName, "--json", "name"}
 
 	_, err := ExecuteStringResult(args)
 	if err != nil {
-		// If the command fails, the repository doesn't exist or we don't have access
 		if strings.Contains(err.Error(), "not found") ||
 			strings.Contains(err.Error(), "Could not resolve to a Repository") {
 			return false, nil
 		}
-		// Other errors (network, auth, etc.) should be returned
 		return false, err
 	}
 
-	// If the command succeeds, the repository exists
 	return true, nil
 }
 
@@ -290,7 +312,6 @@ func (c *Cli) GetRemoteConfiguration() (map[string]string, error) {
 	return remotes, nil
 }
 
-// isInForkContext checks if we're working in a fork context
 func (c *Cli) isInForkContext() bool {
 	remotes, err := c.GetRemoteConfiguration()
 	if err != nil {
@@ -300,7 +321,6 @@ func (c *Cli) isInForkContext() bool {
 	return hasUpstream
 }
 
-// getUpstreamRepository gets the upstream repository name from git remote
 func (c *Cli) getUpstreamRepository() (string, error) {
 	remotes, err := c.GetRemoteConfiguration()
 	if err != nil {
@@ -312,7 +332,6 @@ func (c *Cli) getUpstreamRepository() (string, error) {
 		return "", fmt.Errorf("no upstream remote found")
 	}
 
-	// Extract repository name from upstream URL
 	return utils.ExtractRepoFromURL(upstream), nil
 }
 
@@ -323,14 +342,12 @@ func (c *Cli) formatHeadBranchForFork(headBranch string) (string, error) {
 	}
 
 	if _, hasUpstream := remotes["upstream"]; hasUpstream {
-		// In fork context, get the fork owner from origin remote
 		origin, hasOrigin := remotes["origin"]
 		if !hasOrigin {
 			return headBranch, nil
 		}
 
 		forkRepoName := utils.ExtractRepoFromURL(origin)
-		// Extract only the owner part (before the slash)
 		parts := strings.Split(forkRepoName, "/")
 		if len(parts) >= 1 {
 			forkOwner := parts[0]

@@ -23,6 +23,7 @@ type ForkProvider interface {
 	ForkExists(forkName string) (bool, error)
 	SetDefaultRepository(repo string) error
 	GetRemoteConfiguration() (map[string]string, error)
+	ConfigureRemotesForExistingFork(forkName string) error
 }
 
 func NewManager(
@@ -144,19 +145,11 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 		return nil, err
 	}
 
-	if !status.HasCorrectRemotes {
-		fmt.Printf("Setting up remotes (origin: fork, upstream: original)...\n")
-
-		fmt.Printf("Setting default repository to upstream...\n")
-		if err := m.ghCli.SetDefaultRepository(repo.NameWithOwner); err != nil {
-			return nil, fmt.Errorf("failed to set default repository: %w", err)
-		}
-
-		fmt.Printf("Fetching branches from fork...\n")
-		if err := m.gitProvider.FetchBranchFromOrigin("main"); err != nil {
-			if err := m.gitProvider.FetchBranchFromOrigin("master"); err != nil {
-				logging.PrintWarn("Could not fetch main/master branch from fork")
-			}
+	fmt.Printf("Setting up remotes (origin: fork, upstream: original)...\n")
+	fmt.Printf("Fetching branches from fork...\n")
+	if err := m.gitProvider.FetchBranchFromOrigin("main"); err != nil {
+		if err := m.gitProvider.FetchBranchFromOrigin("master"); err != nil {
+			logging.PrintWarn("Could not fetch main/master branch from fork")
 		}
 	}
 
@@ -197,6 +190,12 @@ func (m *Manager) createNamedFork(forkName string, result *ForkSetupResult) erro
 		fmt.Printf("Fork %s already exists, configuring for use...\n", forkName)
 		result.ForkCreated = false
 		result.ForkName = forkName
+
+		// Actually configure the remotes when fork exists
+		if err := m.ghCli.ConfigureRemotesForExistingFork(forkName); err != nil {
+			return fmt.Errorf("failed to configure remotes: %w", err)
+		}
+
 		return nil
 	}
 

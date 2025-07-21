@@ -68,6 +68,11 @@ type mockForkProvider struct {
 	forkExistsError       error
 }
 
+// ConfigureRemotesForExistingFork implements ForkProvider.
+func (m *mockForkProvider) ConfigureRemotesForExistingFork(forkName string) error {
+	return nil
+}
+
 func (m *mockForkProvider) IsRepositoryFork() (bool, error) {
 	return m.isRepositoryFork, m.isRepositoryForkError
 }
