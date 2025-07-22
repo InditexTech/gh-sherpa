@@ -21,10 +21,6 @@ func SetupForkForCommand(
 	messageType string, // "issue" or "pull request"
 ) error {
 	forkName := forkNameValue
-	if forkName == "" && cfg.Github.ForkOrganization != "" {
-		// Fork name will be constructed by the fork manager using the default organization
-		forkName = cfg.Github.ForkOrganization
-	}
 
 	forkCfg := fork.Configuration{
 		DefaultOrganization: cfg.Github.ForkOrganization,

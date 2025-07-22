@@ -225,9 +225,12 @@ func (c *Cli) CreateFork(forkName string) error {
 
 	args := []string{"repo", "fork", "--remote"}
 
+	// If forkName contains a slash, extract the organization
+	// Otherwise use the whole string as organization
 	if forkName != "" {
 		parts := strings.Split(forkName, "/")
-		if len(parts) == 2 {
+		if len(parts) >= 1 {
+			// Always use the first part as the organization
 			args = append(args, "--org", parts[0])
 		}
 	}
