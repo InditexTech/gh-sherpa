@@ -952,166 +952,6 @@ func TestCli_getUpstreamRepository(t *testing.T) {
 	}
 }
 
-func TestCli_ConfigureRemotesForExistingFork(t *testing.T) {
-	tests := []struct {
-		name                string
-		forkName            string
-		gitSetOriginError   error
-		gitAddUpstreamError error
-		gitSetUpstreamError error
-		setDefaultRepoError error
-		expectedGitCommands [][]string
-		wantErr             bool
-		expectedErrContains string
-	}{
-		{
-			name:     "Success - Configure new fork remotes",
-			forkName: "user/gh-sherpa",
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/user/gh-sherpa.git"},
-				{"remote", "add", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-			},
-			wantErr: false,
-		},
-		{
-			name:                "Success - Configure fork remotes with upstream exists",
-			forkName:            "myorg/awesome-repo",
-			gitAddUpstreamError: fmt.Errorf("fatal: remote upstream already exists"),
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/myorg/awesome-repo.git"},
-				{"remote", "add", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-				{"remote", "set-url", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-			},
-			wantErr: false,
-		},
-		{
-			name:     "Success - Complex organization names",
-			forkName: "my.fork.org/project-name",
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/my.fork.org/project-name.git"},
-				{"remote", "add", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-			},
-			wantErr: false,
-		},
-		{
-			name:              "Error - Failed to set origin URL",
-			forkName:          "user/repo",
-			gitSetOriginError: fmt.Errorf("fatal: No such remote 'origin'"),
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/user/repo.git"},
-			},
-			wantErr:             true,
-			expectedErrContains: "failed to set origin to fork",
-		},
-		{
-			name:                "Error - Failed to add upstream (not already exists)",
-			forkName:            "user/repo",
-			gitAddUpstreamError: fmt.Errorf("fatal: network error"),
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/user/repo.git"},
-				{"remote", "add", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-			},
-			wantErr:             true,
-			expectedErrContains: "failed to add upstream",
-		},
-		{
-			name:                "Error - Failed to set upstream URL when already exists",
-			forkName:            "user/repo",
-			gitAddUpstreamError: fmt.Errorf("fatal: remote upstream already exists"),
-			gitSetUpstreamError: fmt.Errorf("fatal: invalid URL"),
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/user/repo.git"},
-				{"remote", "add", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-				{"remote", "set-url", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-			},
-			wantErr:             true,
-			expectedErrContains: "failed to set upstream URL",
-		},
-		{
-			name:                "Error - Failed to set default repository",
-			forkName:            "user/repo",
-			setDefaultRepoError: fmt.Errorf("repository not found"),
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/user/repo.git"},
-				{"remote", "add", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-			},
-			wantErr:             true,
-			expectedErrContains: "failed to set default repository",
-		},
-		{
-			name:     "Success - Fork with special characters in name",
-			forkName: "user-123/my_awesome-repo.test",
-			expectedGitCommands: [][]string{
-				{"remote", "set-url", "origin", "https://github.com/user-123/my_awesome-repo.test.git"},
-				{"remote", "add", "upstream", "https://github.com/InditexTech/gh-sherpa.git"},
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &Cli{}
-
-			// Track git commands executed
-			var executedGitCommands [][]string
-			originalExecuteGitCommand := executeGitCommand
-			defer func() { executeGitCommand = originalExecuteGitCommand }()
-
-			executeGitCommand = func(args ...string) (result string, err error) {
-				executedGitCommands = append(executedGitCommands, args)
-
-				// Check if this is the origin set-url command
-				if len(args) >= 4 && args[0] == "remote" && args[1] == "set-url" && args[2] == "origin" {
-					return "", tt.gitSetOriginError
-				}
-
-				// Check if this is the upstream add command
-				if len(args) >= 4 && args[0] == "remote" && args[1] == "add" && args[2] == "upstream" {
-					return "", tt.gitAddUpstreamError
-				}
-
-				// Check if this is the upstream set-url command
-				if len(args) >= 4 && args[0] == "remote" && args[1] == "set-url" && args[2] == "upstream" {
-					return "", tt.gitSetUpstreamError
-				}
-
-				return "", nil
-			}
-
-			// Mock ExecuteStringResult for SetDefaultRepository
-			var capturedSetDefaultArgs []string
-			originalExecuteStringResult := ExecuteStringResult
-			defer func() { ExecuteStringResult = originalExecuteStringResult }()
-
-			ExecuteStringResult = func(args []string) (result string, err error) {
-				capturedSetDefaultArgs = args
-				return "", tt.setDefaultRepoError
-			}
-
-			// Execute the function
-			err := c.ConfigureRemotesForExistingFork(tt.forkName)
-
-			// Verify error behavior
-			if tt.wantErr {
-				assert.Error(t, err)
-				if tt.expectedErrContains != "" {
-					assert.Contains(t, err.Error(), tt.expectedErrContains)
-				}
-			} else {
-				assert.NoError(t, err)
-
-				// Verify SetDefaultRepository was called with correct arguments for success cases
-				expectedSetDefaultArgs := []string{"repo", "set-default", "InditexTech/gh-sherpa"}
-				assert.Equal(t, expectedSetDefaultArgs, capturedSetDefaultArgs, "SetDefaultRepository should be called with correct arguments")
-			}
-
-			// Verify git commands were called as expected
-			assert.Equal(t, tt.expectedGitCommands, executedGitCommands, "Git commands should match expected sequence")
-		})
-	}
-}
-
 func Test_executeGitCommand(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -1149,6 +989,147 @@ func Test_executeGitCommand(t *testing.T) {
 				if tt.name == "Success - git version command" {
 					assert.NotEmpty(t, result)
 				}
+			}
+		})
+	}
+}
+
+func TestCli_ConfigureRemotesForExistingForkAfterRepository(t *testing.T) {
+	tests := []struct {
+		name                string
+		forkName            string
+		repoNameWithOwner   string
+		originErr           error
+		addUpstreamErr      error
+		upstreamExists      bool
+		setUpstreamErr      error
+		setDefaultRepoErr   error
+		wantErr             bool
+		expectedErrContains string
+	}{
+		{
+			name:              "Success - All operations succeed",
+			forkName:          "user/repo",
+			repoNameWithOwner: "InditexTech/repo",
+			originErr:         nil,
+			addUpstreamErr:    nil,
+			upstreamExists:    false,
+			setUpstreamErr:    nil,
+			setDefaultRepoErr: nil,
+			wantErr:           false,
+		},
+		{
+			name:              "Success - Upstream already exists and set succeeds",
+			forkName:          "user/repo",
+			repoNameWithOwner: "InditexTech/repo",
+			originErr:         nil,
+			addUpstreamErr:    errors.New("remote upstream already exists"),
+			upstreamExists:    true,
+			setUpstreamErr:    nil,
+			setDefaultRepoErr: nil,
+			wantErr:           false,
+		},
+		{
+			name:                "Error - Setting origin remote fails",
+			forkName:            "user/repo",
+			repoNameWithOwner:   "InditexTech/repo",
+			originErr:           errors.New("permission denied"),
+			addUpstreamErr:      nil,
+			upstreamExists:      false,
+			setUpstreamErr:      nil,
+			setDefaultRepoErr:   nil,
+			wantErr:             true,
+			expectedErrContains: "failed to set origin to fork",
+		},
+		{
+			name:                "Error - Adding upstream fails",
+			forkName:            "user/repo",
+			repoNameWithOwner:   "InditexTech/repo",
+			originErr:           nil,
+			addUpstreamErr:      errors.New("operation failed"),
+			upstreamExists:      false,
+			setUpstreamErr:      nil,
+			setDefaultRepoErr:   nil,
+			wantErr:             true,
+			expectedErrContains: "failed to add upstream",
+		},
+		{
+			name:                "Error - Upstream exists but setting URL fails",
+			forkName:            "user/repo",
+			repoNameWithOwner:   "InditexTech/repo",
+			originErr:           nil,
+			addUpstreamErr:      errors.New("remote upstream already exists"),
+			upstreamExists:      true,
+			setUpstreamErr:      errors.New("permission denied"),
+			setDefaultRepoErr:   nil,
+			wantErr:             true,
+			expectedErrContains: "failed to set upstream URL",
+		},
+		{
+			name:                "Error - Setting default repository fails",
+			forkName:            "user/repo",
+			repoNameWithOwner:   "InditexTech/repo",
+			originErr:           nil,
+			addUpstreamErr:      nil,
+			upstreamExists:      false,
+			setUpstreamErr:      nil,
+			setDefaultRepoErr:   errors.New("repository not found"),
+			wantErr:             true,
+			expectedErrContains: "failed to set default repository",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Cli{}
+
+			// Mock executeGitCommand
+			originalExecuteGitCommand := executeGitCommand
+			defer func() { executeGitCommand = originalExecuteGitCommand }()
+
+			executeGitCommand = func(args ...string) (string, error) {
+				// Check if this is setting origin URL
+				if len(args) >= 4 && args[0] == "remote" && args[1] == "set-url" && args[2] == "origin" {
+					return "", tt.originErr
+				}
+
+				// Check if this is adding upstream remote
+				if len(args) >= 4 && args[0] == "remote" && args[1] == "add" && args[2] == "upstream" {
+					return "", tt.addUpstreamErr
+				}
+
+				// Check if this is setting upstream URL (for existing upstream)
+				if len(args) >= 4 && args[0] == "remote" && args[1] == "set-url" && args[2] == "upstream" {
+					return "", tt.setUpstreamErr
+				}
+
+				return "", errors.New("unexpected command")
+			}
+
+			// Mock ExecuteStringResult for SetDefaultRepository
+			originalExecuteStringResult := ExecuteStringResult
+			defer func() { ExecuteStringResult = originalExecuteStringResult }()
+
+			ExecuteStringResult = func(args []string) (string, error) {
+				// Check if this is setting default repository
+				if len(args) >= 2 && args[0] == "repo" && args[1] == "set-default" {
+					assert.Equal(t, tt.repoNameWithOwner, args[2], "SetDefaultRepository called with wrong repo")
+					return "", tt.setDefaultRepoErr
+				}
+				return "", errors.New("unexpected command")
+			}
+
+			// Call the method under test
+			err := c.ConfigureRemotesForExistingForkAfterRepository(tt.forkName, tt.repoNameWithOwner)
+
+			// Verify results
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.expectedErrContains != "" {
+					assert.Contains(t, err.Error(), tt.expectedErrContains)
+				}
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

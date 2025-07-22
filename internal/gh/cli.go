@@ -246,8 +246,15 @@ func (c *Cli) ConfigureRemotesForExistingFork(forkName string) error {
 		return fmt.Errorf("failed to get repository info: %w", err)
 	}
 
+	if err := c.ConfigureRemotesForExistingForkAfterRepository(forkName, repo.NameWithOwner); err != nil {
+		return fmt.Errorf("failed to configure remotes for existing fork: %w", err)
+	}
+	return nil
+}
+
+func (c *Cli) ConfigureRemotesForExistingForkAfterRepository(forkName string, repoNameWithOwner string) error {
 	forkURL := fmt.Sprintf("https://github.com/%s.git", forkName)
-	originalURL := fmt.Sprintf("https://github.com/%s.git", repo.NameWithOwner)
+	originalURL := fmt.Sprintf("https://github.com/%s.git", repoNameWithOwner)
 
 	if _, err := executeGitCommand("remote", "set-url", "origin", forkURL); err != nil {
 		return fmt.Errorf("failed to set origin to fork: %w", err)
@@ -263,7 +270,7 @@ func (c *Cli) ConfigureRemotesForExistingFork(forkName string) error {
 		}
 	}
 
-	if err := c.SetDefaultRepository(repo.NameWithOwner); err != nil {
+	if err := c.SetDefaultRepository(repoNameWithOwner); err != nil {
 		return fmt.Errorf("failed to set default repository: %w", err)
 	}
 
