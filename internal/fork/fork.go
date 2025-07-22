@@ -128,6 +128,19 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 		result.WasAlreadyConfigured = true
 		result.ForkName = status.ForkName
 		result.UpstreamName = status.UpstreamName
+
+		repo, err := m.repositoryProvider.GetRepository()
+		if err != nil {
+			logging.PrintWarn("Warning: Could not get repository info to set default repository")
+		} else {
+			if err := m.ghCli.SetDefaultRepository(repo.NameWithOwner); err != nil {
+				logging.PrintWarn(fmt.Sprintf("Warning: Could not set default repository to upstream: %v", err))
+				logging.PrintWarn("You may need to run 'gh repo set-default " + repo.NameWithOwner + "' manually")
+			} else {
+				logging.Debug("✓ Default repository confirmed as upstream: " + repo.NameWithOwner)
+			}
+		}
+
 		return result, nil
 	}
 
@@ -156,6 +169,13 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 	result.UpstreamName = repo.NameWithOwner
 	if result.ForkName == "" {
 		result.ForkName = repo.NameWithOwner
+	}
+
+	if err := m.ghCli.SetDefaultRepository(repo.NameWithOwner); err != nil {
+		logging.PrintWarn(fmt.Sprintf("Warning: Could not set default repository to upstream: %v", err))
+		logging.PrintWarn("You may need to run 'gh repo set-default " + repo.NameWithOwner + "' manually")
+	} else {
+		logging.Debug("✓ Default repository set to upstream: " + repo.NameWithOwner)
 	}
 
 	return result, nil

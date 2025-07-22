@@ -263,6 +263,10 @@ func (c *Cli) ConfigureRemotesForExistingFork(forkName string) error {
 		}
 	}
 
+	if err := c.SetDefaultRepository(repo.NameWithOwner); err != nil {
+		return fmt.Errorf("failed to set default repository: %w", err)
+	}
+
 	return nil
 }
 
