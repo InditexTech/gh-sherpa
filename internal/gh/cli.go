@@ -202,6 +202,7 @@ func (c *Cli) IsRepositoryFork() (bool, error) {
 }
 
 var ErrForkAlreadyExists = errors.New("fork already exists")
+
 type ForkAlreadyExistsError struct {
 	ForkName string
 }
