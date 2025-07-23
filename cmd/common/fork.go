@@ -22,7 +22,7 @@ func SetupForkForCommand(
 ) error {
 	forkName := forkNameValue
 
-	forkCfg := fork.Configuration{
+	forkCfg := domain.ForkConfiguration{
 		DefaultOrganization: cfg.Github.ForkOrganization,
 		IsInteractive:       isInteractive,
 	}

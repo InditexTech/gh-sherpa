@@ -112,7 +112,7 @@ func TestDetectForkStatus_NotAFork(t *testing.T) {
 		remoteConfiguration: map[string]string{},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -149,7 +149,7 @@ func TestDetectForkStatus_IsFork(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -194,7 +194,7 @@ func TestSetupFork_AlreadyConfigured(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	result, err := manager.SetupFork("")
@@ -228,7 +228,7 @@ func TestSetupFork_CreateNewFork(t *testing.T) {
 		remoteConfiguration: map[string]string{},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	result, err := manager.SetupFork("")
@@ -262,7 +262,7 @@ func TestSetupFork_UserDeclinesToCreateFork(t *testing.T) {
 		remoteConfiguration: map[string]string{},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	_, err := manager.SetupFork("")
@@ -293,7 +293,7 @@ func TestSetupFork_CreateForkError(t *testing.T) {
 		createForkError:     errors.New("fork creation failed"),
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	_, err := manager.SetupFork("")
@@ -326,7 +326,7 @@ func TestDetectForkStatus_ForkViaAPI_WithCorrectRemotes(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -370,7 +370,7 @@ func TestDetectForkStatus_ForkViaAPI_WithoutCorrectRemotes(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -412,7 +412,7 @@ func TestDetectForkStatus_ForkViaAPI_NoRemotes(t *testing.T) {
 		remoteConfiguration: map[string]string{},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -455,7 +455,7 @@ func TestDetectForkStatus_APIError_ContinuesWithRemoteDetection(t *testing.T) {
 		remoteConfiguration:   map[string]string{},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -491,7 +491,7 @@ func TestSetupFork_InForkButRemotesNotConfigured(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	result, err := manager.SetupFork("")
@@ -536,7 +536,7 @@ func TestDetectForkStatus_ForkViaAPI_RemotesConfiguredInSecondCheck(t *testing.T
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -581,7 +581,7 @@ func TestDetectForkStatus_ForkViaAPI_CorrectRemotesButWrongConfiguration(t *test
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -624,7 +624,7 @@ func TestSetupFork_CreateForkAlreadyExists(t *testing.T) {
 		createForkError:     errors.New("fork already exists for user"),
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	result, err := manager.SetupFork("")
@@ -663,7 +663,7 @@ func TestSetupFork_CreateForkAlreadyExistsNonInteractive(t *testing.T) {
 		createForkError:     errors.New("repository already exists in the destination"),
 	}
 
-	cfg := Configuration{IsInteractive: false}
+	cfg := domain.ForkConfiguration{IsInteractive: false}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	result, err := manager.SetupFork("user/gh-sherpa")
@@ -702,7 +702,7 @@ func TestSetupFork_CreateForkOtherError(t *testing.T) {
 		createForkError:     errors.New("network error"),
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	_, err := manager.SetupFork("")
@@ -736,7 +736,7 @@ func TestDetectForkStatus_RemotesCorrectlyConfigured_ViaRemoteDetection(t *testi
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -782,7 +782,7 @@ func TestDetectForkStatus_RemotesIncorrectlyConfigured_OriginSameAsRepo(t *testi
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -820,7 +820,7 @@ func TestDetectForkStatus_RemotesIncorrectlyConfigured_UpstreamDifferentFromRepo
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -859,7 +859,7 @@ func TestDetectForkStatus_ForkViaAPI_RemotesCorrectlyConfiguredInSecondaryCheck(
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -901,7 +901,7 @@ func TestSetupFork_ForkMismatch_DifferentCustomForkName(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	// Try to setup with a different fork name than the existing one
@@ -937,7 +937,7 @@ func TestSetupFork_ForkMatch_SameCustomForkName(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	// Try to setup with the same fork name as the existing one
@@ -976,7 +976,7 @@ func TestDetectForkStatus_FallbackBranch_APIFork_WithCorrectRemotesInSecondCheck
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	status, err := manager.DetectForkStatus()
@@ -1022,7 +1022,7 @@ func TestSetupFork_NoCustomForkName_ExistingFork(t *testing.T) {
 		},
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	// Setup without custom fork name
@@ -1061,7 +1061,7 @@ func TestSetupFork_ForkExistsCheck_SkipsCreation(t *testing.T) {
 		forkExistsError:     nil,
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	// This simulates: gh sherpa create-pr --fork --fork-name=carlosmmesa-test-org/gh-sherpa
@@ -1110,7 +1110,7 @@ func TestSetupFork_ForkExistsCheck_ForkDoesNotExist(t *testing.T) {
 		forkExistsError:     nil,
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	result, err := manager.SetupFork("new-user/gh-sherpa")
@@ -1152,7 +1152,7 @@ func TestSetupFork_ForkExistsCheck_Error(t *testing.T) {
 		forkExistsError:     errors.New("network error checking fork existence"),
 	}
 
-	cfg := Configuration{IsInteractive: true}
+	cfg := domain.ForkConfiguration{IsInteractive: true}
 	manager := NewManager(cfg, repoProvider, gitProvider, userProvider, forkProvider)
 
 	_, err := manager.SetupFork("user/gh-sherpa")

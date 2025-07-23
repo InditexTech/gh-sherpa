@@ -10,28 +10,19 @@ import (
 )
 
 type Manager struct {
-	cfg                     Configuration
+	cfg                     domain.ForkConfiguration
 	repositoryProvider      domain.RepositoryProvider
 	gitProvider             domain.GitProvider
 	userInteractionProvider domain.UserInteractionProvider
-	ghCli                   ForkProvider
-}
-
-type ForkProvider interface {
-	IsRepositoryFork() (bool, error)
-	CreateFork(forkName string) error
-	ForkExists(forkName string) (bool, error)
-	SetDefaultRepository(repo string) error
-	GetRemoteConfiguration() (map[string]string, error)
-	ConfigureRemotesForExistingFork(forkName string) error
+	ghCli                   domain.ForkProvider
 }
 
 func NewManager(
-	cfg Configuration,
+	cfg domain.ForkConfiguration,
 	repositoryProvider domain.RepositoryProvider,
 	gitProvider domain.GitProvider,
 	userInteractionProvider domain.UserInteractionProvider,
-	ghCli ForkProvider,
+	ghCli domain.ForkProvider,
 ) *Manager {
 	return &Manager{
 		cfg:                     cfg,
@@ -42,7 +33,7 @@ func NewManager(
 	}
 }
 
-func (m *Manager) DetectForkStatus() (*ForkStatus, error) {
+func (m *Manager) DetectForkStatus() (*domain.ForkStatus, error) {
 	logging.Debug("Detecting repository fork status...")
 
 	repo, err := m.repositoryProvider.GetRepository()
@@ -58,7 +49,7 @@ func (m *Manager) DetectForkStatus() (*ForkStatus, error) {
 	logging.Debugf("Current repository: %s", repo.NameWithOwner)
 	logging.Debugf("Remote configuration: %+v", remotes)
 
-	status := &ForkStatus{}
+	status := &domain.ForkStatus{}
 
 	// Check if we have both origin and upstream remotes configured
 	origin, hasOrigin := remotes["origin"]
@@ -107,7 +98,7 @@ func (m *Manager) DetectForkStatus() (*ForkStatus, error) {
 	return status, nil
 }
 
-func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
+func (m *Manager) SetupFork(customForkName string) (*domain.ForkSetupResult, error) {
 	logging.PrintInfo("Detecting repository setup...")
 
 	status, err := m.DetectForkStatus()
@@ -115,7 +106,7 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 		return nil, err
 	}
 
-	result := &ForkSetupResult{}
+	result := &domain.ForkSetupResult{}
 
 	// If fork is already properly configured, check if it matches the requested fork
 	if status.IsInFork && status.HasCorrectRemotes {
@@ -181,7 +172,7 @@ func (m *Manager) SetupFork(customForkName string) (*ForkSetupResult, error) {
 	return result, nil
 }
 
-func (m *Manager) handleForkCreation(status *ForkStatus, forkName string, result *ForkSetupResult) error {
+func (m *Manager) handleForkCreation(status *domain.ForkStatus, forkName string, result *domain.ForkSetupResult) error {
 	if !status.IsInFork {
 		return m.createNewFork(forkName, result)
 	}
@@ -193,14 +184,14 @@ func (m *Manager) handleForkCreation(status *ForkStatus, forkName string, result
 	return nil
 }
 
-func (m *Manager) createNewFork(forkName string, result *ForkSetupResult) error {
+func (m *Manager) createNewFork(forkName string, result *domain.ForkSetupResult) error {
 	if forkName != "" {
 		return m.createNamedFork(forkName, result)
 	}
 	return m.createDefaultFork(result)
 }
 
-func (m *Manager) createNamedFork(forkName string, result *ForkSetupResult) error {
+func (m *Manager) createNamedFork(forkName string, result *domain.ForkSetupResult) error {
 	exists, err := m.ghCli.ForkExists(forkName)
 	if err != nil {
 		return fmt.Errorf("failed to check if fork exists: %w", err)
@@ -222,7 +213,7 @@ func (m *Manager) createNamedFork(forkName string, result *ForkSetupResult) erro
 	return m.performForkCreation(forkName, result)
 }
 
-func (m *Manager) createDefaultFork(result *ForkSetupResult) error {
+func (m *Manager) createDefaultFork(result *domain.ForkSetupResult) error {
 	fmt.Printf("No fork detected. Creating fork...")
 
 	if err := m.requestUserConfirmation(); err != nil {
@@ -232,7 +223,7 @@ func (m *Manager) createDefaultFork(result *ForkSetupResult) error {
 	return m.executeForkCreation("", result)
 }
 
-func (m *Manager) performForkCreation(forkName string, result *ForkSetupResult) error {
+func (m *Manager) performForkCreation(forkName string, result *domain.ForkSetupResult) error {
 	fmt.Printf("No fork detected. Creating fork")
 	if forkName != "" {
 		fmt.Printf(" %s", logging.PaintInfo(forkName))
@@ -260,7 +251,7 @@ func (m *Manager) requestUserConfirmation() error {
 	return nil
 }
 
-func (m *Manager) executeForkCreation(forkName string, result *ForkSetupResult) error {
+func (m *Manager) executeForkCreation(forkName string, result *domain.ForkSetupResult) error {
 	if err := m.ghCli.CreateFork(forkName); err != nil {
 		if strings.Contains(err.Error(), "already exists") {
 			logging.PrintWarn("Fork already exists, continuing with setup...")
@@ -282,7 +273,7 @@ func (m *Manager) executeForkCreation(forkName string, result *ForkSetupResult) 
 	return nil
 }
 
-func (m *Manager) updateForkNameFromStatus(result *ForkSetupResult) error {
+func (m *Manager) updateForkNameFromStatus(result *domain.ForkSetupResult) error {
 	updatedStatus, err := m.DetectForkStatus()
 	if err != nil {
 		return fmt.Errorf("failed to detect fork status after creation: %w", err)
