@@ -122,6 +122,22 @@ func TestExtractRepoFromURL(t *testing.T) {
 			url:      "https://github.com/my.organization/repo.git",
 			expected: "my.organization/repo",
 		},
+		// Edge cases for incomplete URLs
+		{
+			name:     "URL with only owner (no repo)",
+			url:      "https://github.com/owner",
+			expected: "https://github.com/owner",
+		},
+		{
+			name:     "URL with only owner and trailing slash",
+			url:      "https://github.com/owner/",
+			expected: "https://github.com/owner/",
+		},
+		{
+			name:     "URL with empty path segments",
+			url:      "https://github.com/owner//repo",
+			expected: "owner/repo",
+		},
 	}
 
 	for _, tt := range tests {
