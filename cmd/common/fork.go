@@ -1,8 +1,6 @@
 package common
 
 import (
-	"fmt"
-
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
 	"github.com/InditexTech/gh-sherpa/internal/fork"
@@ -42,14 +40,6 @@ func SetupForkForCommand(
 
 	if result.WasAlreadyConfigured {
 		return nil
-	}
-
-	if result.ForkCreated {
-		if messageType == "issue" && issueValue != "" {
-			fmt.Printf("✓ Ready to start working on issue #%s!\n", issueValue)
-		} else {
-			fmt.Printf("✓ Ready to start working on the %s!\n", messageType)
-		}
 	}
 
 	return nil
