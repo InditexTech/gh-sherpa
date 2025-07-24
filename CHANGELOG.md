@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-07-24
+
+### Added
+
+- [#121](https://github.com/InditexTech/gh-sherpa/issues/121) Fork support for external contributors
+
 ## [1.3.1] - 2025-05-29
 
 ### Fixed
