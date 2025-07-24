@@ -10,11 +10,16 @@ import (
 func TestGitCheckoutNewBranchFromOrigin(t *testing.T) {
 	provider := Provider{}
 
-	t.Run("GitCheckoutNewBranchFromOrigin should checkout a new branch from origin", func(t *testing.T) {
+	t.Run("GitCheckoutNewBranchFromOrigin should checkout a new branch from origin when no upstream", func(t *testing.T) {
 		var argsSent []string
 		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git remote get-url upstream to return error (no upstream)
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "", fmt.Errorf("no such remote")
+			}
+			// Capture the checkout command
 			argsSent = args
-			return
+			return "", nil
 		}
 
 		err := provider.CheckoutNewBranchFromOrigin("my-branch", "main")
@@ -23,8 +28,30 @@ func TestGitCheckoutNewBranchFromOrigin(t *testing.T) {
 		assert.Equal(t, []string{"checkout", "--no-track", "-b", "my-branch", "origin/main"}, argsSent)
 	})
 
+	t.Run("GitCheckoutNewBranchFromOrigin should checkout a new branch from upstream when upstream exists", func(t *testing.T) {
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git remote get-url upstream to return success (upstream exists)
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "https://github.com/upstream/repo.git", nil
+			}
+			// Capture the checkout command
+			argsSent = args
+			return "", nil
+		}
+
+		err := provider.CheckoutNewBranchFromOrigin("my-branch", "main")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"checkout", "--no-track", "-b", "my-branch", "upstream/main"}, argsSent)
+	})
+
 	t.Run("GitCheckoutNewBranchFromOrigin should return an error if the branch is not found", func(t *testing.T) {
 		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git remote get-url upstream to return error (no upstream)
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "", fmt.Errorf("no such remote")
+			}
 			err = fmt.Errorf("Failed to run Git command (%w)\n\nDetails:\n%s", err, "foo")
 			return
 		}
@@ -36,11 +63,16 @@ func TestGitCheckoutNewBranchFromOrigin(t *testing.T) {
 
 func TestGitFetchBranchFromOrigin(t *testing.T) {
 	provider := Provider{}
-	t.Run("GitFetchBranchFromOrigin should fetch a branch from origin", func(t *testing.T) {
+	t.Run("GitFetchBranchFromOrigin should fetch a branch from origin when no upstream", func(t *testing.T) {
 		var argsSent []string
 		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git remote get-url upstream to return error (no upstream)
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "", fmt.Errorf("no such remote")
+			}
+			// Capture the fetch command
 			argsSent = args
-			return
+			return "", nil
 		}
 
 		err := provider.FetchBranchFromOrigin("my-branch")
@@ -49,9 +81,31 @@ func TestGitFetchBranchFromOrigin(t *testing.T) {
 		assert.Equal(t, []string{"fetch", "origin", "my-branch"}, argsSent)
 	})
 
+	t.Run("GitFetchBranchFromOrigin should fetch a branch from upstream when upstream exists", func(t *testing.T) {
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git remote get-url upstream to return success (upstream exists)
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "https://github.com/upstream/repo.git", nil
+			}
+			// Capture the fetch command
+			argsSent = args
+			return "", nil
+		}
+
+		err := provider.FetchBranchFromOrigin("my-branch")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"fetch", "upstream", "my-branch"}, argsSent)
+	})
+
 	t.Run("GitFetchBranchFromOrigin should return an error if the branch is not found", func(t *testing.T) {
 		var argsSent []string
 		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git remote get-url upstream to return error (no upstream)
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "", fmt.Errorf("no such remote")
+			}
 			argsSent = args
 			err = fmt.Errorf("Failed to run Git command (%w)\n\nDetails:\n%s", err, "foo")
 			return

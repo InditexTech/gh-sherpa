@@ -65,6 +65,11 @@ github:
     refactoring: ["kind/refactoring"]
     # You can map here other issue types.
 
+  # Fork configuration
+  # Default organization to use when creating forks with --fork flag
+  # If not specified, forks will be created under the user's personal account
+  fork_organization: ""
+
 # Branches configuration -----------------------------------------------------#
 branches:
   # Branch prefixes configuration

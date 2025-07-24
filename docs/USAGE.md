@@ -42,6 +42,8 @@ gh sherpa create-branch, cb [flags]
 * `--base`: Base branch for checkout. By default is the default branch.
 * `--no-fetch`: Remote branches will not be fetched.
 * `--yes, -y`: The branch will be created without confirmation.
+* `--fork`: Automatically set up fork for external contributors.
+* `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
 
 ### Possible scenarios
 
@@ -67,6 +69,16 @@ gh sherpa create-branch --issue 17 --yes
 gh sherpa create-branch --issue SHERPA-31 --base release/1.3.5 --no-fetch
 ```
 
+#### Create a branch with automatic fork setup for external contributors
+
+```sh
+# One-command fork setup and branch creation
+gh sherpa create-branch --issue 32 --fork
+
+# Custom fork organization
+gh sherpa create-branch --issue 45 --fork --fork-name MyOrg/gh-sherpa
+```
+
 ## Create pull request
 
 Create a pull request associated to a GitHub or Jira issue.
@@ -86,6 +98,8 @@ gh sherpa create-pr, cpr [flags]
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
 * `--template`: Path to a pull request template file
+* `--fork`: Automatically set up fork for external contributors.
+* `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
 
 ### Possible scenarios
 
@@ -134,3 +148,57 @@ gh sherpa create-pr --issue SHERPA-81 --base main
 ```sh
 gh sherpa create-pr --issue 750 --no-close-issue
 ```
+
+#### Create a pull request with automatic fork setup for external contributors
+
+```sh
+# One-command fork setup and pull request creation
+gh sherpa create-pr --issue 32 --fork
+
+# Custom fork organization
+gh sherpa create-pr --issue 45 --fork --fork-name MyOrg/gh-sherpa
+```
+
+## Fork Configuration
+
+For external contributors working via forks, Sherpa provides seamless fork management through the `--fork` flag. This feature automates the entire fork setup process.
+
+### Configuration
+
+You can set a default fork organization in your configuration file (`~/.config/sherpa/config.yml`):
+
+```yaml
+github:
+  fork_organization: "MyOrg"
+```
+
+### Fork Workflow Examples
+
+**First-time Fork Setup:**
+```bash
+❯ gh sherpa create-branch -i 32 --fork
+=> Detecting repository setup...
+=> No fork detected. Creating fork danielfn/gh-sherpa...
+✓ Fork created successfully
+=> Setting up remotes (origin: fork, upstream: original)...
+=> Setting default repository to upstream...
+=> Fetching branches from fork...
+=> Creating branch bugfix/GH-32-fix-link-to-cla...
+✓ Ready to start working on issue #32!
+```
+
+**Subsequent Usage:**
+```bash
+❯ gh sherpa create-branch -i 45 --fork
+=> Fork already configured, creating branch...
+=> Creating branch feature/GH-45-new-feature...
+✓ Ready to start working on issue #45!
+```
+
+### What the `--fork` flag does:
+
+1. **Detects repository state** - Checks if already in a fork setup
+2. **Creates fork if needed** - Runs `gh repo fork --remote` with user confirmation
+3. **Sets upstream as default** - Runs `gh repo set-default <upstream-repo>`
+4. **Fetches from fork** - Runs `git fetch origin` to sync branches
+5. **Proceeds with standard operation** - Creates branch/PR with correct remotes
