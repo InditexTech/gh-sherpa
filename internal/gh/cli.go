@@ -143,8 +143,11 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 		args = append(args, "-b", body)
 	}
 
-	for _, label := range labels {
-		args = append(args, "-l", label)
+	// Users with only read access cannot set labels
+	if !c.isInForkContext() {
+		for _, label := range labels {
+			args = append(args, "-l", label)
+		}
 	}
 
 	result, err := ExecuteStringResult(args)

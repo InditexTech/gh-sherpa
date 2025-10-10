@@ -153,7 +153,7 @@ func TestCli_CreatePullRequest_InForkContext(t *testing.T) {
 			originError:      nil,
 			upstreamResponse: "git@github.com:InditexTech/gh-sherpa.git\n",
 			upstreamError:    nil,
-			expectedArgs:     []string{"pr", "create", "-B", "main", "-H", "user:feature/test", "--repo", "InditexTech/gh-sherpa", "-d", "-t", "Test PR", "-b", "Test body", "-l", "enhancement", "-l", "fork"},
+			expectedArgs:     []string{"pr", "create", "-B", "main", "-H", "user:feature/test", "--repo", "InditexTech/gh-sherpa", "-d", "-t", "Test PR", "-b", "Test body"},
 			wantPrURL:        "https://github.com/InditexTech/gh-sherpa/pulls/1",
 			wantErr:          false,
 		},
