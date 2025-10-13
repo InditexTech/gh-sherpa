@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2025-10-13
+
+### Fixed
+
+- [#132](https://github.com/InditexTech/gh-sherpa/issues/132) Create Pull Request from fork fails when setting labels if you don't have permissions
+
 ## [1.4.0] - 2025-07-24
 
 ### Added
