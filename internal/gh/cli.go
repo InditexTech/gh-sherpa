@@ -143,9 +143,8 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 		args = append(args, "-b", body)
 	}
 
-	for _, label := range labels {
-		args = append(args, "-l", label)
-	}
+	// Add labels if not in fork context
+	args = c.addLabelsToArgs(args, labels)
 
 	result, err := ExecuteStringResult(args)
 
@@ -372,4 +371,15 @@ func (c *Cli) formatHeadBranchForFork(headBranch string) (string, error) {
 	}
 
 	return headBranch, nil
+}
+
+// addLabelsToArgs adds labels to the command arguments if not in fork context
+// Users with only read access cannot set labels
+func (c *Cli) addLabelsToArgs(args []string, labels []string) []string {
+	if !c.isInForkContext() {
+		for _, label := range labels {
+			args = append(args, "-l", label)
+		}
+	}
+	return args
 }
