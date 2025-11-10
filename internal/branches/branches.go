@@ -19,6 +19,7 @@ type BranchProvider struct {
 type Configuration struct {
 	config.Branches
 	IsInteractive bool
+	PreferHotfix  bool
 }
 
 func NewFromConfiguration(globalConfig config.Configuration, userInteractionProvider domain.UserInteractionProvider, isInteractive bool) (*BranchProvider, error) {

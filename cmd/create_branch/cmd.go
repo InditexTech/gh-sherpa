@@ -34,6 +34,7 @@ type createBranchFlags struct {
 	UseDefaultValues bool
 	ForkValue        bool
 	ForkNameValue    string
+	PreferHotfix     bool
 }
 
 var flags = createBranchFlags{}
@@ -51,6 +52,7 @@ func init() {
 	Command.PersistentFlags().BoolVar(&flags.NoFetchValue, "no-fetch", false, "does not fetch the base branch")
 	Command.PersistentFlags().BoolVar(&flags.ForkValue, "fork", false, "automatically set up fork for external contributors")
 	Command.PersistentFlags().StringVar(&flags.ForkNameValue, "fork-name", "", "specify custom fork organization/user (e.g. MyOrg/gh-sherpa)")
+	Command.PersistentFlags().BoolVar(&flags.PreferHotfix, "prefer-hotfix", false, "prefer hotfix branch prefix for bug issues when using non-interactive mode")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) (err error) {
@@ -78,6 +80,7 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	branchProviderCfg := branches.Configuration{
 		Branches:      cfg.Branches,
 		IsInteractive: isInteractive,
+		PreferHotfix:  flags.PreferHotfix,
 	}
 	branchProvider, err := branches.New(branchProviderCfg, userInteraction)
 	if err != nil {

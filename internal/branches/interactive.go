@@ -45,10 +45,15 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 		issueSlug = normalizeBranch(issueSlug)
 
 	} else {
-		// remap bug to bugfix
+		// remap bug to bugfix or hotfix based on PreferHotfix flag
 		if issueType == issue_types.Bug {
-			branchType = b.getBugFixBranchType()
-			issueType = issue_types.Bugfix
+			if b.cfg.PreferHotfix {
+				branchType = b.getHotfixBranchType()
+				issueType = issue_types.Hotfix
+			} else {
+				branchType = b.getBugFixBranchType()
+				issueType = issue_types.Bugfix
+			}
 		}
 
 		if !issueType.Valid() || issueType == issue_types.Other || issueType == issue_types.Unknown {
@@ -66,6 +71,16 @@ func (b BranchProvider) getBugFixBranchType() (branchType string) {
 		branchType = b.cfg.Prefixes[issue_types.Bugfix]
 	} else {
 		branchType = issue_types.Bugfix.String()
+	}
+
+	return branchType
+}
+
+func (b BranchProvider) getHotfixBranchType() (branchType string) {
+	if b.cfg.Prefixes[issue_types.Hotfix] != "" {
+		branchType = b.cfg.Prefixes[issue_types.Hotfix]
+	} else {
+		branchType = issue_types.Hotfix.String()
 	}
 
 	return branchType

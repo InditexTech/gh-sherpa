@@ -158,6 +158,41 @@ func (s *BranchTestSuite) TestGetBranchName() {
 		s.ErrorIs(err, ErrUndeterminedIssueType)
 		s.Empty(branchName)
 	})
+
+	s.Run("should return hotfix branch name when prefer-hotfix flag is set", func() {
+		expectedBrachName := "hotfix/GH-1-fake-title"
+
+		s.b.cfg.PreferHotfix = true
+		s.b.cfg.Prefixes[issue_types.Hotfix] = "hotfix"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return bugfix branch name when prefer-hotfix flag is not set", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title"
+
+		s.b.cfg.PreferHotfix = false
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should use default hotfix prefix when prefer-hotfix is set and no prefix override", func() {
+		expectedBrachName := "hotfix/GH-1-fake-title"
+
+		s.b.cfg.PreferHotfix = true
+		s.b.cfg.Prefixes = map[issue_types.IssueType]string{}
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
 }
 
 func TestParseIssueContext(t *testing.T) {
