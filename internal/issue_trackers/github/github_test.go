@@ -46,7 +46,7 @@ func (f *fakeCli) resetLabels() {
 
 func (f *fakeCli) addIssueTypeLabel(issueType issue_types.IssueType) {
 	f.issue.Labels = append(f.issue.Labels, Label{
-		Id:          len(issueType),
+		Id:          int64(len(issueType)),
 		Name:        fmt.Sprintf("kind/%s", issueType),
 		Description: fmt.Sprintf("%s kind label", issueType),
 	})
