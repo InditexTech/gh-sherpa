@@ -32,7 +32,7 @@ type patRequestBody struct {
 }
 
 type patResponseBody struct {
-	Id         int    `json:"id,omitempty" structs:"id,omitempty"`
+	Id         int64  `json:"id,omitempty" structs:"id,omitempty"`
 	Name       string `json:"name,omitempty" structs:"name,omitempty"`
 	CreatedAt  string `json:"createdAt,omitempty" structs:"createdAt,omitempty"`
 	ExpiringAt string `json:"expiringAt,omitempty" structs:"expiringAt,omitempty"`
