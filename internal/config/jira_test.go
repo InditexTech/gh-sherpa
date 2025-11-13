@@ -66,7 +66,7 @@ func TestPatResponseBody_Int64Support(t *testing.T) {
 
 func TestPatResponseBody_UnmarshalLargeValues(t *testing.T) {
 	// This test specifically ensures we don't get the original error:
-	// "json: cannot unmarshal number 7486581160 into Go struct field Label.Labels.Id of type int"
+	// "json: cannot unmarshal number 7486581160 into Go struct field patResponseBody.Id of type int"
 
 	largeIdJSON := `{
 		"id": 7486581160,
