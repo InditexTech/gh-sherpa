@@ -2,7 +2,7 @@ package domain
 
 type PullRequest struct {
 	Title       string
-	Number      int
+	Number      int64
 	State       string
 	Closed      bool
 	Url         string

@@ -1,6 +1,7 @@
 package github
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 	"github.com/InditexTech/gh-sherpa/internal/gh"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -46,7 +48,7 @@ func (f *fakeCli) resetLabels() {
 
 func (f *fakeCli) addIssueTypeLabel(issueType issue_types.IssueType) {
 	f.issue.Labels = append(f.issue.Labels, Label{
-		Id:          len(issueType),
+		Id:          int64(len(issueType)),
 		Name:        fmt.Sprintf("kind/%s", issueType),
 		Description: fmt.Sprintf("%s kind label", issueType),
 	})
@@ -279,4 +281,127 @@ func TestGithub_FormatIssueId(t *testing.T) {
 			assert.Equalf(t, tt.wantIssueId, tt.args.issue.FormatID(), "FormatIssueId(%v)", tt.args.issue.ID())
 		})
 	}
+}
+
+func TestLabel_Int64Support(t *testing.T) {
+	tests := []struct {
+		name     string
+		labelId  int64
+		wantType string
+	}{
+		{
+			name:     "Label ID within int32 range",
+			labelId:  1234567890,
+			wantType: "int64",
+		},
+		{
+			name:     "Label ID exceeding int32 max (2147483647)",
+			labelId:  7486581160,
+			wantType: "int64",
+		},
+		{
+			name:     "Label ID at int32 boundary",
+			labelId:  2147483647,
+			wantType: "int64",
+		},
+		{
+			name:     "Label ID just above int32 boundary",
+			labelId:  2147483648,
+			wantType: "int64",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			label := Label{
+				Id:          tt.labelId,
+				Name:        "test-label",
+				Description: "test description",
+				Color:       "#ffffff",
+			}
+
+			// Verify the label ID is stored correctly as int64
+			assert.Equal(t, tt.labelId, label.Id)
+
+			// Verify the type is int64 using reflection
+			labelType := fmt.Sprintf("%T", label.Id)
+			assert.Equal(t, tt.wantType, labelType)
+		})
+	}
+}
+
+func TestLabel_UnmarshalLargeValues(t *testing.T) {
+	// This test specifically ensures we don't get the original error:
+	// "json: cannot unmarshal number 7486581160 into Go struct field Label.Labels.Id of type int"
+
+	tests := []struct {
+		name        string
+		jsonPayload string
+		expectedId  int64
+		description string
+	}{
+		{
+			name:        "Single label with large ID",
+			jsonPayload: `{"Id": 7486581160, "Name": "kind/bug", "Description": "Bug label", "Color": "d73a4a"}`,
+			expectedId:  7486581160,
+			description: "Real-world large label ID that caused the original bug",
+		},
+		{
+			name:        "Label ID at int32 max",
+			jsonPayload: `{"Id": 2147483647, "Name": "kind/feature", "Description": "Feature label", "Color": "a2eeef"}`,
+			expectedId:  2147483647,
+			description: "Label ID at maximum int32 value",
+		},
+		{
+			name:        "Label ID just above int32 max",
+			jsonPayload: `{"Id": 2147483648, "Name": "kind/enhancement", "Description": "Enhancement label", "Color": "84b6eb"}`,
+			expectedId:  2147483648,
+			description: "Label ID one above int32 max",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var label Label
+
+			err := json.Unmarshal([]byte(tt.jsonPayload), &label)
+			require.NoError(t, err, "Should unmarshal JSON without error: %s", tt.description)
+
+			assert.Equal(t, tt.expectedId, label.Id, tt.description)
+		})
+	}
+}
+
+func TestGhIssue_UnmarshalWithLargeLabelIds(t *testing.T) {
+	// Test that ghIssue can unmarshal issues with labels that have large IDs
+	issueJSON := `{
+		"Number": 12345,
+		"Title": "Test Issue",
+		"Body": "Issue body",
+		"Url": "https://github.com/example/repo/issues/12345",
+		"Labels": [
+			{
+				"Id": 7486581160,
+				"Name": "kind/bug",
+				"Description": "Bug label",
+				"Color": "d73a4a"
+			},
+			{
+				"Id": 2147483648,
+				"Name": "kind/feature",
+				"Description": "Feature label",
+				"Color": "a2eeef"
+			}
+		]
+	}`
+
+	var issue ghIssue
+	err := json.Unmarshal([]byte(issueJSON), &issue)
+
+	require.NoError(t, err, "Should unmarshal GitHub issue with large label IDs without error")
+	assert.Equal(t, int64(12345), issue.Number)
+	assert.Equal(t, "Test Issue", issue.Title)
+	require.Len(t, issue.Labels, 2)
+	assert.Equal(t, int64(7486581160), issue.Labels[0].Id)
+	assert.Equal(t, int64(2147483648), issue.Labels[1].Id)
 }

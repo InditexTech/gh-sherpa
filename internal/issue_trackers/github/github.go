@@ -51,7 +51,7 @@ func (i ghIssue) isPullRequest() bool {
 type ghPullRequest map[string]any
 
 type Label struct {
-	Id          int
+	Id          int64
 	Name        string
 	Description string
 	Color       string
