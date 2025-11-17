@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2025-11-17
+
+## Added
+- [#138](https://github.com/InditexTech/gh-sherpa/issues/138) Allow to prefer hotfix branch when creating from a bug report issue with -y
+
+### Fixed
+
+- [#142](https://github.com/InditexTech/gh-sherpa/issues/142) Integer overflow error when unmarshaling GitHub API responses with large Label IDs
+
 ## [1.4.1] - 2025-10-13
 
 ### Fixed
@@ -105,6 +114,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
 [Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.3.1...main
+[1.5.0]: https://github.com/InditexTech/gh-sherpa/compare/1.4.1...1.5.0
+[1.4.1]: https://github.com/InditexTech/gh-sherpa/compare/1.4.0...1.4.1
+[1.4.0]: https://github.com/InditexTech/gh-sherpa/compare/1.3.1...1.4.0
 [1.3.1]: https://github.com/InditexTech/gh-sherpa/compare/1.3.0...1.3.1
 [1.3.0]: https://github.com/InditexTech/gh-sherpa/compare/1.2.0...1.3.0
 [1.2.0]: https://github.com/InditexTech/gh-sherpa/compare/1.1.1...1.2.0
