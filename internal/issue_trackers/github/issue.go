@@ -50,3 +50,12 @@ func (i Issue) TrackerType() domain.IssueTrackerType {
 func (i Issue) Type() issue_types.IssueType {
 	return i.issueType
 }
+
+func (i Issue) HasLabel(labelName string) bool {
+	for _, label := range i.labels {
+		if label.Name == labelName {
+			return true
+		}
+	}
+	return false
+}

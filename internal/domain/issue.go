@@ -11,4 +11,5 @@ type Issue interface {
 	TypeLabel() string
 	TrackerType() IssueTrackerType
 	Type() issue_types.IssueType
+	HasLabel(labelName string) bool
 }

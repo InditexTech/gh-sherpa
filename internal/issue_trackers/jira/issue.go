@@ -54,3 +54,9 @@ func (i Issue) TypeLabel() string {
 func (i Issue) URL() string {
 	return i.url
 }
+
+func (i Issue) HasLabel(labelName string) bool {
+	// Jira issues don't have labels in the same way GitHub does
+	// This method always returns false for Jira issues
+	return false
+}

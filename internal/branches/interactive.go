@@ -45,12 +45,17 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 		issueSlug = normalizeBranch(issueSlug)
 
 	} else {
-		// remap bug to bugfix or hotfix based on PreferHotfix flag
-		if issueType == issue_types.Bug {
-			if b.cfg.PreferHotfix {
+		// Check for kind/bug label to determine if prefer-hotfix should apply
+		// This works regardless of the issue's determined type or label position
+		hasBugLabel := issue.HasLabel("kind/bug")
+		
+		if hasBugLabel || issueType == issue_types.Bug || issueType == issue_types.Bugfix {
+			if b.cfg.PreferHotfix && hasBugLabel {
+				// If prefer-hotfix is enabled and kind/bug label is present, use hotfix
 				branchType = b.getHotfixBranchType()
 				issueType = issue_types.Hotfix
 			} else {
+				// Otherwise use bugfix
 				branchType = b.getBugFixBranchType()
 				issueType = issue_types.Bugfix
 			}

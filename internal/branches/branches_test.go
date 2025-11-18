@@ -162,6 +162,7 @@ func (s *BranchTestSuite) TestGetBranchName() {
 	s.Run("should return hotfix branch name when prefer-hotfix flag is set", func() {
 		expectedBrachName := "hotfix/GH-1-fake-title"
 
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/bug"})
 		s.b.cfg.PreferHotfix = true
 		s.b.cfg.Prefixes[issue_types.Hotfix] = "hotfix"
 
@@ -185,8 +186,98 @@ func (s *BranchTestSuite) TestGetBranchName() {
 	s.Run("should use default hotfix prefix when prefer-hotfix is set and no prefix override", func() {
 		expectedBrachName := "hotfix/GH-1-fake-title"
 
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/bug"})
 		s.b.cfg.PreferHotfix = true
 		s.b.cfg.Prefixes = map[issue_types.IssueType]string{}
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return hotfix branch name when prefer-hotfix flag is set with issue type Bugfix", func() {
+		expectedBrachName := "hotfix/GH-1-fake-title"
+
+		s.fakeIssue.SetType(issue_types.Bugfix)
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/bug"})
+		s.b.cfg.PreferHotfix = true
+		s.b.cfg.Prefixes[issue_types.Hotfix] = "hotfix"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return bugfix branch name when prefer-hotfix flag is not set with issue type Bugfix", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title"
+
+		s.fakeIssue.SetType(issue_types.Bugfix)
+		s.b.cfg.PreferHotfix = false
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should use default hotfix prefix when prefer-hotfix is set with issue type Bugfix and no prefix override", func() {
+		expectedBrachName := "hotfix/GH-1-fake-title"
+
+		s.fakeIssue.SetType(issue_types.Bugfix)
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/bug"})
+		s.b.cfg.PreferHotfix = true
+		s.b.cfg.Prefixes = map[issue_types.IssueType]string{}
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return hotfix when prefer-hotfix is set and issue has kind/bug label (mapped to Bugfix type)", func() {
+		expectedBrachName := "hotfix/GH-1-fake-title"
+
+		// Simulate a GitHub issue with kind/bug label (which maps to Bugfix type in config)
+		s.fakeIssue.SetType(issue_types.Bugfix)
+		s.fakeIssue.SetTypeLabel("kind/bug")
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/bug"})
+		s.b.cfg.PreferHotfix = true
+		s.b.cfg.Prefixes[issue_types.Hotfix] = "hotfix"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return hotfix when prefer-hotfix is set and kind/bug label is in any position", func() {
+		expectedBrachName := "hotfix/GH-1-fake-title"
+
+		// Simulate issue with multiple labels where kind/bug is NOT first
+		s.fakeIssue.SetType(issue_types.Feature) // Type detected as Feature
+		s.fakeIssue.SetTypeLabel("kind/feature")
+		s.fakeIssue.AddLabel(domain.Label{Name: "priority/high"})
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/feature"})
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/bug"}) // Bug label in 3rd position
+		s.b.cfg.PreferHotfix = true
+		s.b.cfg.Prefixes[issue_types.Hotfix] = "hotfix"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal(expectedBrachName, branchName)
+	})
+
+	s.Run("should return bugfix when kind/bug label present but prefer-hotfix is not set", func() {
+		expectedBrachName := "bugfix/GH-1-fake-title"
+
+		// Issue has kind/bug but prefer-hotfix is false
+		s.fakeIssue.SetType(issue_types.Feature)
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/feature"})
+		s.fakeIssue.AddLabel(domain.Label{Name: "kind/bug"})
+		s.b.cfg.PreferHotfix = false
 
 		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
 
