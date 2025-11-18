@@ -169,6 +169,25 @@ func (s *GithubTestSuite) TestGetIssue() {
 		s.Equal("kind/bug", issue.TypeLabel())
 	})
 
+	s.Run("should return bug issue when kind/bug is present with other labels", func() {
+		s.fakeCli.resetLabels()
+		// Add multiple labels - kind/bug should be detected regardless of other labels
+		s.fakeCli.issue.Labels = append(s.fakeCli.issue.Labels, Label{
+			Id:          10,
+			Name:        "priority/high",
+			Description: "high priority",
+			Color:       "#ff0000",
+		})
+		s.fakeCli.addIssueTypeLabel(issue_types.Bug)
+
+		issue, err := s.github.GetIssue(s.defaultIssueID)
+
+		s.NoError(err)
+		s.Require().NotNil(issue)
+		s.Equal(issue_types.Bug, issue.Type())
+		s.Equal("kind/bug", issue.TypeLabel())
+	})
+
 	s.Run("should return unknown issue if no label is present", func() {
 		s.fakeCli.resetLabels()
 
