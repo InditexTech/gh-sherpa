@@ -35,6 +35,8 @@ type createBranchFlags struct {
 	ForkValue        bool
 	ForkNameValue    string
 	PreferHotfix     bool
+	UseWorktree      bool
+	WorktreePath     string
 }
 
 var flags = createBranchFlags{}
@@ -53,6 +55,8 @@ func init() {
 	Command.PersistentFlags().BoolVar(&flags.ForkValue, "fork", false, "automatically set up fork for external contributors")
 	Command.PersistentFlags().StringVar(&flags.ForkNameValue, "fork-name", "", "specify custom fork organization/user (e.g. MyOrg/gh-sherpa)")
 	Command.PersistentFlags().BoolVar(&flags.PreferHotfix, "prefer-hotfix", false, "prefer hotfix branch prefix for bug issues when using non-interactive mode")
+	Command.PersistentFlags().BoolVar(&flags.UseWorktree, "worktree", false, "create branch in a new git worktree")
+	Command.PersistentFlags().StringVar(&flags.WorktreePath, "worktree-path", "", "path for worktree (default: ../repo-branch)")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) (err error) {
@@ -92,6 +96,8 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		BaseBranch:      flags.BaseValue,
 		FetchFromOrigin: !flags.NoFetchValue,
 		IsInteractive:   isInteractive,
+		UseWorktree:     flags.UseWorktree,
+		WorktreePath:    flags.WorktreePath,
 	}
 	createBranch := use_cases.CreateBranch{
 		Cfg:                     createBranchConfig,

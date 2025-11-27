@@ -17,6 +17,7 @@ type FakeGitProvider struct {
 	CommitsToPush         map[string][]string
 	BranchWithCommitError []string
 	BranchWithPushError   []string
+	Worktrees             []domain.Worktree
 }
 
 var _ domain.GitProvider = (*FakeGitProvider)(nil)
@@ -164,4 +165,48 @@ func (f *FakeGitProvider) GetRepositoryRoot() (rootPath string, err error) {
 		return "", err
 	}
 	return dir, nil
+}
+
+func (f *FakeGitProvider) CreateWorktree(path string, branch string, base string) (err error) {
+	idx := slices.Index(f.RemoteBranches, base)
+	if idx == -1 {
+		return fmt.Errorf("remote branch %s not found", base)
+	}
+
+	// Check if worktree already exists at path
+	for _, wt := range f.Worktrees {
+		if wt.Path == path {
+			return fmt.Errorf("worktree already exists at %s", path)
+		}
+		if wt.Branch == branch {
+			return fmt.Errorf("branch %s is already checked out in worktree %s", branch, wt.Path)
+		}
+	}
+
+	// Add branch to local branches
+	f.LocalBranches = append(f.LocalBranches, branch)
+
+	// Create worktree
+	f.Worktrees = append(f.Worktrees, domain.Worktree{
+		Path:     path,
+		Branch:   branch,
+		Commit:   "fake-commit-hash",
+		Prunable: false,
+	})
+
+	return nil
+}
+
+func (f *FakeGitProvider) ListWorktrees() (worktrees []domain.Worktree, err error) {
+	return f.Worktrees, nil
+}
+
+func (f *FakeGitProvider) RemoveWorktree(path string) (err error) {
+	for i, wt := range f.Worktrees {
+		if wt.Path == path {
+			f.Worktrees = append(f.Worktrees[:i], f.Worktrees[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("worktree not found at %s", path)
 }

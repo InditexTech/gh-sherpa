@@ -229,3 +229,84 @@ func (p *Provider) hasUpstreamRemote() bool {
 	_, err := runGitCommand(args...)
 	return err == nil
 }
+
+func (p *Provider) CreateWorktree(path string, branch string, base string) (err error) {
+	// Check if we're in a fork context (upstream remote exists)
+	remote := "origin"
+	if p.hasUpstreamRemote() {
+		remote = "upstream"
+	}
+
+	// git worktree add <path> -b <branch> <remote>/<base>
+	args := []string{"worktree", "add", path, "-b", branch, remote + "/" + base}
+
+	_, err = runGitCommand(args...)
+
+	if err != nil {
+		err = fmt.Errorf("failed to create worktree.\n\nDetails:\n%s", err)
+		return
+	}
+
+	return
+}
+
+func (p *Provider) ListWorktrees() (worktrees []domain.Worktree, err error) {
+	// git worktree list --porcelain
+	args := []string{"worktree", "list", "--porcelain"}
+
+	out, err := runGitCommand(args...)
+	if err != nil {
+		err = fmt.Errorf("failed to list worktrees.\n\nDetails:\n%s", err)
+		return
+	}
+
+	if os.Getenv(DRY_RUN_ENV) != "" {
+		return worktrees, nil
+	}
+
+	// Parse porcelain output
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	var current domain.Worktree
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			if current.Path != "" {
+				worktrees = append(worktrees, current)
+				current = domain.Worktree{}
+			}
+			continue
+		}
+
+		if strings.HasPrefix(line, "worktree ") {
+			current.Path = strings.TrimPrefix(line, "worktree ")
+		} else if strings.HasPrefix(line, "branch ") {
+			current.Branch = strings.TrimPrefix(line, "branch ")
+		} else if strings.HasPrefix(line, "HEAD ") {
+			current.Commit = strings.TrimPrefix(line, "HEAD ")
+		} else if line == "prunable" {
+			current.Prunable = true
+		}
+	}
+
+	// Add the last worktree if exists
+	if current.Path != "" {
+		worktrees = append(worktrees, current)
+	}
+
+	return
+}
+
+func (p *Provider) RemoveWorktree(path string) (err error) {
+	// git worktree remove <path>
+	args := []string{"worktree", "remove", path}
+
+	_, err = runGitCommand(args...)
+
+	if err != nil {
+		err = fmt.Errorf("failed to remove worktree.\n\nDetails:\n%s", err)
+		return
+	}
+
+	return
+}

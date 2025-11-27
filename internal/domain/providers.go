@@ -27,6 +27,9 @@ type GitProvider interface {
 	CommitEmpty(message string) (err error)
 	PushBranch(branch string) (err error)
 	GetRepositoryRoot() (rootPath string, err error)
+	CreateWorktree(path string, branch string, base string) (err error)
+	ListWorktrees() (worktrees []Worktree, err error)
+	RemoveWorktree(path string) (err error)
 }
 
 type BranchProvider interface {
