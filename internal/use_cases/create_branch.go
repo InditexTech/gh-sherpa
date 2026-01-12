@@ -118,8 +118,8 @@ func (cb CreateBranch) createWorktreeBranch(branchName string, baseBranch string
 		return err
 	}
 
-	fmt.Printf("A local branch named %s has been created in worktree %s!\n", 
-		logging.PaintInfo(branchName), 
+	fmt.Printf("A local branch named %s has been created in worktree %s!\n",
+		logging.PaintInfo(branchName),
 		logging.PaintInfo(worktreePath))
 
 	return nil

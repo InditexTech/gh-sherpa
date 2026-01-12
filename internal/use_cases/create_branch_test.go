@@ -318,7 +318,7 @@ func (s *CreateBranchWorktreeTestSuite) TestCreateBranchWithWorktree() {
 
 		s.NoError(err)
 		s.True(s.gitProvider.BranchExists("feature/GH-1-sample-issue"))
-		
+
 		worktrees, _ := s.gitProvider.ListWorktrees()
 		s.Len(worktrees, 1)
 		s.Equal("feature/GH-1-sample-issue", worktrees[0].Branch)
@@ -332,7 +332,7 @@ func (s *CreateBranchWorktreeTestSuite) TestCreateBranchWithWorktree() {
 		err := s.uc.Execute()
 
 		s.NoError(err)
-		
+
 		worktrees, _ := s.gitProvider.ListWorktrees()
 		s.Len(worktrees, 1)
 		s.Equal("/custom/path/my-worktree", worktrees[0].Path)
