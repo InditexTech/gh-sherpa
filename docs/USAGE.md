@@ -45,6 +45,8 @@ gh sherpa create-branch, cb [flags]
 * `--fork`: Automatically set up fork for external contributors.
 * `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
 * `--prefer-hotfix`: Prefer hotfix branch prefix for bug issues when using non-interactive mode (`-y`).
+* `--worktree`: Create branch in a new git worktree instead of checking out in current repository.
+* `--worktree-path`: Custom path for the worktree (default: `../repo-branch`).
 
 ### Possible scenarios
 
@@ -85,6 +87,28 @@ gh sherpa create-branch --issue 32 --fork
 # Custom fork organization
 gh sherpa create-branch --issue 45 --fork --fork-name MyOrg/gh-sherpa
 ```
+
+#### Create a branch in a git worktree
+
+Git worktrees allow you to work on multiple branches simultaneously in separate directories without switching branches in the main repository.
+
+```sh
+# Create branch in a new worktree with default path (../repo-branch)
+gh sherpa create-branch --issue 17 --worktree
+
+# Create branch in a worktree with custom path
+gh sherpa create-branch --issue 17 --worktree --worktree-path /path/to/worktrees/issue-17
+
+# Combine with other flags
+gh sherpa create-branch --issue 17 --worktree --base develop --yes
+```
+
+**Benefits of using worktrees:**
+
+* Work on multiple issues simultaneously without switching contexts
+* Each issue gets its own isolated working directory
+* Avoid accidentally committing changes to the wrong branch
+* Continue testing one feature while starting work on another
 
 ## Create pull request
 

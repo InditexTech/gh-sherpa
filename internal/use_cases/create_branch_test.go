@@ -267,3 +267,110 @@ func (s *CreateJiraBranchExecutionTestSuite) initializeUserInteractionProvider()
 
 	return userInteractionProvider
 }
+
+func TestCreateBranchWithWorktree(t *testing.T) {
+	suite.Run(t, new(CreateBranchWorktreeTestSuite))
+}
+
+type CreateBranchWorktreeTestSuite struct {
+	suite.Suite
+	gitProvider             *domainFakes.FakeGitProvider
+	issueTrackerProvider    *domainFakes.FakeIssueTrackerProvider
+	userInteractionProvider *domainMocks.MockUserInteractionProvider
+	branchProvider          *domainFakes.FakeBranchProvider
+	repositoryProvider      *domainFakes.FakeRepositoryProvider
+	uc                      use_cases.CreateBranch
+}
+
+func (s *CreateBranchWorktreeTestSuite) SetupTest() {
+	s.gitProvider = domainFakes.NewFakeGitProvider()
+
+	s.issueTrackerProvider = domainFakes.NewFakeIssueTrackerProvider()
+	issue1 := domainFakes.NewFakeIssue("1", issue_types.Feature, domain.IssueTrackerTypeGithub)
+	s.issueTrackerProvider.AddIssue(issue1)
+
+	s.userInteractionProvider = &domainMocks.MockUserInteractionProvider{}
+	s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
+
+	s.branchProvider = domainFakes.NewFakeBranchProvider()
+	s.branchProvider.SetBranchName("feature/GH-1-sample-issue")
+
+	s.repositoryProvider = domainFakes.NewRepositoryProvider()
+
+	s.uc = use_cases.CreateBranch{
+		Cfg: use_cases.CreateBranchConfiguration{
+			IssueID:         "1",
+			FetchFromOrigin: true,
+			IsInteractive:   false,
+			UseWorktree:     true,
+		},
+		Git:                     s.gitProvider,
+		IssueTrackerProvider:    s.issueTrackerProvider,
+		UserInteractionProvider: s.userInteractionProvider,
+		BranchProvider:          s.branchProvider,
+		RepositoryProvider:      s.repositoryProvider,
+	}
+}
+
+func (s *CreateBranchWorktreeTestSuite) TestCreateBranchWithWorktree() {
+	s.Run("should create worktree with default path", func() {
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.True(s.gitProvider.BranchExists("feature/GH-1-sample-issue"))
+
+		worktrees, _ := s.gitProvider.ListWorktrees()
+		s.Len(worktrees, 1)
+		s.Equal("feature/GH-1-sample-issue", worktrees[0].Branch)
+		s.Contains(worktrees[0].Path, "gh-sherpa-feature/GH-1-sample-issue")
+	})
+
+	s.Run("should create worktree with custom path", func() {
+		s.uc.Cfg.WorktreePath = "/custom/path/my-worktree"
+		s.branchProvider.SetBranchName("feature/GH-1-custom")
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+
+		worktrees, _ := s.gitProvider.ListWorktrees()
+		s.Len(worktrees, 1)
+		s.Equal("/custom/path/my-worktree", worktrees[0].Path)
+		s.Equal("feature/GH-1-custom", worktrees[0].Branch)
+	})
+
+	s.Run("should error if branch already exists", func() {
+		s.gitProvider.AddLocalBranches("feature/GH-1-existing")
+		s.branchProvider.SetBranchName("feature/GH-1-existing")
+
+		err := s.uc.Execute()
+
+		s.ErrorContains(err, "a local branch with the name feature/GH-1-existing already exists")
+	})
+
+	s.Run("should fetch from origin before creating worktree", func() {
+		s.gitProvider.ResetRemoteBranches()
+		s.gitProvider.AddRemoteBranches("main")
+		s.branchProvider.SetBranchName("feature/GH-1-fetch-test")
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		// Verify branch was created in worktree
+		worktrees, _ := s.gitProvider.ListWorktrees()
+		s.Len(worktrees, 1)
+		s.Equal("feature/GH-1-fetch-test", worktrees[0].Branch)
+	})
+
+	s.Run("should not fetch if no-fetch is set", func() {
+		s.uc.Cfg.FetchFromOrigin = false
+		s.branchProvider.SetBranchName("feature/GH-1-no-fetch")
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		worktrees, _ := s.gitProvider.ListWorktrees()
+		s.Len(worktrees, 1)
+		s.Equal("feature/GH-1-no-fetch", worktrees[0].Branch)
+	})
+}
