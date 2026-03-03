@@ -15,6 +15,7 @@ type FakeIssue struct {
 	issueType        issue_types.IssueType
 	issueTrackerType domain.IssueTrackerType
 	typeLabel        string
+	labels           []domain.Label
 }
 
 var _ domain.Issue = (*FakeIssue)(nil)
@@ -29,6 +30,10 @@ func (f *FakeIssue) SetType(issueType issue_types.IssueType) {
 
 func (f *FakeIssue) SetTypeLabel(label string) {
 	f.typeLabel = label
+}
+
+func (f *FakeIssue) AddLabel(label domain.Label) {
+	f.labels = append(f.labels, label)
 }
 
 func NewFakeIssue(id string, issueType issue_types.IssueType, issueTrackerType domain.IssueTrackerType) *FakeIssue {
@@ -77,4 +82,13 @@ func (f *FakeIssue) Title() string {
 
 func (f *FakeIssue) URL() string {
 	return f.url
+}
+
+func (f *FakeIssue) HasLabel(labelName string) bool {
+	for _, label := range f.labels {
+		if label.Name == labelName {
+			return true
+		}
+	}
+	return false
 }

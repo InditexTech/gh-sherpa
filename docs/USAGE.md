@@ -44,7 +44,7 @@ gh sherpa create-branch, cb [flags]
 * `--yes, -y`: The branch will be created without confirmation.
 * `--fork`: Automatically set up fork for external contributors.
 * `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
-* `--prefer-hotfix`: Prefer hotfix branch prefix for bug issues when using non-interactive mode (`-y`).
+* `--prefer-hotfix`: Prefer hotfix branch prefix for bug issues when using non-interactive mode (`-y`). For GitHub issues, this flag checks if the `kind/bug` label is present **anywhere** in the issue's label list (not just as the first or primary label). When found, it creates a `hotfix/` branch instead of `bugfix/`, regardless of the issue's detected type or other labels present.
 
 ### Possible scenarios
 
@@ -72,8 +72,15 @@ gh sherpa create-branch --issue SHERPA-31 --base release/1.3.5 --no-fetch
 
 #### Create a hotfix branch from a bug issue without confirmation
 
+When using `--prefer-hotfix`, the tool scans **all labels** on the issue looking for `kind/bug`. If found anywhere in the label list, the branch will be created with a `hotfix/` prefix instead of the default `bugfix/` prefix. This works even if `kind/bug` is not the first label or if other type labels (like `kind/feature`, `kind/internal`) are also present.
+
 ```sh
+# For a GitHub issue #17 with kind/bug label (in any position)
+# Creates: hotfix/GH-17-issue-description
 gh sherpa create-branch --issue 17 --yes --prefer-hotfix
+
+# Works even if the issue has multiple labels like:
+# ["priority/high", "kind/feature", "kind/bug", "component/api"]
 ```
 
 #### Create a branch with automatic fork setup for external contributors
@@ -107,7 +114,7 @@ gh sherpa create-pr, cpr [flags]
 * `--template`: Path to a pull request template file
 * `--fork`: Automatically set up fork for external contributors.
 * `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
-* `--prefer-hotfix`: Prefer hotfix branch prefix for bug issues when using non-interactive mode (`-y`).
+* `--prefer-hotfix`: Prefer hotfix branch prefix for bug issues when using non-interactive mode (`-y`). For GitHub issues, this flag checks if the `kind/bug` label is present **anywhere** in the issue's label list (not just as the first or primary label). When found, it creates a `hotfix/` branch instead of `bugfix/`, regardless of the issue's detected type or other labels present.
 
 ### Possible scenarios
 
@@ -159,8 +166,15 @@ gh sherpa create-pr --issue 750 --no-close-issue
 
 #### Create a hotfix pull request from a bug issue without confirmation
 
+When using `--prefer-hotfix`, the tool scans **all labels** on the issue looking for `kind/bug`. If found anywhere in the label list, the branch and pull request will be created with a `hotfix/` prefix instead of the default `bugfix/` prefix. This works even if `kind/bug` is not the first label or if other type labels are also present.
+
 ```sh
+# For a GitHub issue #750 with kind/bug label (in any position)
+# Creates: hotfix/GH-750-issue-description
 gh sherpa create-pr --issue 750 --yes --prefer-hotfix
+
+# Works even if the issue has multiple labels like:
+# ["priority/high", "kind/feature", "kind/bug", "component/api"]
 ```
 
 #### Create a pull request with automatic fork setup for external contributors
