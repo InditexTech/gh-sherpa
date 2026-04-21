@@ -242,7 +242,14 @@ func (cpr *CreatePullRequest) extractIssueIdFromBranch(currentBranch string) (st
 }
 
 func (cpr *CreatePullRequest) createEmptyCommit() error {
-	return cpr.Git.CommitEmpty("chore: initial commit")
+	if err := cpr.Git.CommitEmpty("chore: initial commit"); err != nil {
+		return err
+	}
+
+	// Remove AI-generated git notes to keep the commit clean
+	_ = cpr.Git.RemoveNotesRef("refs/notes/ai")
+
+	return nil
 }
 
 func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {

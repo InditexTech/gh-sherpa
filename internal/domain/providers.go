@@ -25,6 +25,7 @@ type GitProvider interface {
 	GetCommitsToPush(branch string) (commits []string, err error)
 	RemoteBranchExists(branch string) (exists bool)
 	CommitEmpty(message string) (err error)
+	RemoveNotesRef(ref string) error
 	PushBranch(branch string) (err error)
 	GetRepositoryRoot() (rootPath string, err error)
 }

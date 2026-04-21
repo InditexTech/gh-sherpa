@@ -469,6 +469,99 @@ func (_c *MockGitProvider_RemoteBranchExists_Call) RunAndReturn(run func(string)
 	return _c
 }
 
+// RemoveNotesRef provides a mock function with given fields: ref
+func (_m *MockGitProvider) RemoveNotesRef(ref string) error {
+	ret := _m.Called(ref)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(ref)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockGitProvider_RemoveNotesRef_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveNotesRef'
+type MockGitProvider_RemoveNotesRef_Call struct {
+	*mock.Call
+}
+
+// RemoveNotesRef is a helper method to define mock.On call
+//   - ref string
+func (_e *MockGitProvider_Expecter) RemoveNotesRef(ref interface{}) *MockGitProvider_RemoveNotesRef_Call {
+	return &MockGitProvider_RemoveNotesRef_Call{Call: _e.mock.On("RemoveNotesRef", ref)}
+}
+
+func (_c *MockGitProvider_RemoveNotesRef_Call) Run(run func(ref string)) *MockGitProvider_RemoveNotesRef_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockGitProvider_RemoveNotesRef_Call) Return(err error) *MockGitProvider_RemoveNotesRef_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockGitProvider_RemoveNotesRef_Call) RunAndReturn(run func(string) error) *MockGitProvider_RemoveNotesRef_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRepositoryRoot provides a mock function with given fields:
+func (_m *MockGitProvider) GetRepositoryRoot() (string, error) {
+	ret := _m.Called()
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (string, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGitProvider_GetRepositoryRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRepositoryRoot'
+type MockGitProvider_GetRepositoryRoot_Call struct {
+	*mock.Call
+}
+
+// GetRepositoryRoot is a helper method to define mock.On call
+func (_e *MockGitProvider_Expecter) GetRepositoryRoot() *MockGitProvider_GetRepositoryRoot_Call {
+	return &MockGitProvider_GetRepositoryRoot_Call{Call: _e.mock.On("GetRepositoryRoot")}
+}
+
+func (_c *MockGitProvider_GetRepositoryRoot_Call) Run(run func()) *MockGitProvider_GetRepositoryRoot_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockGitProvider_GetRepositoryRoot_Call) Return(rootPath string, err error) *MockGitProvider_GetRepositoryRoot_Call {
+	_c.Call.Return(rootPath, err)
+	return _c
+}
+
+func (_c *MockGitProvider_GetRepositoryRoot_Call) RunAndReturn(run func() (string, error)) *MockGitProvider_GetRepositoryRoot_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockGitProvider creates a new instance of MockGitProvider. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockGitProvider(t interface {

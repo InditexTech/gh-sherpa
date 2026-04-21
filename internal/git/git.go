@@ -190,6 +190,17 @@ func (p *Provider) CommitEmpty(message string) (err error) {
 	return
 }
 
+func (p *Provider) RemoveNotesRef(ref string) error {
+	args := []string{"notes", "--ref=" + ref, "remove", "HEAD"}
+
+	_, err := runGitCommand(args...)
+	if err != nil {
+		return fmt.Errorf("failed to remove git notes ref %s: %s", ref, err)
+	}
+
+	return nil
+}
+
 func (p *Provider) PushBranch(branch string) (err error) {
 	args := []string{"push", "-u", "origin", branch}
 

@@ -136,6 +136,10 @@ func (f *FakeGitProvider) CommitEmpty(message string) (err error) {
 	return nil
 }
 
+func (f *FakeGitProvider) RemoveNotesRef(ref string) error {
+	return nil
+}
+
 var ErrPushBranch = errors.New("error pushing branch")
 
 func (f *FakeGitProvider) PushBranch(branch string) (err error) {
