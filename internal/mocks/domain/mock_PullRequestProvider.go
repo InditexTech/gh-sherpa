@@ -20,23 +20,23 @@ func (_m *MockPullRequestProvider) EXPECT() *MockPullRequestProvider_Expecter {
 	return &MockPullRequestProvider_Expecter{mock: &_m.Mock}
 }
 
-// CreatePullRequest provides a mock function with given fields: title, body, baseBranch, headBranch, draft, labels
-func (_m *MockPullRequestProvider) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (string, error) {
-	ret := _m.Called(title, body, baseBranch, headBranch, draft, labels)
+// CreatePullRequest provides a mock function with given fields: title, body, baseBranch, headBranch, draft, labels, reviewers, assignees
+func (_m *MockPullRequestProvider) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string, reviewers []string, assignees []string) (string, error) {
+	ret := _m.Called(title, body, baseBranch, headBranch, draft, labels, reviewers, assignees)
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, bool, []string) (string, error)); ok {
-		return rf(title, body, baseBranch, headBranch, draft, labels)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, bool, []string, []string, []string) (string, error)); ok {
+		return rf(title, body, baseBranch, headBranch, draft, labels, reviewers, assignees)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, bool, []string) string); ok {
-		r0 = rf(title, body, baseBranch, headBranch, draft, labels)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, bool, []string, []string, []string) string); ok {
+		r0 = rf(title, body, baseBranch, headBranch, draft, labels, reviewers, assignees)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, bool, []string) error); ok {
-		r1 = rf(title, body, baseBranch, headBranch, draft, labels)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, bool, []string, []string, []string) error); ok {
+		r1 = rf(title, body, baseBranch, headBranch, draft, labels, reviewers, assignees)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,13 +56,15 @@ type MockPullRequestProvider_CreatePullRequest_Call struct {
 //   - headBranch string
 //   - draft bool
 //   - labels []string
-func (_e *MockPullRequestProvider_Expecter) CreatePullRequest(title interface{}, body interface{}, baseBranch interface{}, headBranch interface{}, draft interface{}, labels interface{}) *MockPullRequestProvider_CreatePullRequest_Call {
-	return &MockPullRequestProvider_CreatePullRequest_Call{Call: _e.mock.On("CreatePullRequest", title, body, baseBranch, headBranch, draft, labels)}
+//   - reviewers []string
+//   - assignees []string
+func (_e *MockPullRequestProvider_Expecter) CreatePullRequest(title interface{}, body interface{}, baseBranch interface{}, headBranch interface{}, draft interface{}, labels interface{}, reviewers interface{}, assignees interface{}) *MockPullRequestProvider_CreatePullRequest_Call {
+	return &MockPullRequestProvider_CreatePullRequest_Call{Call: _e.mock.On("CreatePullRequest", title, body, baseBranch, headBranch, draft, labels, reviewers, assignees)}
 }
 
-func (_c *MockPullRequestProvider_CreatePullRequest_Call) Run(run func(title string, body string, baseBranch string, headBranch string, draft bool, labels []string)) *MockPullRequestProvider_CreatePullRequest_Call {
+func (_c *MockPullRequestProvider_CreatePullRequest_Call) Run(run func(title string, body string, baseBranch string, headBranch string, draft bool, labels []string, reviewers []string, assignees []string)) *MockPullRequestProvider_CreatePullRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(bool), args[5].([]string))
+		run(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(bool), args[5].([]string), args[6].([]string), args[7].([]string))
 	})
 	return _c
 }
@@ -72,7 +74,7 @@ func (_c *MockPullRequestProvider_CreatePullRequest_Call) Return(prUrl string, e
 	return _c
 }
 
-func (_c *MockPullRequestProvider_CreatePullRequest_Call) RunAndReturn(run func(string, string, string, string, bool, []string) (string, error)) *MockPullRequestProvider_CreatePullRequest_Call {
+func (_c *MockPullRequestProvider_CreatePullRequest_Call) RunAndReturn(run func(string, string, string, string, bool, []string, []string, []string) (string, error)) *MockPullRequestProvider_CreatePullRequest_Call {
 	_c.Call.Return(run)
 	return _c
 }

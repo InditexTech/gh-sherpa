@@ -45,6 +45,11 @@ gh sherpa create-branch, cb [flags]
 * `--fork`: Automatically set up fork for external contributors.
 * `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
 * `--prefer-hotfix`: Prefer hotfix branch prefix for bug issues when using non-interactive mode (`-y`). For GitHub issues, this flag checks if the `kind/bug` label is present **anywhere** in the issue's label list (not just as the first or primary label). When found, it creates a `hotfix/` branch instead of `bugfix/`, regardless of the issue's detected type or other labels present.
+* `--branch-type`: Force a specific branch type prefix (e.g. `feature`, `bugfix`, `hotfix`). Bypasses issue label detection and works in both interactive and non-interactive mode.
+* `--branch-description`: Force a specific branch description slug instead of deriving it from the issue title. Works in both interactive and non-interactive mode.
+* `--branch-name`: Use exactly this branch name without any auto-generation. Takes priority over all other naming flags.
+* `--dry-run`: Print what would happen without actually creating the branch.
+* `--output`: Output format. Use `json` to get machine-readable output `{"branch":"<name>"}`. Default is human-readable text.
 
 ### Possible scenarios
 
@@ -93,6 +98,24 @@ gh sherpa create-branch --issue 32 --fork
 gh sherpa create-branch --issue 45 --fork --fork-name MyOrg/gh-sherpa
 ```
 
+#### Create a branch with a specific type and description (AI-friendly)
+
+```sh
+# Force branch type and description without interactive prompts
+gh sherpa create-branch --issue 42 --yes --branch-type feature --branch-description "add-auth-endpoint"
+# Creates: feature/GH-42-add-auth-endpoint
+
+# Use an exact branch name
+gh sherpa create-branch --issue 42 --yes --branch-name "feature/GH-42-my-exact-name"
+
+# Preview what would be created
+gh sherpa create-branch --issue 42 --yes --branch-type feature --dry-run
+
+# Get machine-readable output for scripting
+gh sherpa create-branch --issue 42 --yes --branch-type feature --output json
+# Output: {"branch":"feature/GH-42-issue-title"}
+```
+
 ## Create pull request
 
 Create a pull request associated to a GitHub or Jira issue.
@@ -111,10 +134,22 @@ gh sherpa create-pr, cpr [flags]
 * `--yes, -y`: The pull request will be created without confirmation.
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
-* `--template`: Path to a pull request template file
+* `--template`: Path to a pull request template file.
 * `--fork`: Automatically set up fork for external contributors.
 * `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
 * `--prefer-hotfix`: Prefer hotfix branch prefix for bug issues when using non-interactive mode (`-y`). For GitHub issues, this flag checks if the `kind/bug` label is present **anywhere** in the issue's label list (not just as the first or primary label). When found, it creates a `hotfix/` branch instead of `bugfix/`, regardless of the issue's detected type or other labels present.
+* `--branch-type`: Force a specific branch type prefix (e.g. `feature`, `bugfix`, `hotfix`). Bypasses issue label detection.
+* `--branch-description`: Force a specific branch description slug instead of deriving it from the issue title.
+* `--branch-name`: Use exactly this branch name without any auto-generation.
+* `--dry-run`: Print what would happen without actually creating the PR.
+* `--output`: Output format. Use `json` to get machine-readable output `{"branch":"<name>","pr_url":"<url>","draft":<bool>}`. Default is human-readable text.
+* `--pr-title`: Override the auto-generated PR title.
+* `--pr-body`: Override the auto-generated PR body.
+* `--pr-body-file`: Read the PR body from a file (overrides `--pr-body` and `--template`).
+* `--no-use-existing-branch`: Fail if a branch for this issue already exists (default non-interactive behavior is to reuse the existing branch).
+* `--label`: Additional label to apply to the PR. Can be repeated: `--label bug --label priority/high`.
+* `--reviewer`: Request a review from this user or team. Can be repeated: `--reviewer alice --reviewer org/team`.
+* `--assignee`: Assign this user to the PR. Can be repeated: `--assignee alice`.
 
 ### Possible scenarios
 
@@ -185,6 +220,34 @@ gh sherpa create-pr --issue 32 --fork
 
 # Custom fork organization
 gh sherpa create-pr --issue 45 --fork --fork-name MyOrg/gh-sherpa
+```
+
+#### Create a fully scripted PR (AI-friendly, zero interactive prompts)
+
+```sh
+# All parameters specified — no interactive prompts, no stdin required
+gh sherpa create-pr \
+  --issue 42 \
+  --yes \
+  --branch-type feature \
+  --branch-description "add-auth-endpoint" \
+  --pr-title "feat: add authentication endpoint" \
+  --pr-body "Closes #42" \
+  --reviewer alice \
+  --reviewer org/backend-team \
+  --assignee bob \
+  --label "priority/high" \
+  --no-draft
+
+# With JSON output for scripting
+gh sherpa create-pr --issue 42 --yes --branch-type bugfix --output json
+# Output: {"branch":"bugfix/GH-42-issue-title","pr_url":"https://...","draft":true}
+
+# Preview without executing
+gh sherpa create-pr --issue 42 --yes --branch-type feature --dry-run
+
+# Fail if a branch already exists (instead of reusing it)
+gh sherpa create-pr --issue 42 --yes --no-use-existing-branch
 ```
 
 ## Fork Configuration

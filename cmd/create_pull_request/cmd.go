@@ -1,7 +1,9 @@
 package create_pull_request
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/InditexTech/gh-sherpa/cmd/common"
 	"github.com/InditexTech/gh-sherpa/internal/branches"
@@ -28,16 +30,28 @@ var Command = &cobra.Command{
 }
 
 type createPullRequestFlags struct {
-	IssueID          string
-	BaseBranch       string
-	NoFetch          bool
-	NoDraft          bool
-	NoCloseIssue     bool
-	UseDefaultValues bool
-	TemplatePath     string
-	ForkValue        bool
-	ForkNameValue    string
-	PreferHotfix     bool
+	IssueID             string
+	BaseBranch          string
+	NoFetch             bool
+	NoDraft             bool
+	NoCloseIssue        bool
+	UseDefaultValues    bool
+	TemplatePath        string
+	ForkValue           bool
+	ForkNameValue       string
+	PreferHotfix        bool
+	BranchType          string
+	BranchDescription   string
+	BranchName          string
+	DryRun              bool
+	OutputFormat        string
+	PRTitle             string
+	PRBody              string
+	PRBodyFile          string
+	NoUseExistingBranch bool
+	ExtraLabels         []string
+	Reviewers           []string
+	Assignees           []string
 }
 
 var flags createPullRequestFlags
@@ -52,6 +66,18 @@ func init() {
 	Command.PersistentFlags().BoolVar(&flags.ForkValue, "fork", false, "automatically set up fork for external contributors")
 	Command.PersistentFlags().StringVar(&flags.ForkNameValue, "fork-name", "", "specify custom fork organization/user (e.g. MyOrg/gh-sherpa)")
 	Command.PersistentFlags().BoolVar(&flags.PreferHotfix, "prefer-hotfix", false, "prefer hotfix branch prefix for bug issues when using non-interactive mode")
+	Command.PersistentFlags().StringVar(&flags.BranchType, "branch-type", "", "force a specific branch type prefix (e.g. feature, bugfix, hotfix)")
+	Command.PersistentFlags().StringVar(&flags.BranchDescription, "branch-description", "", "force a specific branch description slug instead of deriving it from the issue title")
+	Command.PersistentFlags().StringVar(&flags.BranchName, "branch-name", "", "use exactly this branch name instead of auto-generating one")
+	Command.PersistentFlags().BoolVar(&flags.DryRun, "dry-run", false, "print what would happen without actually creating the PR")
+	Command.PersistentFlags().StringVar(&flags.OutputFormat, "output", "", "output format: '' (default human-readable) or 'json'")
+	Command.PersistentFlags().StringVar(&flags.PRTitle, "pr-title", "", "override the auto-generated PR title")
+	Command.PersistentFlags().StringVar(&flags.PRBody, "pr-body", "", "override the auto-generated PR body")
+	Command.PersistentFlags().StringVar(&flags.PRBodyFile, "pr-body-file", "", "read PR body from file (overrides --pr-body and template)")
+	Command.PersistentFlags().BoolVar(&flags.NoUseExistingBranch, "no-use-existing-branch", false, "fail if a branch for this issue already exists (default is to reuse it)")
+	Command.PersistentFlags().StringArrayVar(&flags.ExtraLabels, "label", []string{}, "additional label to apply to the PR (can be repeated)")
+	Command.PersistentFlags().StringArrayVar(&flags.Reviewers, "reviewer", []string{}, "request a review from this user or team (can be repeated)")
+	Command.PersistentFlags().StringArrayVar(&flags.Assignees, "assignee", []string{}, "assign this user to the PR (can be repeated)")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) error {
@@ -61,7 +87,9 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("sherpa needs an valid issue identifier")
 	}
 
-	logging.PrintCommandHeader(cmdName)
+	if flags.OutputFormat != "json" {
+		logging.PrintCommandHeader(cmdName)
+	}
 
 	cfg := config.GetConfig()
 
@@ -73,11 +101,17 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	userInteraction := &interactive.UserInteractionProvider{}
 
 	isInteractive := !flags.UseDefaultValues
+	// --output json implies non-interactive to prevent stdin prompts from corrupting JSON output.
+	if flags.OutputFormat == "json" {
+		isInteractive = false
+	}
 
 	branchProviderCfg := branches.Configuration{
-		Branches:      cfg.Branches,
-		IsInteractive: isInteractive,
-		PreferHotfix:  flags.PreferHotfix,
+		Branches:          cfg.Branches,
+		IsInteractive:     isInteractive,
+		PreferHotfix:      flags.PreferHotfix,
+		ForcedBranchType:  flags.BranchType,
+		ForcedDescription: flags.BranchDescription,
 	}
 	branchProvider, err := branches.New(branchProviderCfg, userInteraction)
 	if err != nil {
@@ -93,13 +127,23 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 
 	createPullRequestConfig := use_cases.CreatePullRequestConfiguration{
-		IssueID:         flags.IssueID,
-		BaseBranch:      flags.BaseBranch,
-		FetchFromOrigin: !flags.NoFetch,
-		IsInteractive:   isInteractive,
-		DraftPR:         !flags.NoDraft,
-		CloseIssue:      !flags.NoCloseIssue,
-		TemplatePath:    flags.TemplatePath,
+		IssueID:             flags.IssueID,
+		BaseBranch:          flags.BaseBranch,
+		FetchFromOrigin:     !flags.NoFetch,
+		IsInteractive:       isInteractive,
+		DraftPR:             !flags.NoDraft,
+		CloseIssue:          !flags.NoCloseIssue,
+		TemplatePath:        flags.TemplatePath,
+		BranchName:          flags.BranchName,
+		DryRun:              flags.DryRun,
+		OutputFormat:        flags.OutputFormat,
+		PRTitle:             flags.PRTitle,
+		PRBody:              flags.PRBody,
+		PRBodyFile:          flags.PRBodyFile,
+		NoUseExistingBranch: flags.NoUseExistingBranch,
+		ExtraLabels:         flags.ExtraLabels,
+		Reviewers:           flags.Reviewers,
+		Assignees:           flags.Assignees,
 	}
 	createPullRequestUseCase := use_cases.CreatePullRequest{
 		Cfg:                     createPullRequestConfig,
@@ -111,7 +155,13 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 		BranchProvider:          branchProvider,
 	}
 
-	return createPullRequestUseCase.Execute()
+	_, err = createPullRequestUseCase.Execute()
+	if err != nil && flags.OutputFormat == "json" {
+		errJSON, _ := json.Marshal(map[string]string{"error": err.Error()})
+		fmt.Fprintln(os.Stderr, string(errJSON))
+		os.Exit(1)
+	}
+	return err
 }
 
 func preRunCommand(cmd *cobra.Command, _ []string) error {

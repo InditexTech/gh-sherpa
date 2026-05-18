@@ -1,6 +1,8 @@
 package create_branch
 
 import (
+	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/InditexTech/gh-sherpa/cmd/common"
@@ -28,13 +30,18 @@ var Command = &cobra.Command{
 }
 
 type createBranchFlags struct {
-	IssueValue       string
-	BaseValue        string
-	NoFetchValue     bool
-	UseDefaultValues bool
-	ForkValue        bool
-	ForkNameValue    string
-	PreferHotfix     bool
+	IssueValue          string
+	BaseValue           string
+	NoFetchValue        bool
+	UseDefaultValues    bool
+	ForkValue           bool
+	ForkNameValue       string
+	PreferHotfix        bool
+	BranchType          string
+	BranchDescription   string
+	BranchName          string
+	DryRun              bool
+	OutputFormat        string
 }
 
 var flags = createBranchFlags{}
@@ -53,10 +60,17 @@ func init() {
 	Command.PersistentFlags().BoolVar(&flags.ForkValue, "fork", false, "automatically set up fork for external contributors")
 	Command.PersistentFlags().StringVar(&flags.ForkNameValue, "fork-name", "", "specify custom fork organization/user (e.g. MyOrg/gh-sherpa)")
 	Command.PersistentFlags().BoolVar(&flags.PreferHotfix, "prefer-hotfix", false, "prefer hotfix branch prefix for bug issues when using non-interactive mode")
+	Command.PersistentFlags().StringVar(&flags.BranchType, "branch-type", "", "force a specific branch type prefix (e.g. feature, bugfix, hotfix)")
+	Command.PersistentFlags().StringVar(&flags.BranchDescription, "branch-description", "", "force a specific branch description slug instead of deriving it from the issue title")
+	Command.PersistentFlags().StringVar(&flags.BranchName, "branch-name", "", "use exactly this branch name instead of auto-generating one")
+	Command.PersistentFlags().BoolVar(&flags.DryRun, "dry-run", false, "print what would happen without actually creating the branch")
+	Command.PersistentFlags().StringVar(&flags.OutputFormat, "output", "", "output format: '' (default human-readable) or 'json'")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) (err error) {
-	logging.PrintCommandHeader(cmdName)
+	if flags.OutputFormat != "json" {
+		logging.PrintCommandHeader(cmdName)
+	}
 
 	cfg := config.GetConfig()
 
@@ -68,6 +82,10 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	userInteraction := &interactive.UserInteractionProvider{}
 
 	isInteractive := !flags.UseDefaultValues
+	// --output json implies non-interactive to prevent stdin prompts from corrupting JSON output.
+	if flags.OutputFormat == "json" {
+		isInteractive = false
+	}
 
 	ghCli := &gh.Cli{}
 
@@ -78,9 +96,11 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 	}
 
 	branchProviderCfg := branches.Configuration{
-		Branches:      cfg.Branches,
-		IsInteractive: isInteractive,
-		PreferHotfix:  flags.PreferHotfix,
+		Branches:          cfg.Branches,
+		IsInteractive:     isInteractive,
+		PreferHotfix:      flags.PreferHotfix,
+		ForcedBranchType:  flags.BranchType,
+		ForcedDescription: flags.BranchDescription,
 	}
 	branchProvider, err := branches.New(branchProviderCfg, userInteraction)
 	if err != nil {
@@ -92,6 +112,9 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		BaseBranch:      flags.BaseValue,
 		FetchFromOrigin: !flags.NoFetchValue,
 		IsInteractive:   isInteractive,
+		BranchName:      flags.BranchName,
+		DryRun:          flags.DryRun,
+		OutputFormat:    flags.OutputFormat,
 	}
 	createBranch := use_cases.CreateBranch{
 		Cfg:                     createBranchConfig,
@@ -102,9 +125,14 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		BranchProvider:          branchProvider,
 	}
 
-	err = createBranch.Execute()
+	_, err = createBranch.Execute()
 
 	if err != nil {
+		if flags.OutputFormat == "json" {
+			errJSON, _ := json.Marshal(map[string]string{"error": err.Error()})
+			fmt.Fprintln(os.Stderr, string(errJSON))
+			os.Exit(1)
+		}
 		return err
 	}
 

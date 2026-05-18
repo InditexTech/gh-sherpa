@@ -24,26 +24,35 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 
 	issueTrackerType := issue.TrackerType()
 
-	if b.cfg.IsInteractive {
+	// --branch-description overrides the slug in both interactive and non-interactive modes
+	if b.cfg.ForcedDescription != "" {
+		issueSlug = normalizeBranch(b.cfg.ForcedDescription)
+	}
+
+	// --branch-type bypasses all label/type detection
+	if b.cfg.ForcedBranchType != "" {
+		branchType = b.cfg.ForcedBranchType
+	} else if b.cfg.IsInteractive {
 		branchType, err = b.getBranchType(issueType, issueTrackerType)
 		if err != nil {
 			return "", err
 		}
 
-		truncatePrompt := ""
-		maxContextLen := b.calcIssueContextMaxLen(repo.NameWithOwner, branchType, formattedID)
-		if maxContextLen > 0 {
-			truncatePrompt = fmt.Sprintf(" Truncate to %d chars", maxContextLen)
+		if b.cfg.ForcedDescription == "" {
+			truncatePrompt := ""
+			maxContextLen := b.calcIssueContextMaxLen(repo.NameWithOwner, branchType, formattedID)
+			if maxContextLen > 0 {
+				truncatePrompt = fmt.Sprintf(" Truncate to %d chars", maxContextLen)
+			}
+
+			promptIssueContext := "additional description (optional)." + truncatePrompt
+			err = b.UserInteraction.SelectOrInput(promptIssueContext, []string{}, &issueSlug, false)
+			if err != nil {
+				return "", err
+			}
+
+			issueSlug = normalizeBranch(issueSlug)
 		}
-
-		promptIssueContext := "additional description (optional)." + truncatePrompt
-		err = b.UserInteraction.SelectOrInput(promptIssueContext, []string{}, &issueSlug, false)
-		if err != nil {
-			return "", err
-		}
-
-		issueSlug = normalizeBranch(issueSlug)
-
 	} else {
 		// Check for kind/bug label to determine if prefer-hotfix should apply
 		// This works regardless of the issue's determined type or label position
@@ -62,7 +71,7 @@ func (b BranchProvider) GetBranchName(issue domain.Issue, repo domain.Repository
 		}
 
 		if !issueType.Valid() || issueType == issue_types.Other || issueType == issue_types.Unknown {
-			return "", ErrUndeterminedIssueType
+			return "", fmt.Errorf("%w; use --branch-type to specify it", ErrUndeterminedIssueType)
 		}
 	}
 

@@ -53,7 +53,7 @@ func ErrPrAlreadyExists(branch string) error {
 
 var ErrPullRequestWithError = errors.New("pull request with error")
 
-func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prUrl string, err error) {
+func (f *FakePullRequestProvider) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string, reviewers []string, assignees []string) (prUrl string, err error) {
 	if slices.Contains(f.PullRequestsWithErrors, headBranch) {
 		return "", ErrPullRequestWithError
 	}
