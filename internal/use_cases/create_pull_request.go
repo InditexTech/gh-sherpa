@@ -37,23 +37,23 @@ type CreatePullRequestResult struct {
 
 // CreatePullRequestConfiguration contains the arguments for the CreatePullRequest use case
 type CreatePullRequestConfiguration struct {
-	IssueID            string
-	BaseBranch         string
-	FetchFromOrigin    bool
-	DraftPR            bool
-	IsInteractive      bool
-	CloseIssue         bool
-	TemplatePath       string
-	BranchName         string   // --branch-name: bypass generation and use this name directly
-	DryRun             bool     // --dry-run: print what would happen without executing
-	OutputFormat       string   // --output: "" (default) or "json"
-	PRTitle            string   // --pr-title: override the auto-generated PR title
-	PRBody             string   // --pr-body: override the auto-generated PR body
-	PRBodyFile         string   // --pr-body-file: read PR body from file
-	NoUseExistingBranch bool    // --no-use-existing-branch: fail if a branch already exists (non-interactive)
-	ExtraLabels        []string // --label: additional labels to apply to the PR
-	Reviewers          []string // --reviewer: PR reviewers
-	Assignees          []string // --assignee: PR assignees
+	IssueID             string
+	BaseBranch          string
+	FetchFromOrigin     bool
+	DraftPR             bool
+	IsInteractive       bool
+	CloseIssue          bool
+	TemplatePath        string
+	BranchName          string   // --branch-name: bypass generation and use this name directly
+	DryRun              bool     // --dry-run: print what would happen without executing
+	OutputFormat        string   // --output: "" (default) or "json"
+	PRTitle             string   // --pr-title: override the auto-generated PR title
+	PRBody              string   // --pr-body: override the auto-generated PR body
+	PRBodyFile          string   // --pr-body-file: read PR body from file
+	NoUseExistingBranch bool     // --no-use-existing-branch: fail if a branch already exists (non-interactive)
+	ExtraLabels         []string // --label: additional labels to apply to the PR
+	Reviewers           []string // --reviewer: PR reviewers
+	Assignees           []string // --assignee: PR assignees
 }
 
 type CreatePullRequest struct {

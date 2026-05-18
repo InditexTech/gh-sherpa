@@ -14,13 +14,13 @@ type CreateBranchResult struct {
 }
 
 type CreateBranchConfiguration struct {
-	IssueID          string
-	BaseBranch       string
-	FetchFromOrigin  bool
-	IsInteractive    bool
-	BranchName       string // --branch-name: bypass generation and use this name directly
-	DryRun           bool   // --dry-run: print what would happen without executing
-	OutputFormat     string // --output: "" (default) or "json"
+	IssueID         string
+	BaseBranch      string
+	FetchFromOrigin bool
+	IsInteractive   bool
+	BranchName      string // --branch-name: bypass generation and use this name directly
+	DryRun          bool   // --dry-run: print what would happen without executing
+	OutputFormat    string // --output: "" (default) or "json"
 }
 
 type CreateBranch struct {

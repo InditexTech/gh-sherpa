@@ -30,18 +30,18 @@ var Command = &cobra.Command{
 }
 
 type createBranchFlags struct {
-	IssueValue          string
-	BaseValue           string
-	NoFetchValue        bool
-	UseDefaultValues    bool
-	ForkValue           bool
-	ForkNameValue       string
-	PreferHotfix        bool
-	BranchType          string
-	BranchDescription   string
-	BranchName          string
-	DryRun              bool
-	OutputFormat        string
+	IssueValue        string
+	BaseValue         string
+	NoFetchValue      bool
+	UseDefaultValues  bool
+	ForkValue         bool
+	ForkNameValue     string
+	PreferHotfix      bool
+	BranchType        string
+	BranchDescription string
+	BranchName        string
+	DryRun            bool
+	OutputFormat      string
 }
 
 var flags = createBranchFlags{}
