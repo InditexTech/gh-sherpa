@@ -196,13 +196,15 @@ func (cpr CreatePullRequest) Execute() error {
 	if hasPendingCommits {
 		logging.PrintWarn("the branch contains commits that have not been pushed yet")
 
-		confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation(
-			"Do you want to continue pushing all pending commits in this branch and create the pull request", true)
-		if err != nil {
-			return err
-		}
-		if !confirmed {
-			return nil
+		if isInteractive {
+			confirmed, err := cpr.UserInteractionProvider.AskUserForConfirmation(
+				"Do you want to continue pushing all pending commits in this branch and create the pull request", true)
+			if err != nil {
+				return err
+			}
+			if !confirmed {
+				return nil
+			}
 		}
 	} else if !cpr.Git.RemoteBranchExists(currentBranch) {
 		if err = cpr.createEmptyCommit(); err != nil {

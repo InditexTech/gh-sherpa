@@ -188,6 +188,21 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
+	s.Run("should push pending commits and create pull request without prompting when default flag is used", func() {
+		branchName := "feature/GH-3-local-branch"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.gitProvider.CommitsToPush[branchName] = []string{"commit 1", "commit 2"}
+		s.uc.Cfg.IsInteractive = false
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.userInteractionProvider.AssertNotCalled(s.T(), "AskUserForConfirmation")
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+	})
+
 	s.Run("should error if could not create empty commit", func() {
 		s.gitProvider.ResetRemoteBranches()
 		s.gitProvider.CurrentBranch = s.defaultBranchName
@@ -629,6 +644,21 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+	})
+
+	s.Run("should push pending commits and create pull request without prompting when default flag is used", func() {
+		branchName := "feature/PROJECTKEY-3-local-branch"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+		s.gitProvider.CommitsToPush[branchName] = []string{"commit 1", "commit 2"}
+		s.uc.Cfg.IsInteractive = false
+
+		err := s.uc.Execute()
+
+		s.NoError(err)
+		s.userInteractionProvider.AssertNotCalled(s.T(), "AskUserForConfirmation")
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
 	})
 
 	s.Run("should error if could not create empty commit", func() {
