@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-05-28
+
+### Added
+
+- [#157](https://github.com/InditexTech/gh-sherpa/issues/157) feat: add AI-friendly CLI flags for non-interactive usage
+- [#155](https://github.com/InditexTech/gh-sherpa/issues/155) Pending-commits confirmation prompt ignores --yes
+
 ## [1.5.1] - 2026-03-03
 
 ### Fixed
@@ -120,7 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.5.1...release/1.5.1
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.6.0...release/1.6.0
+[1.6.0]: https://github.com/InditexTech/gh-sherpa/compare/1.5.1...1.6.0
 [1.5.1]: https://github.com/InditexTech/gh-sherpa/compare/1.5.0...1.5.1
 [1.5.0]: https://github.com/InditexTech/gh-sherpa/compare/1.4.1...1.5.0
 [1.4.1]: https://github.com/InditexTech/gh-sherpa/compare/1.4.0...1.4.1
