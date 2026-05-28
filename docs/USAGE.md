@@ -11,8 +11,8 @@ Usage:
   sherpa [command]
 
 Available Commands:
-  create-branch Create a local branch from an issue type
-  create-pr     Create a pull request from the current local branch or issue type
+  create-branch Create a local branch from an issue type (alias: cb)
+  create-pr     Create a pull request from the current local branch or issue type (alias: cpr)
   help          Help about any command
 
 Flags:
@@ -39,7 +39,7 @@ gh sherpa create-branch, cb [flags]
 
 #### Optional parameters
 
-* `--base`: Base branch for checkout. By default is the default branch.
+* `--base, -b`: Base branch for checkout. By default is the default branch.
 * `--no-fetch`: Remote branches will not be fetched.
 * `--yes, -y`: The branch will be created without confirmation.
 * `--fork`: Automatically set up fork for external contributors.
@@ -129,11 +129,11 @@ gh sherpa create-pr, cpr [flags]
 #### Optional parameters
 
 * `--issue, -i`: GitHub or Jira issue identifier.
-* `--base`: Base branch for checkout. By default is the default branch.
+* `--base, -b`: Base branch for checkout. By default is the default branch.
 * `--no-fetch`: Remote branches will not be fetched.
 * `--yes, -y`: The pull request will be created without confirmation.
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
-* `--no-close-issue`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
+* `--no-close-issue, -n`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
 * `--template`: Path to a pull request template file.
 * `--fork`: Automatically set up fork for external contributors.
 * `--fork-name`: Specify custom fork organization/user (e.g. MyOrg/gh-sherpa).
