@@ -83,7 +83,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should error if could not get git repository", func() {
 		s.repositoryProvider.Repository = nil
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorIs(err, domainFakes.ErrRepositoryNotFound)
 	})
@@ -91,7 +91,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 	s.Run("should error if could not get current branch", func() {
 		s.gitProvider.CurrentBranch = ""
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not get the current branch name")
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
@@ -104,7 +104,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		expectedError := fmt.Sprintf("could not find an issue identifier in the current branch named %s", branchName)
 		s.EqualError(err, expectedError)
@@ -117,7 +117,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation(mock.Anything, mock.Anything).Return(false, nil).Once()
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
@@ -130,7 +130,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.pullRequestProvider.AddPullRequest(branchName, domain.PullRequest{})
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "pull request")
 		s.ErrorContains(err, "already exists")
@@ -143,7 +143,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertNotCalled(s.T(), "AskUserForConfirmation")
@@ -155,7 +155,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 	})
@@ -166,7 +166,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not push to remote branch "+branchName)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -181,7 +181,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue pushing all pending commits in this branch and create the pull request", true).Return(false, nil).Once()
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -196,7 +196,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.CommitsToPush[branchName] = []string{"commit 1", "commit 2"}
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertNotCalled(s.T(), "AskUserForConfirmation")
@@ -209,7 +209,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.BranchWithCommitError = []string{s.defaultBranchName}
 		s.branchProvider.SetBranchName(s.defaultBranchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorIs(err, domainFakes.ErrGetCommitsToPush)
 	})
@@ -220,7 +220,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.branchProvider.SetBranchName(s.defaultBranchName)
 		s.gitProvider.BranchWithPushError = []string{s.defaultBranchName}
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not push to remote branch "+s.defaultBranchName)
 	})
@@ -232,7 +232,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.pullRequestProvider.PullRequestsWithErrors = []string{branchName}
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not create the pull request because")
 	})
@@ -244,19 +244,31 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
 	})
 
-	s.Run("should error if branch already exists when using default and issue flags", func() {
+	s.Run("should reuse existing branch when using default and issue flags in non-interactive mode", func() {
+		s.gitProvider.ResetRemoteBranches()
 		s.uc.Cfg.IsInteractive = false
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
+
+		s.NoError(err)
+	})
+
+	s.Run("should error if branch already exists when using no-use-existing-branch flag", func() {
+		s.uc.Cfg.IsInteractive = false
+		s.uc.Cfg.IssueID = "1"
+		s.uc.Cfg.NoUseExistingBranch = true
+
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "the branch feature/GH-1-sample-issue already exists")
+		s.uc.Cfg.NoUseExistingBranch = false
 	})
 
 	s.Run("should return error if remote branch already exists when using issue flags", func() {
@@ -265,7 +277,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists("feature/GH-1-sample-issue").Error())
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -281,7 +293,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -296,7 +308,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -311,7 +323,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -324,7 +336,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -343,7 +355,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
@@ -357,7 +369,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 
 		s.uc.Cfg.CloseIssue = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -373,7 +385,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		// Set invalid template path
 		s.uc.Cfg.TemplatePath = "non_existent_template.md"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		// Should error early with template not found error
 		s.Error(err)
@@ -391,7 +403,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		// Usar una ruta relativa
 		s.uc.Cfg.TemplatePath = "testdata/test_template.md"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -413,7 +425,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		dir, _ := os.Getwd()
 		s.uc.Cfg.TemplatePath = filepath.Join(dir, "testdata", "test_template.md")
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -437,7 +449,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.uc.Cfg.TemplatePath = templatePath
 		s.uc.Cfg.CloseIssue = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -455,7 +467,7 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.gitProvider.CurrentBranch = branchName
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.Error(err)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -544,7 +556,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should error if could not get git repository", func() {
 		s.repositoryProvider.Repository = nil
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorIs(err, domainFakes.ErrRepositoryNotFound)
 	})
@@ -552,7 +564,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 	s.Run("should error if could not get current branch", func() {
 		s.gitProvider.CurrentBranch = ""
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not get the current branch name")
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
@@ -563,7 +575,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.gitProvider.CurrentBranch = branchName
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		expectedError := fmt.Sprintf("could not find an issue identifier in the current branch named %s", branchName)
 		s.EqualError(err, expectedError)
@@ -576,7 +588,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		mocks.UnsetExpectedCall(&s.userInteractionProvider.Mock, s.userInteractionProvider.AskUserForConfirmation)
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation(mock.Anything, mock.Anything).Return(false, nil).Once()
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(s.defaultBranchName))
@@ -589,7 +601,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.pullRequestProvider.AddPullRequest(branchName, domain.PullRequest{})
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "pull request")
 		s.ErrorContains(err, "already exists")
@@ -602,7 +614,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.branchProvider.SetBranchName(branchName)
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertNotCalled(s.T(), "AskUserForConfirmation")
@@ -614,7 +626,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.AddLocalBranches(branchName)
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 	})
@@ -624,7 +636,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.CurrentBranch = branchName
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not push to remote branch "+branchName)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -639,7 +651,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue pushing all pending commits in this branch and create the pull request", true).Return(false, nil).Once()
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -654,7 +666,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.CommitsToPush[branchName] = []string{"commit 1", "commit 2"}
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertNotCalled(s.T(), "AskUserForConfirmation")
@@ -667,7 +679,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.BranchWithCommitError = []string{s.defaultBranchName}
 		s.branchProvider.SetBranchName(s.defaultBranchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorIs(err, domainFakes.ErrGetCommitsToPush)
 	})
@@ -678,7 +690,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.CurrentBranch = s.defaultBranchName
 		s.branchProvider.SetBranchName(s.defaultBranchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not push to remote branch "+s.defaultBranchName)
 	})
@@ -690,7 +702,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.pullRequestProvider.PullRequestsWithErrors = []string{branchName}
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "could not create the pull request because")
 	})
@@ -703,19 +715,31 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
 	})
 
-	s.Run("should error if branch already exists when using default and issue flags", func() {
+	s.Run("should reuse existing branch when using default and issue flags in non-interactive mode", func() {
+		s.gitProvider.ResetRemoteBranches()
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
+
+		s.NoError(err)
+	})
+
+	s.Run("should error if branch already exists when using no-use-existing-branch flag", func() {
+		s.uc.Cfg.IssueID = "PROJECTKEY-1"
+		s.uc.Cfg.IsInteractive = false
+		s.uc.Cfg.NoUseExistingBranch = true
+
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "the branch feature/PROJECTKEY-1-sample-issue already exists")
+		s.uc.Cfg.NoUseExistingBranch = false
 	})
 
 	s.Run("should return error if remote branch already exists when using issue flags", func() {
@@ -724,7 +748,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, use_cases.ErrRemoteBranchAlreadyExists("feature/PROJECTKEY-1-sample-issue").Error())
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -740,7 +764,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -756,7 +780,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -771,7 +795,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.userInteractionProvider.AssertExpectations(s.T())
@@ -781,7 +805,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.RemoteBranches = []string{"main", "develop"}
 		s.gitProvider.CurrentBranch = "feature/PROJECTKEY-1-sample-issue"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
@@ -800,7 +824,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.IssueID = "PROJECTKEY-1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(s.gitProvider.CurrentBranch))
@@ -816,7 +840,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.CloseIssue = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 	})
@@ -831,7 +855,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		// Set invalid template path
 		s.uc.Cfg.TemplatePath = "non_existent_template.md"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		// Should error early with template not found error
 		s.Error(err)
@@ -848,7 +872,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 
 		s.uc.Cfg.TemplatePath = "testdata/test_template.md"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -868,7 +892,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		dir, _ := os.Getwd()
 		s.uc.Cfg.TemplatePath = filepath.Join(dir, "testdata", "test_template.md")
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -890,7 +914,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		templatePath := filepath.Join(dir, "testdata", "test_template.md")
 		s.uc.Cfg.TemplatePath = templatePath
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
@@ -908,7 +932,7 @@ func (s *CreateJiraPullRequestExecutionTestSuite) TestCreatePullRequestExecution
 		s.gitProvider.CurrentBranch = branchName
 		s.branchProvider.SetBranchName(branchName)
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.Error(err)
 		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))

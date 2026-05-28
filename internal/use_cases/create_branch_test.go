@@ -75,14 +75,14 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.Error(err)
 		s.False(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if no issue flag is provided", func() {
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
 		s.False(s.gitProvider.BranchExists(s.defaultBranchName))
@@ -96,7 +96,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.uc.Cfg.IssueID = "3"
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, fmt.Sprintf("a local branch with the name %s already exists", branchName))
 	})
@@ -105,7 +105,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.uc.Cfg.IssueID = "1"
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.gitProvider.BranchExists(s.defaultBranchName))
@@ -116,7 +116,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 		s.uc.Cfg.IssueID = "1"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.gitProvider.BranchExists(s.defaultBranchName))
@@ -132,7 +132,7 @@ func (s *CreateGithubBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.uc.Cfg.IssueID = "3"
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, fmt.Sprintf("a local branch with the name %s already exists", branchName))
 	})
@@ -195,14 +195,14 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.uc.Cfg.IssueID = issueID
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.Error(err)
 		s.False(s.gitProvider.BranchExists(s.defaultBranchName))
 	})
 
 	s.Run("should error if no issue flag is provided", func() {
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, "sherpa needs an valid issue identifier")
 		s.False(s.gitProvider.BranchExists(s.defaultBranchName))
@@ -216,7 +216,7 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.uc.Cfg.IssueID = "PROJECTKEY-3"
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, fmt.Sprintf("a local branch with the name %s already exists", branchName))
 	})
@@ -225,7 +225,7 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.uc.Cfg.IssueID = issueID
 		s.uc.Cfg.IsInteractive = false
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.gitProvider.BranchExists(s.defaultBranchName))
@@ -236,7 +236,7 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 		s.userInteractionProvider.EXPECT().AskUserForConfirmation("Do you want to continue?", true).Return(true, nil).Maybe()
 		s.uc.Cfg.IssueID = issueID
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.NoError(err)
 		s.True(s.gitProvider.BranchExists(s.defaultBranchName))
@@ -252,7 +252,7 @@ func (s *CreateJiraBranchExecutionTestSuite) TestCreateBranchExecution() {
 
 		s.uc.Cfg.IssueID = issueID
 
-		err := s.uc.Execute()
+		_, err := s.uc.Execute()
 
 		s.ErrorContains(err, fmt.Sprintf("a local branch with the name %s already exists", branchName))
 	})

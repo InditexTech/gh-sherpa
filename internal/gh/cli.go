@@ -108,7 +108,7 @@ var executeGitCommand = func(args ...string) (string, error) {
 	return stdout.String(), nil
 }
 
-func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prURL string, err error) {
+func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string, reviewers []string, assignees []string) (prURL string, err error) {
 	args := []string{"pr", "create"}
 
 	if baseBranch != "" {
@@ -145,6 +145,14 @@ func (c *Cli) CreatePullRequest(title string, body string, baseBranch string, he
 
 	// Add labels if not in fork context
 	args = c.addLabelsToArgs(args, labels)
+
+	for _, reviewer := range reviewers {
+		args = append(args, "--reviewer", reviewer)
+	}
+
+	for _, assignee := range assignees {
+		args = append(args, "--assignee", assignee)
+	}
 
 	result, err := ExecuteStringResult(args)
 

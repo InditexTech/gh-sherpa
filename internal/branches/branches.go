@@ -18,8 +18,10 @@ type BranchProvider struct {
 
 type Configuration struct {
 	config.Branches
-	IsInteractive bool
-	PreferHotfix  bool
+	IsInteractive     bool
+	PreferHotfix      bool
+	ForcedBranchType  string
+	ForcedDescription string
 }
 
 func NewFromConfiguration(globalConfig config.Configuration, userInteractionProvider domain.UserInteractionProvider, isInteractive bool) (*BranchProvider, error) {

@@ -65,7 +65,7 @@ func TestCli_CreatePullRequest(t *testing.T) {
 				return "https://github.com/InditexTech/gh-sherpa/pulls/1\n", nil
 			}
 
-			gotPrURL, err := c.CreatePullRequest(tt.args.title, tt.args.body, tt.args.baseBranch, tt.args.headBranch, tt.args.draft, tt.args.labels)
+			gotPrURL, err := c.CreatePullRequest(tt.args.title, tt.args.body, tt.args.baseBranch, tt.args.headBranch, tt.args.draft, tt.args.labels, nil, nil)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -203,7 +203,7 @@ func TestCli_CreatePullRequest_InForkContext(t *testing.T) {
 				return "https://github.com/InditexTech/gh-sherpa/pulls/1\n", nil
 			}
 
-			gotPrURL, err := c.CreatePullRequest(tt.title, tt.body, tt.baseBranch, tt.headBranch, tt.draft, tt.labels)
+			gotPrURL, err := c.CreatePullRequest(tt.title, tt.body, tt.baseBranch, tt.headBranch, tt.draft, tt.labels, nil, nil)
 
 			if tt.wantErr {
 				assert.Error(t, err)

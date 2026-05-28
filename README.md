@@ -18,6 +18,7 @@ pull request associated with that issue, following the contribution model you de
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+- [AI-assisted development](#ai-assisted-development)
 - [Contribute](#contribute)
 
 ## Prerequisites
@@ -78,6 +79,46 @@ credentials and then proceed to create the custom configuration file with the pr
 
 After installing this extension in your development environment, you can know the available commands in the
 [`USAGE.md`](docs/USAGE.md) file.
+
+## AI-assisted development
+
+Sherpa is designed to be fully driven by AI coding agents without requiring any interactive terminal input.
+
+All branch naming decisions and PR metadata can be specified via CLI flags — no stdin prompts are needed when using `-y`/`--yes` together with the new flags.
+
+### Typical AI agent workflow
+
+**Create a branch** for an issue with a known type:
+```sh
+gh sherpa create-branch --issue 42 --yes \
+  --branch-type feature \
+  --branch-description "implement-oauth"
+# Output: feature/GH-42-implement-oauth
+```
+
+**Create a fully configured draft PR** in one command:
+```sh
+gh sherpa create-pr --issue 42 --yes \
+  --branch-type feature \
+  --branch-description "implement-oauth" \
+  --pr-title "feat(auth): implement OAuth2 login" \
+  --pr-body "Closes #42\n\nImplements OAuth2 login flow." \
+  --reviewer alice \
+  --assignee bob \
+  --label "priority/high"
+```
+
+**Get machine-readable output** for chaining with other tools:
+```sh
+BRANCH=$(gh sherpa create-branch --issue 42 --yes --branch-type bugfix --output json | jq -r .branch)
+```
+
+**Preview without side effects**:
+```sh
+gh sherpa create-pr --issue 42 --yes --branch-type feature --dry-run
+```
+
+When a branch already exists for the issue, Sherpa automatically reuses it in non-interactive mode (`-y`). To opt out of this behavior and force an error instead, use `--no-use-existing-branch`.
 
 ## Contribute
 

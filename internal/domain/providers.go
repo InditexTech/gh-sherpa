@@ -6,7 +6,7 @@ type RepositoryProvider interface {
 
 type PullRequestProvider interface {
 	GetPullRequestForBranch(branch string) (pullRequest *PullRequest, err error)
-	CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string) (prUrl string, err error)
+	CreatePullRequest(title string, body string, baseBranch string, headBranch string, draft bool, labels []string, reviewers []string, assignees []string) (prUrl string, err error)
 }
 
 type UserInteractionProvider interface {

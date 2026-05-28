@@ -284,6 +284,48 @@ func (s *BranchTestSuite) TestGetBranchName() {
 		s.NoError(err)
 		s.Equal(expectedBrachName, branchName)
 	})
+
+	s.Run("should use forced branch type bypassing issue label detection", func() {
+		s.fakeIssue.SetType(issue_types.Bug)
+		s.b.cfg.ForcedBranchType = "feature"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal("feature/GH-1-fake-title", branchName)
+	})
+
+	s.Run("should use forced branch type for undetermined issue type without error", func() {
+		s.fakeIssue.SetType("undetermined-type")
+		s.b.cfg.ForcedBranchType = "hotfix"
+		s.b.cfg.Prefixes[issue_types.Hotfix] = "hotfix"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal("hotfix/GH-1-fake-title", branchName)
+	})
+
+	s.Run("should use forced description as slug instead of issue title", func() {
+		s.fakeIssue.SetType(issue_types.Bug)
+		s.b.cfg.ForcedDescription = "my custom description"
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal("bugfix/GH-1-my-custom-description", branchName)
+	})
+
+	s.Run("should use forced description in interactive mode too", func() {
+		s.b.cfg.IsInteractive = true
+		s.b.cfg.ForcedDescription = "custom desc"
+		s.userInteractionProvider.EXPECT().SelectOrInputPrompt(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+		branchName, err := s.b.GetBranchName(s.fakeIssue, *s.defaultRepository)
+
+		s.NoError(err)
+		s.Equal("bugfix/GH-1-custom-desc", branchName)
+	})
 }
 
 func TestParseIssueContext(t *testing.T) {
