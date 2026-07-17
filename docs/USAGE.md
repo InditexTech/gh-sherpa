@@ -50,6 +50,8 @@ gh sherpa create-branch, cb [flags]
 * `--branch-name`: Use exactly this branch name without any auto-generation. Takes priority over all other naming flags.
 * `--dry-run`: Print what would happen without actually creating the branch.
 * `--output`: Output format. Use `json` to get machine-readable output `{"branch":"<name>"}`. Default is human-readable text.
+* `--worktree`: Create branch in a new git worktree instead of checking out in current repository.
+* `--worktree-path`: Custom path for the worktree (default: `../repo-branch`).
 
 ### Possible scenarios
 
@@ -115,6 +117,28 @@ gh sherpa create-branch --issue 42 --yes --branch-type feature --dry-run
 gh sherpa create-branch --issue 42 --yes --branch-type feature --output json
 # Output: {"branch":"feature/GH-42-issue-title"}
 ```
+
+#### Create a branch in a git worktree
+
+Git worktrees allow you to work on multiple branches simultaneously in separate directories without switching branches in the main repository.
+
+```sh
+# Create branch in a new worktree with default path (../repo-branch)
+gh sherpa create-branch --issue 17 --worktree
+
+# Create branch in a worktree with custom path
+gh sherpa create-branch --issue 17 --worktree --worktree-path /path/to/worktrees/issue-17
+
+# Combine with other flags
+gh sherpa create-branch --issue 17 --worktree --base develop --yes
+```
+
+**Benefits of using worktrees:**
+
+* Work on multiple issues simultaneously without switching contexts
+* Each issue gets its own isolated working directory
+* Avoid accidentally committing changes to the wrong branch
+* Continue testing one feature while starting work on another
 
 ## Create pull request
 

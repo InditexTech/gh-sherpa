@@ -42,6 +42,8 @@ type createBranchFlags struct {
 	BranchName        string
 	DryRun            bool
 	OutputFormat      string
+	UseWorktree       bool
+	WorktreePath      string
 }
 
 var flags = createBranchFlags{}
@@ -65,6 +67,8 @@ func init() {
 	Command.PersistentFlags().StringVar(&flags.BranchName, "branch-name", "", "use exactly this branch name instead of auto-generating one")
 	Command.PersistentFlags().BoolVar(&flags.DryRun, "dry-run", false, "print what would happen without actually creating the branch")
 	Command.PersistentFlags().StringVar(&flags.OutputFormat, "output", "", "output format: '' (default human-readable) or 'json'")
+	Command.PersistentFlags().BoolVar(&flags.UseWorktree, "worktree", false, "create branch in a new git worktree")
+	Command.PersistentFlags().StringVar(&flags.WorktreePath, "worktree-path", "", "path for worktree (default: ../repo-branch)")
 }
 
 func runCommand(cmd *cobra.Command, _ []string) (err error) {
@@ -115,6 +119,8 @@ func runCommand(cmd *cobra.Command, _ []string) (err error) {
 		BranchName:      flags.BranchName,
 		DryRun:          flags.DryRun,
 		OutputFormat:    flags.OutputFormat,
+		UseWorktree:     flags.UseWorktree,
+		WorktreePath:    flags.WorktreePath,
 	}
 	createBranch := use_cases.CreateBranch{
 		Cfg:                     createBranchConfig,

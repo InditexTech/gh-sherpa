@@ -21,6 +21,8 @@ type CreateBranchConfiguration struct {
 	BranchName      string // --branch-name: bypass generation and use this name directly
 	DryRun          bool   // --dry-run: print what would happen without executing
 	OutputFormat    string // --output: "" (default) or "json"
+	UseWorktree     bool
+	WorktreePath    string
 }
 
 type CreateBranch struct {
@@ -92,6 +94,25 @@ func (cb CreateBranch) Execute() (result CreateBranchResult, err error) {
 		}
 	}
 
+	if cb.Cfg.UseWorktree {
+		worktreePath, err := cb.createWorktreeBranch(branchName, baseBranch, !cb.Cfg.FetchFromOrigin, repo)
+		if err != nil {
+			return result, err
+		}
+		if cb.Cfg.OutputFormat == "json" {
+			jsonBytes, jsonErr := json.Marshal(result)
+			if jsonErr != nil {
+				return result, fmt.Errorf("failed to serialize result: %w", jsonErr)
+			}
+			fmt.Println(string(jsonBytes))
+		} else {
+			fmt.Printf("A local branch named %s has been created in worktree %s!\n",
+				logging.PaintInfo(branchName),
+				logging.PaintInfo(worktreePath))
+		}
+		return result, nil
+	}
+
 	if err := cb.checkoutBranch(branchName, baseBranch, !cb.Cfg.FetchFromOrigin); err != nil {
 		return result, err
 	}
@@ -125,4 +146,35 @@ func (cb CreateBranch) checkoutBranch(branchName string, baseBranch string, fetc
 	}
 
 	return nil
+}
+
+func (cb CreateBranch) createWorktreeBranch(branchName string, baseBranch string, fetch bool, repo *domain.Repository) (worktreePath string, err error) {
+	if cb.Git.BranchExists(branchName) {
+		return "", fmt.Errorf("a local branch with the name %s already exists", branchName)
+	}
+
+	if fetch {
+		if err := cb.Git.FetchBranchFromOrigin(baseBranch); err != nil {
+			return "", fmt.Errorf("error while fetching the branch %s: %s", baseBranch, err)
+		}
+	}
+
+	// Determine worktree path
+	worktreePath = cb.Cfg.WorktreePath
+	if worktreePath == "" {
+		// Default: ../repo-branch
+		repoRoot, err := cb.Git.GetRepositoryRoot()
+		if err != nil {
+			return "", fmt.Errorf("error getting repository root: %s", err)
+		}
+		// Extract repo name from root path
+		worktreePath = fmt.Sprintf("../%s-%s", repo.Name, branchName)
+		logging.Debugf("Using default worktree path: %s (relative to %s)", worktreePath, repoRoot)
+	}
+
+	if err := cb.Git.CreateWorktree(worktreePath, branchName, baseBranch); err != nil {
+		return "", err
+	}
+
+	return worktreePath, nil
 }
