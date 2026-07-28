@@ -173,7 +173,9 @@ func (p *Provider) RemoteBranchExists(branch string) (exists bool) {
 func (p *Provider) CommitEmpty(message string) (err error) {
 	signing := CommitSigningEnabled()
 
-	args := []string{"commit", "--allow-empty", "-m", message}
+	// Include -s (--signoff) so the commit carries a Signed-off-by trailer,
+	// required by repositories that enforce the DCO "Check Signed-Off-By" rule.
+	args := []string{"commit", "--allow-empty", "-s", "-m", message}
 
 	if signing {
 		args = append(args, "-S")

@@ -171,6 +171,58 @@ func TestGitBranchExists(t *testing.T) {
 	})
 }
 
+func TestGitCommitEmpty(t *testing.T) {
+	provider := Provider{}
+
+	t.Run("CommitEmpty should include a Signed-off-by trailer when signing is disabled", func(t *testing.T) {
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git config --get commit.gpgsign to return disabled
+			if len(args) >= 3 && args[0] == "config" && args[1] == "--get" && args[2] == "commit.gpgsign" {
+				return "false\n", nil
+			}
+			argsSent = args
+			return "", nil
+		}
+
+		err := provider.CommitEmpty("chore: initial commit")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"commit", "--allow-empty", "-s", "-m", "chore: initial commit"}, argsSent)
+	})
+
+	t.Run("CommitEmpty should include both Signed-off-by and GPG signing when signing is enabled", func(t *testing.T) {
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			// Mock git config --get commit.gpgsign to return enabled
+			if len(args) >= 3 && args[0] == "config" && args[1] == "--get" && args[2] == "commit.gpgsign" {
+				return "true\n", nil
+			}
+			argsSent = args
+			return "", nil
+		}
+
+		err := provider.CommitEmpty("chore: initial commit")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"commit", "--allow-empty", "-s", "-m", "chore: initial commit", "-S"}, argsSent)
+	})
+
+	t.Run("CommitEmpty should return an error if the commit fails", func(t *testing.T) {
+		runGitCommand = func(args ...string) (out string, err error) {
+			if len(args) >= 3 && args[0] == "config" && args[1] == "--get" && args[2] == "commit.gpgsign" {
+				return "false\n", nil
+			}
+			err = fmt.Errorf("Failed to run Git command (%w)\n\nDetails:\n%s", err, "foo")
+			return
+		}
+
+		err := provider.CommitEmpty("chore: initial commit")
+
+		assert.Error(t, err)
+	})
+}
+
 func TestGitPushBranch(t *testing.T) {
 	provider := Provider{}
 	t.Run("GitPush should push the branch to origin", func(t *testing.T) {
