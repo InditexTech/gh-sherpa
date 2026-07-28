@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-07-28
+
 ### Fixed
 
 - [#160](https://github.com/InditexTech/gh-sherpa/issues/160) The initial empty commit created by Sherpa now includes a `Signed-off-by` trailer (`-s`), so it passes DCO `Check Signed-Off-By` rules
