@@ -1,7 +1,7 @@
 # Go related variables
 GO = go
 GOFMT = gofmt
-GOSTATICCHECK = go run honnef.co/go/tools/cmd/staticcheck@v0.4.3
+GOSTATICCHECK = go run honnef.co/go/tools/cmd/staticcheck@v0.7.0
 GOMOCKERY = $(GO) run github.com/vektra/mockery/v2@v2.32.4
 
 M = $(shell printf "\033[34;1m▶▶▶\033[0m")

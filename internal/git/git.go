@@ -35,7 +35,7 @@ var runGitCommand = func(args ...string) (out string, err error) {
 
 	err = cmd.Run()
 	if err != nil {
-		err = fmt.Errorf(stderr.String())
+		err = fmt.Errorf("%s", stderr.String())
 		return
 	}
 
