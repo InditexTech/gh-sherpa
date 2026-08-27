@@ -7,6 +7,9 @@ on:
     branches: ['main']
     paths: ['version']
 
+permissions:
+  contents: write
+
 env:
   GO_VERSION: 1.25.14
   DIST_DIR: dist

@@ -4,6 +4,9 @@ name: PR-verify
 on:
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   GO_VERSION: 1.25.14
   NODE_VERSION: 18.x
