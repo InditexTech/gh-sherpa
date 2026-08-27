@@ -12,6 +12,8 @@ jobs:
   verify:
     name: Verify
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -31,6 +33,8 @@ jobs:
   repo-linter:
     name: Repo Linter
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -56,6 +60,8 @@ jobs:
   reuse-compliance:
     name: REUSE Compliance
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
