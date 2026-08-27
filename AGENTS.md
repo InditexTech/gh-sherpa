@@ -54,7 +54,7 @@ cmd/  ──►  internal/use_cases/  ──►  providers (gh, git, issue_track
 
 ## 4. Build, test, verify
 
-Go 1.21 (see [`.tool-versions`](.tool-versions)). Make targets:
+Go 1.25 (see [`.tool-versions`](.tool-versions)). Make targets:
 
 | Command | What it does |
 |---|---|
