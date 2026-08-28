@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/andygrunwald/go-jira v1.16.0
+	github.com/andygrunwald/go-jira v1.17.0
 	github.com/cli/go-gh/v2 v2.13.0
 	github.com/go-playground/validator/v10 v10.30.3
 	github.com/jwalton/gchalk v1.3.0
