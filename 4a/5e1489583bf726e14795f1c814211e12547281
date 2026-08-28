@@ -1,0 +1,16 @@
+CHANGELOG.md
+  h_bfb644618f4f30 10-29,156-158
+version
+  h_bfb644618f4f30 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "4a5e1489583bf726e14795f1c814211e12547281",
+  "prompts": {},
+  "humans": {
+    "h_bfb644618f4f30": {
+      "author": "Jorge Garcia Rey <jorgegar@inditex.com>"
+    }
+  }
+}
