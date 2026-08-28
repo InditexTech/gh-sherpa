@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.2] - 2026-08-28
+
+### Security
+
+- [#163](https://github.com/InditexTech/gh-sherpa/pull/163) Restrict permissions in the pull request verification workflow
+- [#164](https://github.com/InditexTech/gh-sherpa/pull/164) Resolve CodeQL findings and add Dependabot configuration
+- [#165](https://github.com/InditexTech/gh-sherpa/pull/165) Restrict permissions in the release workflow
+
+### Dependencies
+
+- [#166](https://github.com/InditexTech/gh-sherpa/pull/166) Bump `fsfe/reuse-action` from 3 to 6
+- [#167](https://github.com/InditexTech/gh-sherpa/pull/167) Bump `actions/setup-go` from 6 to 7
+- [#168](https://github.com/InditexTech/gh-sherpa/pull/168) Bump `github.com/spf13/cobra` from 1.8.0 to 1.10.2
+- [#169](https://github.com/InditexTech/gh-sherpa/pull/169) Bump `actions/checkout` from 6 to 7
+- [#170](https://github.com/InditexTech/gh-sherpa/pull/170) Bump `github.com/andygrunwald/go-jira` from 1.16.0 to 1.17.0
+- [#171](https://github.com/InditexTech/gh-sherpa/pull/171) Bump `github.com/spf13/viper` from 1.18.2 to 1.21.0
+- [#172](https://github.com/InditexTech/gh-sherpa/pull/172) Bump `actions/setup-node` from 5 to 7
+- [#173](https://github.com/InditexTech/gh-sherpa/pull/173) Bump `github.com/go-playground/validator/v10` from 10.16.0 to 10.30.3
+- [#174](https://github.com/InditexTech/gh-sherpa/pull/174) Bump `github.com/stretchr/testify` from 1.8.4 to 1.12.1
+
 ## [1.6.1] - 2026-07-28
 
 ### Fixed
@@ -133,7 +153,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.6.0...release/1.6.0
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.6.2...HEAD
+[1.6.2]: https://github.com/InditexTech/gh-sherpa/compare/1.6.1...1.6.2
+[1.6.1]: https://github.com/InditexTech/gh-sherpa/compare/1.6.0...1.6.1
 [1.6.0]: https://github.com/InditexTech/gh-sherpa/compare/1.5.1...1.6.0
 [1.5.1]: https://github.com/InditexTech/gh-sherpa/compare/1.5.0...1.5.1
 [1.5.0]: https://github.com/InditexTech/gh-sherpa/compare/1.4.1...1.5.0
