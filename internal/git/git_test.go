@@ -208,6 +208,23 @@ func TestGitCommitEmpty(t *testing.T) {
 		assert.Equal(t, []string{"commit", "--allow-empty", "-s", "-m", "chore: initial commit", "-S"}, argsSent)
 	})
 
+	t.Run("CommitEmpty should bypass hooks and preserve GPG signing when no-verify is enabled", func(t *testing.T) {
+		provider := Provider{NoVerify: true}
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			if len(args) >= 3 && args[0] == "config" && args[1] == "--get" && args[2] == "commit.gpgsign" {
+				return "true\n", nil
+			}
+			argsSent = args
+			return "", nil
+		}
+
+		err := provider.CommitEmpty("chore: initial commit")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"commit", "--allow-empty", "-s", "-m", "chore: initial commit", "--no-verify", "-S"}, argsSent)
+	})
+
 	t.Run("CommitEmpty should return an error if the commit fails", func(t *testing.T) {
 		runGitCommand = func(args ...string) (out string, err error) {
 			if len(args) >= 3 && args[0] == "config" && args[1] == "--get" && args[2] == "commit.gpgsign" {
@@ -236,6 +253,20 @@ func TestGitPushBranch(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"push", "-u", "origin", "my-branch"}, argsSent)
+	})
+
+	t.Run("GitPush should bypass the pre-push hook when no-verify is enabled", func(t *testing.T) {
+		provider := Provider{NoVerify: true}
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			argsSent = args
+			return
+		}
+
+		err := provider.PushBranch("my-branch")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"push", "-u", "origin", "my-branch", "--no-verify"}, argsSent)
 	})
 
 	t.Run("GitPush should return an error if the branch is not found", func(t *testing.T) {
