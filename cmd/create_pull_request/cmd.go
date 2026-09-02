@@ -33,7 +33,7 @@ type createPullRequestFlags struct {
 	IssueID             string
 	BaseBranch          string
 	NoFetch             bool
-	NoVerify            bool
+	SkipGitHooks        bool
 	NoDraft             bool
 	NoCloseIssue        bool
 	UseDefaultValues    bool
@@ -61,7 +61,7 @@ func init() {
 	Command.PersistentFlags().StringVarP(&flags.IssueID, "issue", "i", "", "issue identifier")
 	Command.PersistentFlags().StringVarP(&flags.BaseBranch, "base", "b", "", "base branch for checkout. Use the default branch of the repository if it is not set")
 	Command.PersistentFlags().BoolVar(&flags.NoFetch, "no-fetch", false, "does not fetch the base branch")
-	Command.PersistentFlags().BoolVar(&flags.NoVerify, "no-verify", false, "bypass pre-commit, commit-msg, and pre-push hooks")
+	Command.PersistentFlags().BoolVar(&flags.SkipGitHooks, "skip-git-hooks", false, "skip pre-commit, commit-msg, and pre-push hooks")
 	Command.PersistentFlags().BoolVar(&flags.NoDraft, "no-draft", false, "create the pull request in ready for review mode")
 	Command.PersistentFlags().BoolVarP(&flags.NoCloseIssue, "no-close-issue", "n", false, "do not close the GitHub issue after merging the pull request")
 	Command.PersistentFlags().StringVar(&flags.TemplatePath, "template", "", "path to a pull request template file")
@@ -149,7 +149,7 @@ func runCommand(cmd *cobra.Command, _ []string) error {
 	}
 	createPullRequestUseCase := use_cases.CreatePullRequest{
 		Cfg:                     createPullRequestConfig,
-		Git:                     &git.Provider{NoVerify: flags.NoVerify},
+		Git:                     &git.Provider{SkipGitHooks: flags.SkipGitHooks},
 		RepositoryProvider:      ghCliProvider,
 		IssueTrackerProvider:    issueTrackers,
 		UserInteractionProvider: userInteraction,

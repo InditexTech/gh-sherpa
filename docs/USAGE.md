@@ -131,7 +131,7 @@ gh sherpa create-pr, cpr [flags]
 * `--issue, -i`: GitHub or Jira issue identifier.
 * `--base, -b`: Base branch for checkout. By default is the default branch.
 * `--no-fetch`: Remote branches will not be fetched.
-* `--no-verify`: Bypass the `pre-commit` and `commit-msg` hooks for a generated empty commit and the `pre-push` hook when pushing the branch.
+* `--skip-git-hooks`: Skip the `pre-commit` and `commit-msg` hooks for a generated empty commit and the `pre-push` hook when pushing the branch.
 * `--yes, -y`: The pull request will be created without confirmation.
 * `--no-draft`: The pull request will be created in ready for review mode. By default is in draft mode.
 * `--no-close-issue, -n`: The GitHub issue will not be closed when the pull request is merged. By default is closed.
@@ -173,7 +173,7 @@ gh sherpa create-pr -i SHERPA-71 --yes
 #### Create a branch and pull request without running Git verification hooks
 
 ```sh
-gh sherpa create-pr -i 750 --no-verify
+gh sherpa create-pr -i 750 --skip-git-hooks
 ```
 
 This passes Git's native `--no-verify` option to any empty commit and branch push performed by Sherpa. Other Git hooks are unaffected.
