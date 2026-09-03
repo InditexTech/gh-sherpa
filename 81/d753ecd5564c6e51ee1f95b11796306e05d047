@@ -1,0 +1,21 @@
+CHANGELOG.md
+  s_1caf0ba77b4f09::t_80c3425c8380d4 10-15,162-163
+version
+  s_1caf0ba77b4f09::t_1ce434da86a837 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "81d753ecd5564c6e51ee1f95b11796306e05d047",
+  "prompts": {},
+  "sessions": {
+    "s_1caf0ba77b4f09": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f99a22cdbffeLV4HCldkDMBhqs",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Mario Escobedo Del Rio <marioer@inditex.com>"
+    }
+  }
+}
