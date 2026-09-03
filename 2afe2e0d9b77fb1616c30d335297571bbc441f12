@@ -1,0 +1,14 @@
+.github/dependabot.yml
+  h_8fe143308bc629 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "2afe2e0d9b77fb1616c30d335297571bbc441f12",
+  "prompts": {},
+  "humans": {
+    "h_8fe143308bc629": {
+      "author": "Mariano Alonso Ortiz <marianoao@inditex.com>"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+go.mod
+  s_27379df517bb0f::t_ad30b6e8ead28f 14,44,48
+go.sum
+  s_27379df517bb0f::t_b4f9506c44f167 128-129,134-135,147-148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "aa1d961ca4f93b08bf044f318b15852c7ed7fcfd",
+  "prompts": {},
+  "sessions": {
+    "s_27379df517bb0f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fb7dbda92ffeK36ABA67VdirZX",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jorge Garcia Rey <jorgegar@inditex.com>"
+    }
+  }
+}
