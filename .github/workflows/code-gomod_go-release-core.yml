@@ -1,0 +1,549 @@
+# SPDX-FileCopyrightText: 2026 INDUSTRIA DE DISEÑO TEXTIL S.A. (INDITEX S.A.)
+# SPDX-License-Identifier: Apache-2.0
+
+name: code-gomod-go-release-core
+
+# Prepare-only release reactor: derives the next vX.Y.Z from the latest tag, cuts
+# the CHANGELOG once, commits and tags. Go has no package registry, so there is no
+# publish stage and no id-token: write -- distribution IS the tag (and, opt-in,
+# the binaries attached to its GitHub Release).
+on:
+  workflow_call:
+    inputs:
+      release_type:
+        description: Optional release type supplied by the fixed release workflow.
+        required: false
+        type: string
+        default: ''
+    outputs:
+      release_commit:
+        description: Immutable commit used to build the release artifacts.
+        value: ${{ jobs.prepare-release.outputs.release_commit }}
+      releases:
+        description: JSON array of release tags and versions.
+        value: ${{ jobs.prepare-release.outputs.releases }}
+      artifacts:
+        description: The declared artifact mode ('none' or 'binaries').
+        value: ${{ jobs.prepare-release.outputs.artifacts }}
+
+permissions:
+  contents: read
+
+env:
+  WORKING_DIRECTORY: ${{ vars.WORKING_DIRECTORY }}
+  # The project owns its build/verify; the governed envelope only reads the
+  # verify_command / artifact_command / artifacts contract from the descriptor.
+  COMPONENT_DESCRIPTOR: .github/inditextech-ci-go.json
+  ASDF_BRANCH_VERSION: '0.18.0'
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    if: >-
+      (
+        github.event_name == 'workflow_dispatch' &&
+        (
+          (vars.DEVELOPMENT_FLOW == 'trunk-based-development' && (github.ref_name == 'main' || startsWith(github.ref_name, 'main-'))) ||
+          (vars.DEVELOPMENT_FLOW == 'git-flow' && (github.ref_name == 'main' || startsWith(github.ref_name, 'main-')))
+        )
+      ) ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.merged &&
+        !contains(join(github.event.pull_request.labels.*.name, ','), 'skip-release') &&
+        (
+          (vars.DEVELOPMENT_FLOW == 'trunk-based-development' && (github.event.pull_request.base.ref == 'main' || startsWith(github.event.pull_request.base.ref, 'main-'))) ||
+          (vars.DEVELOPMENT_FLOW == 'git-flow' && (github.event.pull_request.base.ref == 'main' || startsWith(github.event.pull_request.base.ref, 'main-')))
+        ) &&
+        (
+          contains(join(github.event.pull_request.labels.*.name, ','), 'release-type') ||
+          vars.DEVELOPMENT_FLOW == 'trunk-based-development'
+        )
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      release_commit: ${{ steps.release-metadata.outputs.release_commit }}
+      releases: ${{ steps.release-metadata.outputs.releases }}
+      artifacts: ${{ steps.release-metadata.outputs.artifacts }}
+    steps:
+      - name: Resolve release context
+        id: release-context
+        env:
+          EVENT_SHA: ${{ github.sha }}
+          PR_BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR_MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          REQUESTED_RELEASE_TYPE: ${{ inputs.release_type }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            baseline_branch="$GITHUB_REF_NAME"
+            release_labels="$REQUESTED_RELEASE_TYPE"
+            release_ref="$EVENT_SHA"
+          else
+            baseline_branch="$PR_BASE_BRANCH"
+            release_labels="$PR_LABELS"
+            release_ref="$PR_MERGE_SHA"
+          fi
+
+          if [[ -z "$baseline_branch" || ! "$release_ref" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error title=Invalid release context::A baseline branch and immutable release commit are required."
+            exit 1
+          fi
+
+          {
+            echo "baseline_branch=$baseline_branch"
+            echo "release_labels=$release_labels"
+            echo "release_ref=$release_ref"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Check out immutable release source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ steps.release-context.outputs.release_ref }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Read governed tool versions
+        id: tool-versions
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolved=""
+          if [[ -f .tool-versions ]]; then
+            # Validate only real "<plugin> <version>" lines; asdf allows # comments (SPDX/REUSE) and blank lines.
+            if grep -vE '^[[:space:]]*(#|$)' .tool-versions | grep -qvE '^[a-zA-Z0-9_-]+ [a-zA-Z0-9._+-]+$'; then
+              echo "::error title=Invalid tool-versions::${WORKING_DIRECTORY}/.tool-versions is malformed."
+              exit 1
+            fi
+            # Emit only the governed golang pin so asdf ignores project extra pins (e.g. kind).
+            resolved="$(grep -E '^golang ' .tool-versions || true)"
+          fi
+          if [[ -z "$resolved" ]]; then
+            # No committed golang pin: derive it from the module's own go directive so the
+            # governed lane follows the product's declared toolchain instead of failing or
+            # clamping it. A committed pin always wins over the derived one.
+            if [[ ! -f go.mod ]]; then
+              echo "::error title=Missing go toolchain::${WORKING_DIRECTORY} has no golang pin in .tool-versions and no go.mod to derive one from."
+              exit 1
+            fi
+            version="$(sed -nE 's/^toolchain[[:space:]]+go([0-9]+\.[0-9]+(\.[0-9]+)?)[[:space:]]*$/\1/p' go.mod | head -n 1)"
+            if [[ -z "$version" ]]; then
+              version="$(sed -nE 's/^go[[:space:]]+([0-9]+\.[0-9]+(\.[0-9]+)?)[[:space:]]*$/\1/p' go.mod | head -n 1)"
+            fi
+            if [[ -z "$version" ]]; then
+              echo "::error title=Missing go toolchain::${WORKING_DIRECTORY}/go.mod declares no usable go version."
+              exit 1
+            fi
+            # asdf installs an exact patch release; a two-part directive (go 1.21) means .0.
+            if [[ "$version" != *.*.* ]]; then
+              version="${version}.0"
+            fi
+            resolved="golang ${version}"
+            echo "::notice title=Derived go toolchain::Using ${resolved} from ${WORKING_DIRECTORY}/go.mod."
+          fi
+          {
+            echo "tool_versions<<EOF"
+            echo "$resolved"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up asdf-managed Go
+        uses: asdf-vm/actions/install@b7bcd026f18772e44fe1026d729e1611cc435d47 # v4.0.1
+        with:
+          tool_versions: ${{ steps.tool-versions.outputs.tool_versions }}
+          asdf_version: ${{ env.ASDF_BRANCH_VERSION }}
+
+      - name: Verify release candidate
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Cut only after the governed verify_command passes on the immutable candidate commit.
+          verify_command="$(jq -er '.verify_command // "make verify"' "$GITHUB_WORKSPACE/$COMPONENT_DESCRIPTOR")"
+          bash -c "$verify_command"
+
+      - name: Plan release metadata
+        id: release-plan
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          BASELINE_BRANCH: ${{ steps.release-context.outputs.baseline_branch }}
+          DEVELOPMENT_FLOW: ${{ vars.DEVELOPMENT_FLOW }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASE_LABELS: ${{ steps.release-context.outputs.release_labels }}
+          RELEASE_REF: ${{ steps.release-context.outputs.release_ref }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # persist-credentials is false, so wire the App token into git before any remote op.
+          gh auth setup-git
+
+          records_file="$RUNNER_TEMP/go-release-records.jsonl"
+          source_commit="$(git rev-parse "$RELEASE_REF^{commit}")"
+          expected_ref="refs/heads/$BASELINE_BRANCH"
+          remote_line="$(git ls-remote --exit-code origin "$expected_ref")"
+          read -r remote_commit remote_ref extra <<< "$remote_line"
+
+          if [[ "$remote_ref" != "$expected_ref" || -n "${extra:-}" ]]; then
+            echo "::error title=Release branch verification failed::Could not resolve exactly one destination branch."
+            exit 1
+          fi
+
+          resume="false"
+          if [[ "$remote_commit" != "$source_commit" ]]; then
+            git fetch --no-tags origin "$remote_commit"
+            release_commit="$(git rev-list --ancestry-path --reverse "${source_commit}..${remote_commit}" | head -1)"
+            if [[ -z "$release_commit" ]] \
+              || [[ "$(git rev-parse "${release_commit}^")" != "$source_commit" ]] \
+              || [[ "$(git show -s --format=%s "$release_commit")" != "[go-release] Prepare release" ]]; then
+              echo "::error title=Release branch advanced::The destination branch moved after the release source commit."
+              exit 1
+            fi
+            git checkout --detach "$release_commit"
+            resume="true"
+          fi
+
+          bump_semver() {  # <X.Y.Z> <major|minor|patch>
+            local major minor patch
+            IFS=. read -r major minor patch <<< "$1"
+            case "$2" in
+              major) major=$((major + 1)); minor=0; patch=0 ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              patch) patch=$((patch + 1)) ;;
+            esac
+            printf '%s.%s.%s' "$major" "$minor" "$patch"
+          }
+
+          if [[ "$resume" == "false" ]]; then
+            # release-type label drives the bump; trunk defaults to minor, git-flow requires the label.
+            case ",$RELEASE_LABELS," in
+              *",release-type/major,"*) release_bump="major" ;;
+              *",release-type/minor,"*) release_bump="minor" ;;
+              *",release-type/hotfix,"*|*",release-type/multi-hotfix,"*|*",release-type/patch,"*)
+                release_bump="patch"
+                ;;
+              *)
+                if [[ "$DEVELOPMENT_FLOW" == "trunk-based-development" ]]; then
+                  release_bump="minor"
+                else
+                  echo "::error title=Missing release type::git-flow releases require a release-type label."
+                  exit 1
+                fi
+                ;;
+            esac
+
+            # Current version is the latest strict vX.Y.Z tag (v0.0.0 when none); Go has no in-tree version, distribution IS the tag.
+            current_version="0.0.0"
+            while IFS= read -r candidate; do
+              stripped="${candidate#v}"
+              if [[ "$stripped" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                current_version="$stripped"
+                break
+              fi
+            done < <(git tag --list 'v*' --sort=-v:refname)
+
+            release_version="$(bump_semver "$current_version" "$release_bump")"
+            tag="v${release_version}"
+
+            if git show-ref --tags --verify --quiet "refs/tags/$tag"; then
+              echo "::error title=Tag conflict::$tag already exists."
+              exit 1
+            fi
+
+            jq -cn --arg version "$release_version" --arg tag "$tag" \
+              '{version: $version, tag: $tag}' > "$records_file"
+            releases="$(jq -cs . "$records_file")"
+            echo "RELEASE_VERSION=$release_version" >> "$GITHUB_ENV"
+            # Export the keyword too: keep-a-changelog's `bump` takes the semver-inc
+            # keyword, not the concrete version (see the Bump step).
+            echo "RELEASE_BUMP=$release_bump" >> "$GITHUB_ENV"
+          else
+            # Resume: the CHANGELOG already carries the cut version at its topmost released heading (mirrors node/java reading version from the tree).
+            release_version="$(grep -E -m1 '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | sed -E 's/^## \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/')"
+            if [[ -z "$release_version" ]]; then
+              echo "::error title=Incomplete release resume::CHANGELOG.md has no released version heading."
+              exit 1
+            fi
+            tag="v${release_version}"
+            releases="$(jq -cn --arg version "$release_version" --arg tag "$tag" '[{version: $version, tag: $tag}]')"
+            head_commit="$(git rev-parse HEAD)"
+            if [[ "$(git rev-list -n 1 "$tag")" != "$head_commit" ]]; then
+              echo "::error title=Incomplete release resume::$tag does not point to the release commit."
+              exit 1
+            fi
+          fi
+
+          {
+            echo "resume=$resume"
+            echo "expected_ref=$expected_ref"
+            echo "releases_intermediate<<EOF"
+            printf '%s\n' "$releases"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Bump CHANGELOG for release
+        if: steps.release-plan.outputs.resume != 'true'
+        uses: release-flow/keep-a-changelog-action@74931dec7ecdbfc8e38ac9ae7e8dd84c08db2f32 # v3.0.0
+        with:
+          command: bump
+          # keep-a-changelog's `bump` accepts a semver-inc keyword (major/minor/
+          # patch/...), NOT a concrete version -- a concrete number aborts every
+          # release before the tag/push. Pass the keyword that drove the bump.
+          version: ${{ env.RELEASE_BUMP }}
+          changelog: ${{ env.WORKING_DIRECTORY }}/CHANGELOG.md
+          fail-on-empty-release-notes: false
+          # Keep the re-seeded empty [Unreleased] section (Go's next-dev re-seed).
+          keep-unreleased-section: true
+          tag-prefix: "v"
+
+      - name: Reconcile CHANGELOG version with release
+        if: steps.release-plan.outputs.resume != 'true'
+        env:
+          RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # A keyword bump derives the new number from the CHANGELOG's own history,
+          # which drifts from the authoritative tag version (greenfield/resume);
+          # re-anchor the entry just written to RELEASE_VERSION (no-op when in sync).
+          # Go tags are vX.Y.Z, so the link URLs carry a `v` the bare heading omits.
+          cl="CHANGELOG.md"
+          cl_ver="$(grep -m1 -E '^## \[[0-9]' "$cl" | sed -E 's/^## \[([^]]+)\].*/\1/')"
+          if [[ -z "$cl_ver" ]]; then
+            echo "::error title=CHANGELOG has no release entry::Expected a '## [X.Y.Z]' heading after the bump step."
+            exit 1
+          fi
+          if [[ "$cl_ver" != "$RELEASE_VERSION" ]]; then
+            echo "::notice title=CHANGELOG version reconciled::keep-a-changelog wrote ${cl_ver}; re-anchoring to release ${RELEASE_VERSION}."
+            cl_ver_re="${cl_ver//./\\.}"
+            # One portable pass (BSD + GNU sed; `sed -i -E` misparses on BSD) re-anchors
+            # (1) the bare release heading, (2) the Unreleased compare base, and (3) the
+            # new version's own link -- whose URLs carry Go's `v` prefix the heading omits.
+            tmp="$(mktemp)"
+            sed -E \
+              -e "s@^## \[${cl_ver_re}\]( - )@## [${RELEASE_VERSION}]\1@" \
+              -e "s@^(\[Unreleased\]: .*/compare/v)${cl_ver_re}(\.\.\.HEAD)@\1${RELEASE_VERSION}\2@" \
+              -e "s@^\[${cl_ver_re}\]: (.*/)(compare/[^ ]*\.\.\.|releases/tag/)v${cl_ver_re}@[${RELEASE_VERSION}]: \1\2v${RELEASE_VERSION}@" \
+              "$cl" > "$tmp"
+            cat "$tmp" > "$cl"
+            rm -f "$tmp"
+          fi
+
+      - name: Commit, tag and push release
+        if: steps.release-plan.outputs.resume != 'true'
+        id: release-commit
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASES: ${{ steps.release-plan.outputs.releases_intermediate }}
+          EXPECTED_REF: ${{ steps.release-plan.outputs.expected_ref }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The consumed CHANGELOG is the only tree change; there is no in-tree version to bump.
+          git -C "$GITHUB_WORKSPACE" add -- "$WORKING_DIRECTORY/CHANGELOG.md"
+          if git diff --cached --quiet; then
+            echo "::error title=Missing release metadata::The CHANGELOG bump produced no changes to commit."
+            exit 1
+          fi
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+          git commit -m "[go-release] Prepare release"
+
+          # App-bot annotated tag; no GPG git-signing -- Go's supply-chain trust is
+          # the immutable tag on protected main plus provenance at the source.
+          tag="$(jq -r '.[0].tag' <<< "$RELEASES")"
+          version="$(jq -r '.[0].version' <<< "$RELEASES")"
+          git check-ref-format "refs/tags/$tag"
+          git tag -a "$tag" -m "Release $version"
+
+          git push --atomic origin "HEAD:$EXPECTED_REF" "refs/tags/$tag"
+
+      - name: Publish release metadata
+        id: release-metadata
+        env:
+          RELEASES: ${{ steps.release-plan.outputs.releases_intermediate }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifacts="$(jq -er '.artifacts // "none"' "$GITHUB_WORKSPACE/$COMPONENT_DESCRIPTOR")"
+          {
+            echo "release_commit=$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
+            echo "artifacts=$artifacts"
+            echo "releases<<EOF"
+            printf '%s\n' "$RELEASES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  build-distributions:
+    name: Build ${{ matrix.release.tag }}
+    needs: prepare-release
+    # Binaries are opt-in: only projects that declare artifacts: binaries produce dist/*.
+    if: needs.prepare-release.outputs.artifacts == 'binaries'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ${{ fromJSON(needs.prepare-release.outputs.releases) }}
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ needs.prepare-release.outputs.release_commit }}
+
+      - name: Read governed tool versions
+        id: tool-versions
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          resolved=""
+          if [[ -f .tool-versions ]]; then
+            # Validate only real "<plugin> <version>" lines; asdf allows # comments (SPDX/REUSE) and blank lines.
+            if grep -vE '^[[:space:]]*(#|$)' .tool-versions | grep -qvE '^[a-zA-Z0-9_-]+ [a-zA-Z0-9._+-]+$'; then
+              echo "::error title=Invalid tool-versions::${WORKING_DIRECTORY}/.tool-versions is malformed."
+              exit 1
+            fi
+            # Emit only the governed golang pin so asdf ignores project extra pins (e.g. kind).
+            resolved="$(grep -E '^golang ' .tool-versions || true)"
+          fi
+          if [[ -z "$resolved" ]]; then
+            # No committed golang pin: derive it from the module's own go directive so the
+            # governed lane follows the product's declared toolchain instead of failing or
+            # clamping it. A committed pin always wins over the derived one.
+            if [[ ! -f go.mod ]]; then
+              echo "::error title=Missing go toolchain::${WORKING_DIRECTORY} has no golang pin in .tool-versions and no go.mod to derive one from."
+              exit 1
+            fi
+            version="$(sed -nE 's/^toolchain[[:space:]]+go([0-9]+\.[0-9]+(\.[0-9]+)?)[[:space:]]*$/\1/p' go.mod | head -n 1)"
+            if [[ -z "$version" ]]; then
+              version="$(sed -nE 's/^go[[:space:]]+([0-9]+\.[0-9]+(\.[0-9]+)?)[[:space:]]*$/\1/p' go.mod | head -n 1)"
+            fi
+            if [[ -z "$version" ]]; then
+              echo "::error title=Missing go toolchain::${WORKING_DIRECTORY}/go.mod declares no usable go version."
+              exit 1
+            fi
+            # asdf installs an exact patch release; a two-part directive (go 1.21) means .0.
+            if [[ "$version" != *.*.* ]]; then
+              version="${version}.0"
+            fi
+            resolved="golang ${version}"
+            echo "::notice title=Derived go toolchain::Using ${resolved} from ${WORKING_DIRECTORY}/go.mod."
+          fi
+          {
+            echo "tool_versions<<EOF"
+            echo "$resolved"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Set up asdf-managed Go
+        uses: asdf-vm/actions/install@b7bcd026f18772e44fe1026d729e1611cc435d47 # v4.0.1
+        with:
+          tool_versions: ${{ steps.tool-versions.outputs.tool_versions }}
+          asdf_version: ${{ env.ASDF_BRANCH_VERSION }}
+
+      - name: Build declared distributions
+        env:
+          RELEASE: ${{ toJSON(matrix.release) }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The release commit already passed verify; run the project-owned artifact_command to produce dist/*.
+          artifact_command="$(jq -er '.artifact_command' "$GITHUB_WORKSPACE/$COMPONENT_DESCRIPTOR")"
+          rm -rf dist
+          bash -c "$artifact_command"
+          if ! ls dist/* > /dev/null 2>&1; then
+            echo "::error title=Missing artifacts::artifact_command produced no dist/* for ${RELEASE}."
+            exit 1
+          fi
+
+      - name: Upload release distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: go-distributions-${{ matrix.release.tag }}
+          path: ${{ env.WORKING_DIRECTORY }}/dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  finalize-release:
+    name: Finalize release (sync PR)
+    needs: [prepare-release, build-distributions]
+    # Trunk-based is the default and needs no finalize; the sync-to-develop PR is git-flow only.
+    if: >-
+      always() &&
+      needs.prepare-release.result == 'success' &&
+      (needs.build-distributions.result == 'success' || needs.build-distributions.result == 'skipped') &&
+      vars.DEVELOPMENT_FLOW == 'git-flow'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Check out release branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.base.ref || github.ref_name }}
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Open sync-to-develop pull request
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          BASELINE_BRANCH: ${{ github.event.pull_request.base.ref || github.ref_name }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          RELEASES: ${{ needs.prepare-release.outputs.releases }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh auth setup-git
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
+
+          version="$(jq -r '.[0].version' <<< "$RELEASES")"
+          develop_branch="${BASELINE_BRANCH/main/develop}"
+          if [[ -z "$(git ls-remote --heads origin "$develop_branch")" ]]; then
+            echo "::notice title=Sync skipped::$develop_branch does not exist."
+            exit 0
+          fi
+          sync_branch="automated/sync-release-${version}-to-${develop_branch}"
+          git switch --force-create "$sync_branch" "origin/$BASELINE_BRANCH"
+          git push --force-with-lease --set-upstream origin "$sync_branch"
+
+          if [[ -z "$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$sync_branch" --base "$develop_branch" --state open --json number --jq '.[0].number // empty')" ]]; then
+            gh pr create --repo "$GITHUB_REPOSITORY" \
+              --base "$develop_branch" --head "$sync_branch" \
+              --title "Sync release $version to $develop_branch" \
+              --body "**Automated pull request** syncing the release cut on \`$BASELINE_BRANCH\` back into \`$develop_branch\`."
+          fi

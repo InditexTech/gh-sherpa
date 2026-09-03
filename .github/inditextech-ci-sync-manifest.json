@@ -1,0 +1,47 @@
+{
+  "configuration": {
+    "development_flow": "trunk-based",
+    "outputs": [
+      "gh-release"
+    ],
+    "parameters": {
+      "artifact_command": "./dist.sh",
+      "artifacts": "binaries",
+      "sonar": true,
+      "verify_command": "make verify",
+      "working_directory": "."
+    }
+  },
+  "creation_year": 2026,
+  "integrity": {
+    "algorithm": "hmac-sha256",
+    "signature": "e9a4ca1f6d15c655df380e1169ed61b646e56613cc05d08437204e93e2ec63f8"
+  },
+  "managed_by": "InditexTech CI governance",
+  "managed_paths": {
+    ".github/ISSUE_TEMPLATE/1-bug.yml": "cd4dad3f32fe707e06324790a2fe2c25829c55566de2b459d744e785b36e1205",
+    ".github/ISSUE_TEMPLATE/2-feature.yml": "ebb92730d6c01641d055f97ac094cbe07f88fac24be9b689ddf26e47e7bda863",
+    ".github/ISSUE_TEMPLATE/3-other.yml": "5a839b39a98704036210dee498146f51bd5a6c057228685680e02004ff063a9a",
+    ".github/ISSUE_TEMPLATE/config.yml": "10e5dee4d49aa9e7792ceb4c986160c61f95da1ba00a64bf06e5f1f636cd17ec",
+    ".github/PULL_REQUEST_TEMPLATE.md": "23a0b0ac79a9020ccac9c013582a01f86e2df2ae7f914673583b9a3368313041",
+    ".github/inditextech-ci-go.json": "6ce23922808dca5a1d432772acf43f8f14a20024b29284d4dcdbba0c38d4f0a6",
+    ".github/workflows/code-gomod_go-PR_verify.yml": "7145f586962f35425afbce4cdd00c61f0447d25f1c22ea48c8131f42343f893e",
+    ".github/workflows/code-gomod_go-release-core.yml": "bc147153d3790e03c42a2242db91af7bfb6c8542b52e328b650b669f1232d640",
+    ".github/workflows/code-gomod_go-release.yml": "1e6f2943c8f0c249dbb8e20823dce954cff22c2f4c799811c80a3904f2d55965",
+    ".github/workflows/code-gomod_go-sonarcloud-analysis.yml": "65b682f75a2fc0d9e928bc4816d79e1ff6aa68830c47148e23db9943f3a79c10",
+    ".github/workflows/code-release_preview.yml": "7dd6015b229102308c8e3eaac8a0e39521f9737b060abade1ef1ed2ea979a7f7",
+    ".github/workflows/codeql.yml": "a7ff83d8f89a5e02bfd729939a51a0a512a0f2f3fa7ddf9dc688dfdf41937748",
+    ".github/workflows/pr-verify.yml": "f52295fbfe81578c0a6459d8b384be569933ac78d32fff370932a8dec6943e46",
+    ".github/workflows/push-verify.yml": "217097070d0fdef329eae1a7187806a4623d692ce467ca8f1f9a7f56dddb29ed",
+    "CODE_OF_CONDUCT.md": "ce1e7a8f68a7917d48c03f9f7aae5529367f73af0e959276e889d33ea1e8d4ab",
+    "SECURITY.md": "0ee7a3356bc3a1c7649e3b7a6a9012b0608011be2b1ff8d106ad02c8950bab25",
+    "repolinter.json": "0efb305c47a63f03c488a34906fc2d5471c84145c2ff553f2aacf3a41b92e1a1"
+  },
+  "profile": "go",
+  "repository_id": 637824878,
+  "schema_version": 2,
+  "source_digests": {
+    "base": "07b8d9c8965dfd1fb563ed4411597769036aefb8fe3976b5c677b3870fdac2e4",
+    "go": "ea935973d867b59ff8d8d946c48ead238444966be57bbb92cacb4c9659a19746"
+  }
+}

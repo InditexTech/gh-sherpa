@@ -1,25 +1,41 @@
-# Security
+<!--
+SPDX-FileCopyrightText: 2026 INDUSTRIA DE DISEÑO TEXTIL S.A. (INDITEX S.A.)
 
-We at Inditex believe that responsible disclosure of security vulnerabilities helps us ensure the security and privacy
-of all opensource community.
+SPDX-License-Identifier: Apache-2.0
+-->
 
-If you believe you have found a security vulnerability in any Inditex repository that meets Inditex definition of a
-security vulnerability, please report it to us as described below. We appreciate the hard work maintainers put into
-fixing vulnerabilities and understand that sometimes more time is required to properly address an issue.
+# Security Policy
 
-## Reporting security issues
+## Reporting a Vulnerability
 
-> [!CAUTION]
-> Do not file public issues on GitHub for security vulnerabilities
+We take the security of the project seriously. If you believe you have found a security vulnerability, please report it to us as described below.
 
-* Let us know by submitting the finding through our [disclosure submission program](https://vdp.inditex.com)
-as soon as possible, upon discovery of a potential security issue.
-* Once we've assessed your report, we will create a GitHub "security advisory", which will allow the reporter and
-Inditex team to work on the issue in a confidential manner. We will invite you as a collaborator to the advisory and any
-needed trusted persons.
-* That "security advisory" will also allow us to have a temporary private fork, to work on the fix in confidentiality.
-* Once a fix is ready, we will include the fix in our next release and mark that release as a security release.
-* Details on the issue will be embargoed for 30 days to give users an oppurtunity to upgrade, after which we will
-coordinate disclosure with the researcher(s).
-* If you've contributed the fix, you will be credited for it.
+**Please do not report security vulnerabilities through public GitHub issues.**
 
+Instead, please report them via our [disclosure submission program](https://vdp.inditex.com).
+
+## Preferred Languages
+
+We prefer all communications to be in English.
+
+## Process
+
+1. Security report received
+2. Security team acknowledges receipt within 48 hours
+3. Team investigates and determines severity
+4. Team develops and tests fix
+5. Team prepares advisory and patches
+6. Advisory published, patches released
+
+## Safe Harbor
+
+We support safe harbor for security researchers who:
+
+1. Make a good faith effort to avoid privacy violations, destruction of data, and interruption or degradation of our services
+2. Only interact with accounts you own or with explicit permission of the account holder
+3. Provide us with a reasonable amount of time to resolve vulnerabilities prior to any disclosure to the public or a third-party
+4. Do not exploit a security issue for purposes other than immediate testing
+
+## Third-party Security Notifications
+
+We review security reports for our dependencies and follow responsible disclosure guidelines.
