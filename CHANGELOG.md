@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-03
+
+### Added
+
+- [#177](https://github.com/InditexTech/gh-sherpa/pull/177) Add `--skip-git-hooks` to `create-pr` for generated commits and pushes
+
 ## [1.6.2] - 2026-08-28
 
 ### Security
@@ -153,7 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.6.2...HEAD
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.7.0...HEAD
+[1.7.0]: https://github.com/InditexTech/gh-sherpa/compare/1.6.2...1.7.0
 [1.6.2]: https://github.com/InditexTech/gh-sherpa/compare/1.6.1...1.6.2
 [1.6.1]: https://github.com/InditexTech/gh-sherpa/compare/1.6.0...1.6.1
 [1.6.0]: https://github.com/InditexTech/gh-sherpa/compare/1.5.1...1.6.0
