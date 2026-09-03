@@ -15,7 +15,9 @@ const gitBin = "git"
 
 const DRY_RUN_ENV = "SHERPA_DRY_RUN"
 
-type Provider struct{}
+type Provider struct {
+	SkipGitHooks bool
+}
 
 var _ domain.GitProvider = (*Provider)(nil)
 
@@ -176,6 +178,9 @@ func (p *Provider) CommitEmpty(message string) (err error) {
 	// Include -s (--signoff) so the commit carries a Signed-off-by trailer,
 	// required by repositories that enforce the DCO "Check Signed-Off-By" rule.
 	args := []string{"commit", "--allow-empty", "-s", "-m", message}
+	if p.SkipGitHooks {
+		args = append(args, "--no-verify")
+	}
 
 	if signing {
 		args = append(args, "-S")
@@ -194,6 +199,9 @@ func (p *Provider) CommitEmpty(message string) (err error) {
 
 func (p *Provider) PushBranch(branch string) (err error) {
 	args := []string{"push", "-u", "origin", branch}
+	if p.SkipGitHooks {
+		args = append(args, "--no-verify")
+	}
 
 	_, err = runGitCommand(args...)
 
