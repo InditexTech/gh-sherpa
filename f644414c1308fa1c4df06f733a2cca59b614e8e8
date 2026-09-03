@@ -1,0 +1,25 @@
+.github/workflows/PR-verify.yml
+  s_27379df517bb0f::t_ea885cea33a416 19,25,40,67,73
+.github/workflows/release.yml
+  s_27379df517bb0f::t_46f396fddf12be 22,27
+go.mod
+  s_27379df517bb0f::t_547e4662eb5a1a 7,9,12,22,31
+go.sum
+  s_27379df517bb0f::t_99ec43eb621c57 5-6,25,36-37,44-45,51-52,71-72,111-113,133
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "f644414c1308fa1c4df06f733a2cca59b614e8e8",
+  "prompts": {},
+  "sessions": {
+    "s_27379df517bb0f": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_fb7dbda92ffeK36ABA67VdirZX",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jorge Garcia Rey <jorgegar@inditex.com>"
+    }
+  }
+}
