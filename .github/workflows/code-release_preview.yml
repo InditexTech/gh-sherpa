@@ -1,0 +1,158 @@
+# SPDX-FileCopyrightText: 2026 INDUSTRIA DE DISEÑO TEXTIL S.A. (INDITEX S.A.)
+# SPDX-License-Identifier: Apache-2.0
+
+name: code-release-preview
+
+on:
+  pull_request:
+    types: [labeled, synchronize, ready_for_review, opened, reopened]
+    branches: [main, main-*, develop, develop-*]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: code-release-preview-${{ github.repository }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  WORKING_DIRECTORY: ${{ vars.WORKING_DIRECTORY }}
+
+jobs:
+  release-preview:
+    name: Release Preview
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (
+        (vars.DEVELOPMENT_FLOW == 'trunk-based-development' && (github.event.pull_request.base.ref == 'main' || startsWith(github.event.pull_request.base.ref, 'main-'))) ||
+        (vars.DEVELOPMENT_FLOW == 'git-flow' && (github.event.pull_request.base.ref == 'main' || startsWith(github.event.pull_request.base.ref, 'main-')))
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write # Publishes the calculated release preview.
+    steps:
+      - name: Check out pull request head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Check CHANGELOG has Unreleased changes
+        # Skip for PRs that opt out of a release (skip-release label) and for the
+        # engine's automated reconcile PR, which never carries release content.
+        if: >-
+          !contains(github.event.pull_request.labels.*.name, 'skip-release') &&
+          github.event.pull_request.head.ref != 'automated/ci-governance-sync'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_EVENT_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet "origin/$BASE_REF"...HEAD -- CHANGELOG.md; then
+            echo "::error title=No CHANGELOG changes::Update the Unreleased section with this release's changes."
+            gh pr comment "$GITHUB_EVENT_NUMBER" --repo "$GITHUB_REPOSITORY" --body $'### :x: No changes in `CHANGELOG.md`\nUpdate the `## [Unreleased]` section listing the changes for this release before merging.'
+            exit 1
+          fi
+
+      - name: Calculate release preview
+        env:
+          DEVELOPMENT_FLOW: ${{ vars.DEVELOPMENT_FLOW }}
+          GITHUB_EVENT_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ",$RELEASE_LABELS," == *",skip-release,"* ]]; then
+            body=$'### Release Preview\n\nThis pull request has the `skip-release` label and will not create a GitHub release.'
+            gh pr comment "$GITHUB_EVENT_NUMBER" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body "$body"
+            exit 0
+          fi
+
+          case ",$RELEASE_LABELS," in
+            *",release-type/major,"*) release_bump="major" ;;
+            *",release-type/minor,"*) release_bump="minor" ;;
+            *",release-type/hotfix,"*|*",release-type/multi-hotfix,"*|*",release-type/patch,"*)
+              release_bump="patch"
+              ;;
+            *)
+              if [[ "$DEVELOPMENT_FLOW" == "trunk-based-development" ]]; then
+                release_bump="minor"
+              else
+                body=$'### Release Preview\n\nAdd a `release-type/...` label to calculate a release for this git-flow pull request.'
+                gh pr comment "$GITHUB_EVENT_NUMBER" \
+                  --repo "$GITHUB_REPOSITORY" \
+                  --body "$body"
+                exit 0
+              fi
+              ;;
+          esac
+
+          merge_strategy="Create a merge commit"
+          if [[ "$DEVELOPMENT_FLOW" == "trunk-based-development" ]]; then
+            merge_strategy="Squash and merge"
+          fi
+
+          bump_semver() {  # <X.Y.Z> <major|minor|patch>
+            local major minor patch
+            IFS=. read -r major minor patch <<< "$1"
+            case "$2" in
+              major) major=$((major + 1)); minor=0; patch=0 ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              patch) patch=$((patch + 1)) ;;
+            esac
+            printf '%s.%s.%s' "$major" "$minor" "$patch"
+          }
+
+          # Go release version is derived from git tags, never a tracked manifest: the
+          # current version is the newest strict vX.Y.Z tag (0.0.0 when none exists), and
+          # the release-type label drives the semver bump. The release is tag-only.
+          current_version="0.0.0"
+          has_release="false"
+          while IFS= read -r tag; do
+            [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || continue
+            current_version="${tag#v}"
+            has_release="true"
+            break
+          done < <(git tag --list 'v*' --sort=-v:refname)
+
+          release_version="$(bump_semver "$current_version" "$release_bump")"
+          release_tag="v${release_version}"
+
+          if [[ "$has_release" == "true" ]]; then
+            current_label="\`v$current_version\`"
+          else
+            current_label="_none (first release)_"
+          fi
+          versions="$(printf '%s\n' \
+            "- Current version (latest tag): $current_label" \
+            "- Proposed release tag: \`$release_tag\`" \
+            "- Next development version: CHANGELOG \`## [Unreleased]\` re-seeded on the release commit (tag-only, no in-tree version)")"
+
+          changes="$(awk '
+            BEGIN { capture=0 }
+            /^## \[[Uu]nreleased\]/ { capture=1; next }
+            capture && /^## \[/ { capture=0 }
+            capture { print }
+          ' CHANGELOG.md)"
+
+          body="$(printf "%s\n\n%s\n- Release type: \`%s\`\n- Expected merge strategy: **%s**\n\n#### Changes\n%s" \
+            '### Go Release Preview' \
+            "$versions" \
+            "$release_bump" \
+            "$merge_strategy" \
+            "$changes")"
+          gh pr comment "$GITHUB_EVENT_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --body "$body"
