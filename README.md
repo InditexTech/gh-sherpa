@@ -20,6 +20,7 @@ pull request associated with that issue, following the contribution model you de
 - [Usage](#usage)
 - [AI-assisted development](#ai-assisted-development)
 - [Contribute](#contribute)
+- [License](#license)
 
 ## Prerequisites
 
@@ -129,3 +130,7 @@ there the steps to contribute along with development and testing guidelines.
 
 If you find a security vulnerability in this project, please, check the [`SECURITY.md`](SECURITY.md) file to know how to
 report it.
+
+## License
+
+This project is licensed under the [Apache License 2.0](LICENSE).
