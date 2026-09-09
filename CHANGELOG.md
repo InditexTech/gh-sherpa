@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-09
+
+### Added
+
+- [#185](https://github.com/InditexTech/gh-sherpa/pull/185) Add support for creating Git worktrees
+
 ## [1.7.0] - 2026-09-03
 
 ### Added
@@ -159,7 +165,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.7.0...HEAD
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/1.8.0...HEAD
+[1.8.0]: https://github.com/InditexTech/gh-sherpa/compare/1.7.0...1.8.0
 [1.7.0]: https://github.com/InditexTech/gh-sherpa/compare/1.6.2...1.7.0
 [1.6.2]: https://github.com/InditexTech/gh-sherpa/compare/1.6.1...1.6.2
 [1.6.1]: https://github.com/InditexTech/gh-sherpa/compare/1.6.0...1.6.1
