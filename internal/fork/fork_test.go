@@ -36,6 +36,7 @@ func (m *mockGitProvider) RemoteBranchExists(branch string) bool                
 func (m *mockGitProvider) CommitEmpty(message string) error                      { return nil }
 func (m *mockGitProvider) PushBranch(branch string) error                        { return nil }
 func (m *mockGitProvider) GetRepositoryRoot() (string, error)                    { return "/tmp", nil }
+func (m *mockGitProvider) CreateWorktree(path, branch, base string) error        { return nil }
 
 type mockUserInteractionProvider struct {
 	confirmationResult bool
