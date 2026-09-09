@@ -49,7 +49,9 @@ gh sherpa create-branch, cb [flags]
 * `--branch-description`: Force a specific branch description slug instead of deriving it from the issue title. Works in both interactive and non-interactive mode.
 * `--branch-name`: Use exactly this branch name without any auto-generation. Takes priority over all other naming flags.
 * `--dry-run`: Print what would happen without actually creating the branch.
-* `--output`: Output format. Use `json` to get machine-readable output `{"branch":"<name>"}`. Default is human-readable text.
+* `--output`: Output format. Use `json` to get machine-readable output `{"branch":"<name>"}`. Worktree creation also returns `worktree_path`. Default is human-readable text.
+* `--worktree`: Create the branch in a new Git worktree without switching the current working tree. The default destination is `../worktrees/<branch>` relative to the repository root.
+* `--worktree-path`: Use this exact destination for the new worktree. Relative paths are resolved from the current directory. This flag implies `--worktree`.
 
 ### Possible scenarios
 
@@ -115,6 +117,25 @@ gh sherpa create-branch --issue 42 --yes --branch-type feature --dry-run
 gh sherpa create-branch --issue 42 --yes --branch-type feature --output json
 # Output: {"branch":"feature/GH-42-issue-title"}
 ```
+
+#### Create a branch in a Git worktree
+
+```sh
+# Create the worktree at ../worktrees/feature/GH-17-issue-title
+gh sherpa create-branch --issue 17 --worktree
+
+# A custom path activates worktree mode without requiring --worktree
+gh sherpa create-branch --issue 17 --worktree-path ../parallel/issue-17
+
+# Preview the worktree and resolved path without creating it
+gh sherpa create-branch --issue 17 --worktree --dry-run
+
+# Get the created branch and absolute worktree path for automation
+gh sherpa create-branch --issue 17 --worktree --output json
+# Output: {"branch":"feature/GH-17-issue-title","worktree_path":"/path/to/worktrees/feature/GH-17-issue-title"}
+```
+
+The current working tree stays on its existing branch. Branch names containing `/` create nested directories under the default `../worktrees` directory. If both flags are provided, `--worktree-path` takes precedence.
 
 ## Create pull request
 

@@ -61,6 +61,55 @@ func TestGitCheckoutNewBranchFromOrigin(t *testing.T) {
 	})
 }
 
+func TestGitCreateWorktree(t *testing.T) {
+	provider := Provider{}
+
+	t.Run("creates a worktree from origin and preserves a path with spaces", func(t *testing.T) {
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "", fmt.Errorf("no such remote")
+			}
+			argsSent = args
+			return "", nil
+		}
+
+		err := provider.CreateWorktree("../worktrees/my feature", "feature/my-branch", "main")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"worktree", "add", "--no-track", "-b", "feature/my-branch", "../worktrees/my feature", "origin/main"}, argsSent)
+	})
+
+	t.Run("creates a worktree from upstream when it exists", func(t *testing.T) {
+		var argsSent []string
+		runGitCommand = func(args ...string) (out string, err error) {
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "https://github.com/upstream/repo.git", nil
+			}
+			argsSent = args
+			return "", nil
+		}
+
+		err := provider.CreateWorktree("../worktrees/feature", "feature/my-branch", "main")
+
+		assert.NoError(t, err)
+		assert.Equal(t, []string{"worktree", "add", "--no-track", "-b", "feature/my-branch", "../worktrees/feature", "upstream/main"}, argsSent)
+	})
+
+	t.Run("returns an error when git cannot create the worktree", func(t *testing.T) {
+		runGitCommand = func(args ...string) (out string, err error) {
+			if len(args) >= 3 && args[0] == "remote" && args[1] == "get-url" && args[2] == "upstream" {
+				return "", fmt.Errorf("no such remote")
+			}
+			return "", fmt.Errorf("path already exists")
+		}
+
+		err := provider.CreateWorktree("../worktrees/feature", "feature/my-branch", "main")
+
+		assert.ErrorContains(t, err, "failed to create the worktree")
+	})
+}
+
 func TestGitFetchBranchFromOrigin(t *testing.T) {
 	provider := Provider{}
 	t.Run("GitFetchBranchFromOrigin should fetch a branch from origin when no upstream", func(t *testing.T) {

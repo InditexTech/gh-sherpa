@@ -91,6 +91,22 @@ func (p *Provider) CheckoutNewBranchFromOrigin(branch string, base string) (err 
 	return
 }
 
+func (p *Provider) CreateWorktree(path string, branch string, base string) (err error) {
+	remote := "origin"
+	if p.hasUpstreamRemote() {
+		remote = "upstream"
+	}
+
+	args := []string{"worktree", "add", "--no-track", "-b", branch, path, remote + "/" + base}
+
+	_, err = runGitCommand(args...)
+	if err != nil {
+		return fmt.Errorf("failed to create the worktree.\n\nDetails:\n%s", err)
+	}
+
+	return nil
+}
+
 func (p *Provider) GetCurrentBranch() (branchName string, err error) {
 	args := []string{"rev-parse", "--abbrev-ref", "HEAD"}
 

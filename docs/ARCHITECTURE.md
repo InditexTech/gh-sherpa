@@ -20,9 +20,13 @@ graph TD;
   generateBranchName -->|Branch already exists| generateBranchNameErr([Error])
   generateBranchName(Generate branch name from Issue **) --> getBaseBranch
 
-  getBaseBranch(Get base branch from repository) -->  checkoutBranch
+  getBaseBranch(Get base branch from repository) --> creationMode{Worktree mode?}
 
+  creationMode -->|No| checkoutBranch
   checkoutBranch(Create branch from origin **) --> End
+
+  creationMode -->|Yes| createWorktree
+  createWorktree(Create worktree and branch from origin **) --> End
 
   End([End])
 
