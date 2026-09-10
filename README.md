@@ -114,6 +114,11 @@ gh sherpa create-pr --issue 42 --yes \
 BRANCH=$(gh sherpa create-branch --issue 42 --yes --branch-type bugfix --output json | jq -r .branch)
 ```
 
+**Create an isolated worktree** without switching the current branch:
+```sh
+WORKTREE=$(gh sherpa create-branch --issue 42 --yes --worktree --output json | jq -r .worktree_path)
+```
+
 **Preview without side effects**:
 ```sh
 gh sherpa create-pr --issue 42 --yes --branch-type feature --dry-run

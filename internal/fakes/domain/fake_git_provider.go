@@ -17,6 +17,8 @@ type FakeGitProvider struct {
 	CommitsToPush         map[string][]string
 	BranchWithCommitError []string
 	BranchWithPushError   []string
+	FetchedBranches       []string
+	Worktrees             map[string]string
 }
 
 var _ domain.GitProvider = (*FakeGitProvider)(nil)
@@ -34,6 +36,7 @@ func NewFakeGitProvider() *FakeGitProvider {
 		},
 		CommitsToPush:         map[string][]string{},
 		BranchWithCommitError: []string{},
+		Worktrees:             map[string]string{},
 	}
 }
 
@@ -58,10 +61,27 @@ func (f *FakeGitProvider) BranchExists(branch string) bool {
 }
 
 func (f *FakeGitProvider) FetchBranchFromOrigin(branch string) (err error) {
+	f.FetchedBranches = append(f.FetchedBranches, branch)
 	idx := slices.Index(f.RemoteBranches, branch)
 	if idx == -1 {
 		return fmt.Errorf("remote branch %s not found", branch)
 	}
+	return nil
+}
+
+func (f *FakeGitProvider) CreateWorktree(path string, branch string, base string) error {
+	if !slices.Contains(f.RemoteBranches, base) {
+		return fmt.Errorf("remote branch %s not found", base)
+	}
+	if f.BranchExists(branch) {
+		return fmt.Errorf("local branch %s already exists", branch)
+	}
+	if _, exists := f.Worktrees[path]; exists {
+		return fmt.Errorf("worktree already exists at %s", path)
+	}
+
+	f.LocalBranches = append(f.LocalBranches, branch)
+	f.Worktrees[path] = branch
 	return nil
 }
 

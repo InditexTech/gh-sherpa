@@ -61,7 +61,7 @@ Go 1.25 (see [`.tool-versions`](.tool-versions)). Make targets:
 | `make build` | `go build -o bin/ ./...` |
 | `make test` | `go test ./...` |
 | `make coverage` | Coverage profile in `.local/coverage.out` |
-| `make generate-mocks` | Regenerate mocks via mockery v2.32.4 |
+| `make generate-mocks` | Regenerate mocks via mockery v2.53.5 |
 | `make verify` | tidy + checkfmt + lint + vet + build + test + coverage — **required before opening a PR** |
 
 ## 5. Coding conventions
@@ -74,7 +74,7 @@ Go 1.25 (see [`.tool-versions`](.tool-versions)). Make targets:
 
   Existing pattern: [`cmd/create_branch/cmd.go:84-88`](cmd/create_branch/cmd.go).
 - **JSON output**: if you add fields to `--output json`, update the documented shape in [`docs/USAGE.md`](docs/USAGE.md). Current shapes:
-  - `create-branch`: `{"branch":"<name>"}`
+  - `create-branch`: `{"branch":"<name>"}`; worktree mode adds `"worktree_path":"<absolute-path>"`
   - `create-pr`: `{"branch":"<name>","pr_url":"<url>","draft":<bool>}`
 - **Errors in JSON mode**: emit `{"error":"..."}` on stderr and exit non-zero (see existing pattern in both commands).
 - **Branch / PR types**: defined in [`internal/config/default-config.yml`](internal/config/default-config.yml). Do not hard-code prefixes; resolve through `branches.Provider`.
