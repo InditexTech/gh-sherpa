@@ -1,0 +1,55 @@
+{
+  "configuration": {
+    "development_flow": "trunk-based",
+    "outputs": [
+      "gh-release"
+    ],
+    "parameters": {
+      "artifact_command": "./dist.sh",
+      "artifacts": "binaries",
+      "sonar": true,
+      "verify_command": "make verify",
+      "working_directory": "."
+    }
+  },
+  "creation_year": 2026,
+  "integrity": {
+    "algorithm": "hmac-sha256",
+    "signature": "38b798a9ad9df254ee29d4ba50233894c7faf17f92edfd13319bac2905442824"
+  },
+  "managed_by": "InditexTech CI governance",
+  "managed_paths": {
+    ".github/ISSUE_TEMPLATE/1-bug.yml": "cd4dad3f32fe707e06324790a2fe2c25829c55566de2b459d744e785b36e1205",
+    ".github/ISSUE_TEMPLATE/2-feature.yml": "ebb92730d6c01641d055f97ac094cbe07f88fac24be9b689ddf26e47e7bda863",
+    ".github/ISSUE_TEMPLATE/3-other.yml": "5a839b39a98704036210dee498146f51bd5a6c057228685680e02004ff063a9a",
+    ".github/ISSUE_TEMPLATE/config.yml": "10e5dee4d49aa9e7792ceb4c986160c61f95da1ba00a64bf06e5f1f636cd17ec",
+    ".github/PULL_REQUEST_TEMPLATE.md": "23a0b0ac79a9020ccac9c013582a01f86e2df2ae7f914673583b9a3368313041",
+    ".github/inditextech-ci-go.json": "6ce23922808dca5a1d432772acf43f8f14a20024b29284d4dcdbba0c38d4f0a6",
+    ".github/workflows/code-gomod_go-PR_verify.yml": "76aefd67d70c17d44252cb2854191c6530cfc176f49d3a481a65eac2f4989fb9",
+    ".github/workflows/code-gomod_go-release-core.yml": "aabedee38e13939a00b690e1ff2c3f4c2990fdc5b70ee2beb0edd775bf7de552",
+    ".github/workflows/code-gomod_go-release.yml": "a7558ce46703a186fcbfd4aa8e631279673155342fd14cd577519f5bcd9f9127",
+    ".github/workflows/code-gomod_go-sonarcloud-analysis.yml": "fcb5c72a4ae59a3b429420b1e15eda5c4c0cb4a0aa89c3f4f99eb2e3198dcaca",
+    ".github/workflows/code-release_preview.yml": "074adc9b096cde6479657f24cf8b9ce3458ba2f7daa6a6e15ff065941f17c886",
+    ".github/workflows/codeql.yml": "cdd995b56f89f38fbe2cdfd2701e8e6b1d632710da4d9768e8afdf1225a9454b",
+    ".github/workflows/pr-verify.yml": "dfcff10f7b2ff38a112ea4051e79462f4f2c6ad1a82035db3145327e79a34fbb",
+    ".github/workflows/push-verify.yml": "49e6e9c6a7015ea59a2bc831982b2fc4bfd1d5721302f6041170b4a15b7d56e1",
+    ".github/workflows/scorecard-analysis.yml": "b45c2a0f87801796cefb4363d9f1414891b0734bc07de3f50d4a880e22faea10"
+  },
+  "managed_variables": {
+    "DEVELOPMENT_FLOW": "trunk-based-development",
+    "WORKING_DIRECTORY": "."
+  },
+  "profile": "go",
+  "repository_id": 637824878,
+  "retained_paths": {
+    "CODE_OF_CONDUCT.md": "82652832094a0ea95c3099798331b0399bdeb3961134d73289f806cb3a6bd1d9",
+    "CONTRIBUTING.md": "f1f3bcafb7ab76b187f624c287aab4e23d63ece1aced84269b829cd0e1a6ea22",
+    "SECURITY.md": "07418e7228e5d3dbc627183283e5e0b4ecb3f548d221a66d05b0296b34031869",
+    "repolinter.json": "e9ac505098371f151ca76891c97d7dfa87e18cd5eb12b544cdcda64adf295e57"
+  },
+  "schema_version": 2,
+  "source_digests": {
+    "base": "f4d9ef76fa455bf355dd0f91592696a7623dd797ea4a46c2042fbaf0febaa0b3",
+    "go": "60e3d69e263b3e58fb3e22255ca750f8aca138d9f0f07cb69b71437e7d25e4cc"
+  }
+}
