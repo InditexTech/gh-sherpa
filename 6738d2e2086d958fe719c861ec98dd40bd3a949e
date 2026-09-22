@@ -1,0 +1,19 @@
+version
+  s_34bd2cbf6873e0::t_e0101ae62c79ac 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6738d2e2086d958fe719c861ec98dd40bd3a949e",
+  "prompts": {},
+  "sessions": {
+    "s_34bd2cbf6873e0": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f79848f31ffeFbzPGcIKiV86mK",
+        "model": "zai-org/GLM-5.3-Flash"
+      },
+      "human_author": "Jorge Garcia Rey <jorgegar@inditex.com>"
+    }
+  }
+}

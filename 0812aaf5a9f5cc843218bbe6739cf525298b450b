@@ -1,0 +1,21 @@
+NOTICE
+  s_c005f02ff73148::t_98b7b328a41e22 1-13
+README.md
+  s_c005f02ff73148::t_be5c3f31b106dd 23,133-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0812aaf5a9f5cc843218bbe6739cf525298b450b",
+  "prompts": {},
+  "sessions": {
+    "s_c005f02ff73148": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1962fdc1-ca07-4dfe-a869-f34a557f1444",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Ivan Alvarez Sabin <ivanasabi@ext.inditex.com>"
+    }
+  }
+}
