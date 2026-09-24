@@ -51,16 +51,6 @@
         }
       }
     },
-    "changelog-file-exists": {
-      "level": "error",
-      "rule": {
-        "type": "file-existence",
-        "options": {
-          "globsAny": ["CHANGELOG*"],
-          "nocase": true
-        }
-      }
-    },
     "security-file-exists": {
       "level": "error",
       "rule": {
@@ -70,18 +60,8 @@
         }
       }
     },
-    "support-file-exists": {
-      "level": "off",
-      "rule": {
-        "type": "file-existence",
-        "options": {
-          "globsAny": ["{docs/,.github/,}SUPPORT*"],
-          "nocase": true
-        }
-      }
-    },
     "readme-references-license": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-contents",
         "options": {
@@ -100,38 +80,19 @@
         }
       }
     },
-    "test-directory-exists": {
-      "level": "off",
-      "rule": {
-        "type": "directory-existence",
-        "options": {
-          "globsAny": ["/test", "/specs"],
-          "nocase": true
-        }
-      }
-    },
     "integrates-with-ci": {
       "level": "error",
       "rule": {
         "type": "file-existence",
         "options": {
           "globsAny": [
-            ".gitlab-ci.yml",
-            ".travis.yml",
-            "appveyor.yml",
-            ".appveyor.yml",
-            "circle.yml",
-            ".circleci/config.yml",
-            "Jenkinsfile",
-            ".drone.yml",
-            ".github/workflows/",
-            "azure-pipelines.yml"
+            ".github/workflows/"
           ]
         }
       }
     },
     "code-of-conduct-file-contains-email": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-contents",
         "options": {
@@ -149,18 +110,6 @@
         }
       }
     },
-    "source-license-headers-exist": {
-      "level": "warning",
-      "rule": {
-        "type": "file-starts-with",
-        "options": {
-          "globsAll": ["./**/*.go"],
-          "lineCount": 5,
-          "patterns": ["Copyright", "License"],
-          "flags": "i"
-        }
-      }
-    },
     "github-issue-template-exists": {
       "level": "error",
       "rule": {
@@ -172,7 +121,7 @@
       }
     },
     "github-pull-request-template-exists": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-existence",
         "options": {
@@ -190,7 +139,7 @@
       "rule": {
         "type": "file-existence",
         "options": {
-          "globsAny": ["package.json"]
+          "globsAny": ["{,**/}package.json"]
         }
       }
     },
@@ -210,7 +159,7 @@
       "rule": {
         "type": "file-existence",
         "options": {
-          "globsAny": ["pom.xml", "build.xml", "build.gradle"]
+          "globsAny": ["{,**/}pom.xml", "{,**/}build.xml", "{,**/}build.gradle"]
         }
       }
     },
@@ -220,7 +169,11 @@
       "rule": {
         "type": "file-existence",
         "options": {
-          "globsAny": ["setup.py", "requirements.txt"]
+          "globsAny": [
+            "{,**/}setup.py",
+            "{,**/}requirements.txt",
+            "{,**/}pyproject.toml"
+          ]
         }
       }
     },
@@ -265,7 +218,7 @@
       }
     },
     "license-detectable-by-licensee": {
-      "level": "off",
+      "level": "error",
       "where": ["license="],
       "rule": {
         "type": "license-detectable-by-licensee",
@@ -283,14 +236,8 @@
         }
       }
     },
-    "best-practices-badge-present": {
-      "level": "off",
-      "rule": {
-        "type": "best-practices-badge-present"
-      }
-    },
     "internal-file-not-exists": {
-      "level": "off",
+      "level": "error",
       "rule": {
         "type": "file-not-exists",
         "options": {

@@ -1,0 +1,8 @@
+{
+  "artifact_command": "./dist.sh",
+  "artifacts": "binaries",
+  "schema_version": 1,
+  "sonar": true,
+  "verify_command": "make verify",
+  "working_directory": "."
+}
