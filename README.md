@@ -134,3 +134,7 @@ there the steps to contribute along with development and testing guidelines.
 
 If you find a security vulnerability in this project, please, check the [`SECURITY.md`](SECURITY.md) file to know how to
 report it.
+
+## License
+
+[Apache-2.0](LICENSES/Apache-2.0.txt) © Inditex
