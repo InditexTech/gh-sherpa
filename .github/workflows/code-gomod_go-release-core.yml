@@ -31,6 +31,9 @@ on:
       APP_PRIVATE_KEY:
         required: true
 
+permissions:
+  contents: read
+
 env:
   CI_GOVERNANCE_RELEASE_STAGING_REF: refs/ci-governance/release/${{ github.run_id }}-${{ github.run_attempt }}
   WORKING_DIRECTORY: ${{ vars.WORKING_DIRECTORY }}
