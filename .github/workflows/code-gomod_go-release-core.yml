@@ -30,6 +30,12 @@ on:
     secrets:
       APP_PRIVATE_KEY:
         required: true
+      CI_GPG_SECRET_KEY:
+        description: Armored GPG secret key signing release commits and tags.
+        required: false
+      CI_GPG_SECRET_KEY_PASSWORD:
+        description: Passphrase protecting CI_GPG_SECRET_KEY.
+        required: false
 
 permissions:
   contents: read
@@ -355,6 +361,13 @@ jobs:
             rm -f "$tmp"
           fi
 
+      - name: Configure release git signing
+        uses: InditexTech/gh-actions/configure-release-git@ca5ff3f7d69ee5a3cb026ac5585d680f083d8f7b
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          gpg-secret-key: ${{ secrets.CI_GPG_SECRET_KEY }}
+          gpg-passphrase: ${{ secrets.CI_GPG_SECRET_KEY_PASSWORD }}
+
       - name: Commit and stage release
         if: steps.release-plan.outputs.resume != 'true'
         id: release-commit
@@ -372,8 +385,6 @@ jobs:
             echo "::error title=Missing release metadata::The CHANGELOG bump produced no changes to commit."
             exit 1
           fi
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
           git commit -m "[go-release] Prepare release"
 
           git check-ref-format "refs/tags/$(jq -r '.[0].tag' <<< "$RELEASES")"
@@ -608,6 +619,13 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref || github.ref_name }}
           token: ${{ steps.app-token.outputs.token }}
 
+      - name: Configure release git signing
+        uses: InditexTech/gh-actions/configure-release-git@ca5ff3f7d69ee5a3cb026ac5585d680f083d8f7b
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          gpg-secret-key: ${{ secrets.CI_GPG_SECRET_KEY }}
+          gpg-passphrase: ${{ secrets.CI_GPG_SECRET_KEY_PASSWORD }}
+
       - name: Promote the release to the default branch
         id: promote
         if: needs.build-distributions.result == 'success' || needs.build-distributions.result == 'skipped'
@@ -622,8 +640,6 @@ jobs:
         run: |
           set -euo pipefail
           gh auth setup-git
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
 
           git fetch --no-tags origin "+${STAGING_REF}:refs/ci-governance/staged" 2>/dev/null || true
           if [[ "$(git ls-remote origin "$EXPECTED_REF" | cut -f1)" == "$RELEASE_COMMIT" ]]; then
@@ -645,7 +661,7 @@ jobs:
             echo "::error title=Tag conflict::$tag already exists."
             exit 1
           fi
-          git tag -a "$tag" -m "Release $version"
+          git tag -s "$tag" -m "Release $version"
 
           git push --atomic origin "${RELEASE_COMMIT}:${EXPECTED_REF}" "refs/tags/$tag"
 
@@ -660,8 +676,6 @@ jobs:
         run: |
           set -euo pipefail
           gh auth setup-git
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "${APP_SLUG}[bot]@users.noreply.github.com"
 
           version="$(jq -r '.[0].version' <<< "$RELEASES")"
           develop_branch="${BASELINE_BRANCH/main/develop}"
