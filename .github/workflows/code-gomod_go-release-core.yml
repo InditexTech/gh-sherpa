@@ -263,6 +263,21 @@ jobs:
           }
 
           if [[ "$resume" == "false" ]]; then
+            # A workflow_dispatch never passes through the Release Preview
+            # CHANGELOG gate, so a fresh cut must prove there is something to
+            # release: refuse an Unreleased section without a content entry.
+            if [[ "${GITHUB_EVENT_NAME:-}" == "workflow_dispatch" ]]; then
+              if [[ ! -f CHANGELOG.md ]] || ! awk '
+                $0 ~ /^##[[:space:]]+\[Unreleased\][[:space:]]*$/ { unreleased = 1; next }
+                unreleased && $0 ~ /^##[[:space:]]/ { exit }
+                unreleased && $0 ~ /^[[:space:]]*([-*+]|[0-9]+\.)[[:space:]]+/ { entry = 1 }
+                END { exit !(unreleased && entry) }
+              ' CHANGELOG.md; then
+                echo "::error title=No CHANGELOG changes::A dispatched release needs a substantive entry under ## [Unreleased]."
+                exit 1
+              fi
+            fi
+
             case ",$RELEASE_LABELS," in
               *",release-type/major,"*) release_bump="major" ;;
               *",release-type/minor,"*) release_bump="minor" ;;

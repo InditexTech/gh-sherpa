@@ -15,7 +15,7 @@
   "creation_year": 2026,
   "integrity": {
     "algorithm": "hmac-sha256",
-    "signature": "f4f8a3931cf8f46c0f66e0c8646e55e80be2eb154c8f4edbc5a419c52cfcd0e1"
+    "signature": "f04a1a7bca3baf254bcd4435639cfc1fc419814bbbe760a051c74d769b452754"
   },
   "managed_by": "InditexTech CI governance",
   "managed_paths": {
@@ -26,7 +26,7 @@
     ".github/PULL_REQUEST_TEMPLATE.md": "23a0b0ac79a9020ccac9c013582a01f86e2df2ae7f914673583b9a3368313041",
     ".github/inditextech-ci-go.json": "6ce23922808dca5a1d432772acf43f8f14a20024b29284d4dcdbba0c38d4f0a6",
     ".github/workflows/code-gomod_go-PR_verify.yml": "d148e5af0bc577e6deff1c6c57916de83af3e553fbe197d057ac2e7c6d7e22cb",
-    ".github/workflows/code-gomod_go-release-core.yml": "51136d7ea33e643b5b02f60d824498c7d37c2f48bfd480992de22974620f6a6f",
+    ".github/workflows/code-gomod_go-release-core.yml": "6a9869dcfb572b782f92873a8649f712c304a7fd409d2353b72d759f100ad42b",
     ".github/workflows/code-gomod_go-release.yml": "923519a56e3a88bb5403c7ab5075e072f1b69d51d688339ee1a396d9bbff2b47",
     ".github/workflows/code-gomod_go-sonarcloud-analysis.yml": "fcb5c72a4ae59a3b429420b1e15eda5c4c0cb4a0aa89c3f4f99eb2e3198dcaca",
     ".github/workflows/code-release_preview.yml": "074adc9b096cde6479657f24cf8b9ce3458ba2f7daa6a6e15ff065941f17c886",
@@ -49,6 +49,6 @@
   "schema_version": 2,
   "source_digests": {
     "base": "7e2620ef26ae53d9243d38ce0a669e8841c38e82c916467e27e5e54abb067597",
-    "go": "97e7294778cc898eb57415e362c354cc01237bf0c3874e97b8883b4e8ef5ac21"
+    "go": "bb05c885bfeca2a56a1dc81eefb7b0fccfa11cdc4a8650569d0485648af5ebb1"
   }
 }
