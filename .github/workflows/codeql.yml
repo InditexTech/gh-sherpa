@@ -22,6 +22,7 @@ concurrency:
 
 env:
   WORKING_DIRECTORY: ${{ vars.WORKING_DIRECTORY }}
+  COMPONENT_DESCRIPTOR: .github/inditextech-ci-go.json
   ASDF_BRANCH_VERSION: '0.18.0'
 
 jobs:
@@ -95,6 +96,28 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - name: Resolve governed working directory
+        if: matrix.language == 'go'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! -f "$COMPONENT_DESCRIPTOR" ]]; then
+            echo "::error title=Missing descriptor::${COMPONENT_DESCRIPTOR} not found."
+            exit 1
+          fi
+          workdir="${WORKING_DIRECTORY:-$(jq -r '.working_directory // empty' "$COMPONENT_DESCRIPTOR")}"
+          case "$workdir" in
+            ""|/*|..|../*|*/..|*/../*)
+              echo "::error title=Invalid working directory::WORKING_DIRECTORY must be a non-empty relative repository path." >&2
+              exit 1
+              ;;
+          esac
+          if [[ ! -d "$workdir" ]]; then
+            echo "::error title=Missing working directory::'${workdir}' is not a directory in this checkout." >&2
+            exit 1
+          fi
+          echo "WORKING_DIRECTORY=${workdir}" >> "$GITHUB_ENV"
 
       - name: Read governed tool versions
         id: tool-versions
