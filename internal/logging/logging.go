@@ -15,7 +15,7 @@ func Debug(message ...string) {
 	fmt.Printf("DEBUG: %s\n", message)
 }
 
-func Debugf(message string, args ...interface{}) {
+func Debugf(message string, args ...any) {
 	if os.Getenv(envDebug) == "" {
 		return
 	}
@@ -31,7 +31,7 @@ func Error(message string) {
 	fmt.Println(PaintError("ERROR: " + message))
 }
 
-func Errorf(message string, args ...interface{}) {
+func Errorf(message string, args ...any) {
 	fmt.Println(PaintError("ERROR: " + fmt.Sprintf(message, args...)))
 }
 

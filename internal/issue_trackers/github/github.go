@@ -22,7 +22,7 @@ var ErrIdIsPullRequestNumber = func(identifier string) error {
 }
 
 type githubCli interface {
-	Execute(result interface{}, command []string) error
+	Execute(result any, command []string) error
 	domain.RepositoryProvider
 }
 
