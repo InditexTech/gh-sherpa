@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#200](https://github.com/InditexTech/gh-sherpa/pull/200) Read `--pr-body-file` in `create-pr` when `--pr-title` is also set
 
+### Dependencies
+
+- [#201](https://github.com/InditexTech/gh-sherpa/issues/201) Bump Go to 1.27.3 so builds no longer trust the compromised eMudhra intermediate CA certificates
+
 ## [1.8.0] - 2026-09-09
 
 ### Added
