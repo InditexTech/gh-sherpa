@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- [#200](https://github.com/InditexTech/gh-sherpa/pull/200) Read `--pr-body-file` in `create-pr` when `--pr-title` is also set
+
 ## [1.8.0] - 2026-09-09
 
 ### Added
