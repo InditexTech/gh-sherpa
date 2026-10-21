@@ -324,22 +324,32 @@ func (cpr *CreatePullRequest) pushChanges(branchName string) (err error) {
 	return
 }
 
+func readPRBodyFile(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to read --pr-body-file: %w", err)
+	}
+	return string(content), nil
+}
+
 func (cpr *CreatePullRequest) getPullRequestTitleAndBody(issue domain.Issue) (title string, body string, err error) {
-	// --pr-title and --pr-body fully override auto-generation
+	// --pr-title and --pr-body fully override auto-generation;
+	// --pr-body-file still overrides --pr-body
 	if cpr.Cfg.PRTitle != "" {
 		title = cpr.Cfg.PRTitle
 		body = cpr.Cfg.PRBody
+		if cpr.Cfg.PRBodyFile != "" {
+			body, err = readPRBodyFile(cpr.Cfg.PRBodyFile)
+		}
 		return
 	}
 
 	// --pr-body-file overrides the body
 	if cpr.Cfg.PRBodyFile != "" {
-		content, readErr := os.ReadFile(cpr.Cfg.PRBodyFile)
-		if readErr != nil {
-			err = fmt.Errorf("failed to read --pr-body-file: %w", readErr)
+		body, err = readPRBodyFile(cpr.Cfg.PRBodyFile)
+		if err != nil {
 			return
 		}
-		body = string(content)
 		// Still auto-generate the title from the issue
 		switch issue.TrackerType() {
 		case domain.IssueTrackerTypeGithub:
