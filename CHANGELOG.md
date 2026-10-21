@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Dependencies
 
 - [#201](https://github.com/InditexTech/gh-sherpa/issues/201) Bump Go to 1.27.3 so builds no longer trust the compromised eMudhra intermediate CA certificates
+- [#197](https://github.com/InditexTech/gh-sherpa/pull/197) Bump `github.com/cli/go-gh/v2` from 2.13.0 to 2.16.2
 
 ## [1.8.0] - 2026-09-09
 
