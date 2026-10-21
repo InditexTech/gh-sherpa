@@ -167,7 +167,7 @@ gh sherpa create-pr, cpr [flags]
 * `--output`: Output format. Use `json` to get machine-readable output `{"branch":"<name>","pr_url":"<url>","draft":<bool>}`. Default is human-readable text.
 * `--pr-title`: Override the auto-generated PR title.
 * `--pr-body`: Override the auto-generated PR body.
-* `--pr-body-file`: Read the PR body from a file (overrides `--pr-body` and `--template`).
+* `--pr-body-file`: Read the PR body from a file (overrides `--pr-body` and `--template`, also when `--pr-title` is set).
 * `--no-use-existing-branch`: Fail if a branch for this issue already exists (default non-interactive behavior is to reuse the existing branch).
 * `--label`: Additional label to apply to the PR. Can be repeated: `--label bug --label priority/high`.
 * `--reviewer`: Request a review from this user or team. Can be repeated: `--reviewer alice --reviewer org/team`.
