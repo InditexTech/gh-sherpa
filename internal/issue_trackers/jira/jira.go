@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 
 	"github.com/InditexTech/gh-sherpa/internal/config"
 	"github.com/InditexTech/gh-sherpa/internal/domain"
@@ -109,10 +110,8 @@ func (j *Jira) goJiraIssueToIssue(issue gojira.Issue) domain.Issue {
 
 func (j *Jira) getIssueType(issueID string) issue_types.IssueType {
 	for issueType, ids := range j.cfg.IssueTypes {
-		for _, id := range ids {
-			if id == issueID {
-				return issueType
-			}
+		if slices.Contains(ids, issueID) {
+			return issueType
 		}
 	}
 

@@ -66,10 +66,8 @@ func GetAllValues() []IssueType {
 func ParseIssueType(s string) IssueType {
 	result := IssueType(s)
 
-	for _, issueType := range GetAllValues() {
-		if result == issueType {
-			return result
-		}
+	if slices.Contains(GetAllValues(), result) {
+		return result
 	}
 
 	return Unknown

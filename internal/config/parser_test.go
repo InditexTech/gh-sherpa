@@ -52,12 +52,10 @@ func TestJiraTemplateConfiguration(t *testing.T) {
 
 	t.Run("Should generate configuration with values", func(t *testing.T) {
 		jiraData := JiraTemplateConfiguration{
-			Jira: Jira{
-				Auth: JiraAuth{
-					Host:          "https://jira.example.com",
-					Token:         "jira-pat",
-					SkipTLSVerify: true,
-				},
+			Auth: JiraAuth{
+				Host:          "https://jira.example.com",
+				Token:         "jira-pat",
+				SkipTLSVerify: true,
 			},
 		}
 
