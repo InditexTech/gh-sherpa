@@ -1,0 +1,47 @@
+docs/USAGE.md
+  s_49c7bb098950fd::t_def550020ef571 52-54,121-139
+internal/mocks/domain/mock_BranchProvider.go
+  s_19e28bfb706b2d::t_618626434bdd7b 1,27-30
+internal/mocks/domain/mock_ConfigProvider.go
+  s_19e28bfb706b2d::t_e84286dad81665 1,27-30,79,83-86,128-131
+internal/mocks/domain/mock_ForkProvider.go
+  s_19e28bfb706b2d::t_8686a676ab6fbe 1-338
+internal/mocks/domain/mock_GitProvider.go
+  s_19e28bfb706b2d::t_6b7e54c10d8f9c 1,24-27,70-73,116-119,163-166,205-252,257-260,303-306,359-362,413,417-420,468-522,527-530,573-576
+internal/mocks/domain/mock_Issue.go
+  s_19e28bfb706b2d::t_5f5a47a491cfe8 1,24,28-31,69,73-76,114-160,164-167,205,209-212,250,254-257,295,299-302,340,344-347,385,389-392
+internal/mocks/domain/mock_IssueTrackerProvider.go
+  s_19e28bfb706b2d::t_3faff61bec3dd6 1,27-30,85-88
+internal/mocks/domain/mock_PullRequestProvider.go
+  s_19e28bfb706b2d::t_b1a74b2e2885f4 1,27-30,90-93
+internal/mocks/domain/mock_RepositoryProvider.go
+  s_19e28bfb706b2d::t_e441b09f76db02 1,23,27-30
+internal/mocks/domain/mock_UserInteractionProvider.go
+  s_19e28bfb706b2d::t_6776a4725c8ee8 1,24-27,81-84,130-133
+internal/use_cases/create_branch_test.go
+  s_49c7bb098950fd::t_ef84b601a21696 5-7,16,116-128,158-285
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "a20191fdf5973e89faf2378165576abe2b0a93bc",
+  "prompts": {},
+  "sessions": {
+    "s_19e28bfb706b2d": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f7a117669ffe6YzB7Yb1A3vqLB",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Jorge Garcia Rey <jorgegar@inditex.com>"
+    },
+    "s_49c7bb098950fd": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_f79cd24a3ffeSDVvr5eDC6h4B3",
+        "model": "gemini-3.8-flash"
+      },
+      "human_author": "Jorge Garcia Rey <jorgegar@inditex.com>"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+CHANGELOG.md
+  h_3463394a5f8c4a 10-15,162-163
+version
+  h_3463394a5f8c4a 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "39183ce1997808ee173174a98af4a327aa8f7ca3",
+  "prompts": {},
+  "humans": {
+    "h_3463394a5f8c4a": {
+      "author": "Mario Escobedo Del Rio <marioer@inditex.com>"
+    }
+  }
+}

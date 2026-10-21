@@ -1,0 +1,21 @@
+NOTICE
+  s_4c6f0fc023cc49::t_828c95b2320ec3 1-13
+README.md
+  s_4c6f0fc023cc49::t_a7c71c04a805aa 23,133-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c1c3fa105ed009957434231384ea756bfa7f9fca",
+  "prompts": {},
+  "sessions": {
+    "s_4c6f0fc023cc49": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "s_4c6f0fc023cc49",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Alvarez Sabin <ivanasabi@ext.inditex.com>"
+    }
+  }
+}
