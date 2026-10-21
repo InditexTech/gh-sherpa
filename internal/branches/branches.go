@@ -127,12 +127,3 @@ func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType st
 	trailingDashPattern := regexp.MustCompile(`-+$`)
 	return trailingDashPattern.ReplaceAllString(branchName, "")
 }
-
-// min returns the smallest of x or y.
-func min(x, y int) int {
-	if x > y {
-		return y
-	}
-
-	return x
-}

@@ -86,15 +86,13 @@ func (s *JiraTestSuite) SetupSubTest() {
 	}
 
 	cfg := Configuration{
-		Jira: config.Jira{
-			Auth: config.JiraAuth{
-				Host: "https://jira.example.com/jira",
-			},
-			IssueTypes: config.JiraIssueTypes{
-				issue_types.Bug:         {"1"},
-				issue_types.Feature:     {"3", "5"},
-				issue_types.Refactoring: {},
-			},
+		Auth: config.JiraAuth{
+			Host: "https://jira.example.com/jira",
+		},
+		IssueTypes: config.JiraIssueTypes{
+			issue_types.Bug:         {"1"},
+			issue_types.Feature:     {"3", "5"},
+			issue_types.Refactoring: {},
 		},
 		IssueTypeLabels: map[issue_types.IssueType][]string{
 			issue_types.Bug:         {"kind/bug", "kind/bugfix"},

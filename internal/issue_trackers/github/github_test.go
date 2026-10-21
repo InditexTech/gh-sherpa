@@ -115,12 +115,10 @@ func (s *GithubTestSuite) SetupSubTest() {
 	}
 
 	cfg := Configuration{
-		Github: config.Github{
-			IssueLabels: config.GithubIssueLabels{
-				issue_types.Bug:         {"kind/bug", "kind/bugfix"},
-				issue_types.Feature:     {"kind/feature", "kind/enhancement"},
-				issue_types.Refactoring: {},
-			},
+		IssueLabels: config.GithubIssueLabels{
+			issue_types.Bug:         {"kind/bug", "kind/bugfix"},
+			issue_types.Feature:     {"kind/feature", "kind/enhancement"},
+			issue_types.Refactoring: {},
 		},
 	}
 

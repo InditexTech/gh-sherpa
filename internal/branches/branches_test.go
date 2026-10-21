@@ -487,7 +487,6 @@ func TestFormatBranchName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			b := BranchProvider{
 				cfg: Configuration{
@@ -527,7 +526,6 @@ func TestParseBranchName(t *testing.T) {
 			want:       &BranchNameInfo{BranchType: "randomprefix", IssueId: "A_PROJECT_KEY-99", IssueContext: "issue-tittle-here"},
 		},
 	} {
-		tc := tc
 		t.Run(tc.branchName, func(t *testing.T) {
 			branchInfo := ParseBranchName(tc.branchName)
 
