@@ -34,12 +34,34 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - name: Check out pull request head
+      - name: Resolve pull request merge commit
+        id: merge-commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_EVENT_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/pull/${GITHUB_EVENT_NUMBER}/merge" ]] \
+            || [[ ! "$MERGE_SHA" =~ ^[0-9a-f]{40}$ ]] \
+            || [[ "$MERGE_SHA" == "$HEAD_SHA" ]]; then
+            echo "::error title=No merge commit::GitHub provides no merge commit of this pull request with its base, so no release can be proposed."
+            body=$'### Release Preview\n\nGitHub provides no merge commit of this pull request with its base (for example, it conflicts with its base), so no release is proposed. Resolve the conflict to get a preview.'
+            gh pr comment "$GITHUB_EVENT_NUMBER" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body "$body"
+            exit 1
+          fi
+          echo "merge_commit=$MERGE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Check out pull request merge commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ steps.merge-commit.outputs.merge_commit }}
 
       - name: Check CHANGELOG has Unreleased changes
         if: >-
