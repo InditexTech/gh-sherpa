@@ -34,12 +34,34 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - name: Check out pull request head
+      - name: Resolve pull request merge commit
+        id: merge-commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_EVENT_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF" != "refs/pull/${GITHUB_EVENT_NUMBER}/merge" ]] \
+            || [[ ! "$MERGE_SHA" =~ ^[0-9a-f]{40}$ ]] \
+            || [[ "$MERGE_SHA" == "$HEAD_SHA" ]]; then
+            echo "::error title=No merge commit::GitHub provides no merge commit of this pull request with its base, so no release can be proposed."
+            body=$'### Release Preview\n\nGitHub provides no merge commit of this pull request with its base (for example, it conflicts with its base), so no release is proposed. Resolve the conflict to get a preview.'
+            gh pr comment "$GITHUB_EVENT_NUMBER" \
+              --repo "$GITHUB_REPOSITORY" \
+              --body "$body"
+            exit 1
+          fi
+          echo "merge_commit=$MERGE_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Check out pull request merge commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ steps.merge-commit.outputs.merge_commit }}
 
       - name: Check CHANGELOG has Unreleased changes
         if: >-
@@ -61,7 +83,8 @@ jobs:
             exit 1
           fi
 
-      - name: Calculate release preview
+      - name: Resolve release type
+        id: release-type
         env:
           DEVELOPMENT_FLOW: ${{ vars.DEVELOPMENT_FLOW }}
           GITHUB_EVENT_NUMBER: ${{ github.event.pull_request.number }}
@@ -99,46 +122,72 @@ jobs:
               ;;
           esac
 
+          echo "release_bump=$release_bump" >> "$GITHUB_OUTPUT"
+
+      - name: Compute release version
+        id: release-version
+        if: steps.release-type.outputs.release_bump != ''
+        uses: InditexTech/gh-actions/release-version@ab7978dfa118776238a6982e445707a1ae6c0668 # v1.2.0
+        with:
+          release-type: ${{ steps.release-type.outputs.release_bump }}
+          tag-format: v
+          strategy: single
+          packages: '[{"name": "module", "tag-prefix": "", "declared-version": ""}]'
+
+      - name: Check legacy bare release tags
+        if: steps.release-type.outputs.release_bump != ''
+        env:
+          RELEASES: ${{ steps.release-version.outputs.releases }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          strict='^[0-9]+\.[0-9]+\.[0-9]+$'
+          base="$(jq -er '.[0].base' <<< "$RELEASES")"
+          base_label="v$base"
+          if [[ -z "$base" ]]; then
+            base="0.0.0"
+            base_label="none"
+          fi
+          if [[ ! "$base" =~ $strict ]]; then
+            echo "::error title=Invalid release base::The computed release base '$base' is not X.Y.Z."
+            exit 1
+          fi
+
+          bare_tags="$(git tag --list --merged HEAD '[0-9]*')"
+          highest="$(printf '%s\n' "$bare_tags" | awk '/^[0-9]+\.[0-9]+\.[0-9]+$/' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
+          if [[ -z "$highest" ]]; then
+            exit 0
+          fi
+          newest="$(printf '%s\n%s\n' "$highest" "$base" | sort -s -t. -k1,1n -k2,2n -k3,3n | tail -n 1)"
+          if [[ "$highest" != "$base" && "$newest" == "$highest" ]]; then
+            echo "::error title=Legacy bare release tag::Release tag $highest is higher than the latest v release tag ($base_label). Create the compatibility tag v$highest on the same commit as $highest, then release again."
+            exit 1
+          fi
+
+      - name: Calculate release preview
+        if: steps.release-type.outputs.release_bump != ''
+        env:
+          DEVELOPMENT_FLOW: ${{ vars.DEVELOPMENT_FLOW }}
+          GITHUB_EVENT_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_BUMP: ${{ steps.release-type.outputs.release_bump }}
+          RELEASES: ${{ steps.release-version.outputs.releases }}
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          release_bump="$RELEASE_BUMP"
           merge_strategy="Create a merge commit"
           if [[ "$DEVELOPMENT_FLOW" == "trunk-based-development" ]]; then
             merge_strategy="Squash and merge"
           fi
 
-          bump_semver() {
-            local major minor patch
-            IFS=. read -r major minor patch <<< "$1"
-            case "$2" in
-              major) major=$((major + 1)); minor=0; patch=0 ;;
-              minor) minor=$((minor + 1)); patch=0 ;;
-              patch) patch=$((patch + 1)) ;;
-            esac
-            printf '%s.%s.%s' "$major" "$minor" "$patch"
-          }
+          current_version="$(jq -er '.[0].base' <<< "$RELEASES")"
+          release_tag="$(jq -er '.[0].tag' <<< "$RELEASES")"
 
-          semver_gt() {
-            local lmajor lminor lpatch rmajor rminor rpatch
-            IFS=. read -r lmajor lminor lpatch <<< "$1"
-            IFS=. read -r rmajor rminor rpatch <<< "$2"
-            (( lmajor != rmajor )) && return $(( lmajor > rmajor ? 0 : 1 ))
-            (( lminor != rminor )) && return $(( lminor > rminor ? 0 : 1 ))
-            (( lpatch > rpatch ))
-          }
-
-          current_version="0.0.0"
-          has_release="false"
-          while IFS= read -r candidate; do
-            stripped="${candidate#v}"
-            [[ "$stripped" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || continue
-            if [[ "$has_release" == "false" ]] || semver_gt "$stripped" "$current_version"; then
-              current_version="$stripped"
-            fi
-            has_release="true"
-          done < <(git tag --list 'v[0-9]*' '[0-9]*')
-
-          release_version="$(bump_semver "$current_version" "$release_bump")"
-          release_tag="v${release_version}"
-
-          if [[ "$has_release" == "true" ]]; then
+          if [[ -n "$current_version" ]]; then
             current_label="\`v$current_version\`"
           else
             current_label="_none (first release)_"
