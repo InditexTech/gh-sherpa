@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- [#135](https://github.com/InditexTech/gh-sherpa/issues/135) Keep the issue identifier when a branch name is cropped to `max_length`; only the description after it is shortened
+
 ## [1.9.0] - 2026-10-21
 
 ### Fixed

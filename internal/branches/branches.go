@@ -113,14 +113,17 @@ func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType st
 
 	branchName = fmt.Sprintf("%s/%s", branchPrefix, issueId)
 
-	if issueContext != "" {
-		branchName = fmt.Sprintf("%s-%s", branchName, issueContext)
+	// Only the issue context is cropped to fit the max length. "<prefix>/<issue id>" is never cut,
+	// even when it does not fit on its own, so the branch always points to its issue.
+	if b.cfg.MaxLength-len([]rune(repoNameWithOwner)) > 0 {
+		maxIssueContextLength := b.calcIssueContextMaxLen(repoNameWithOwner, branchPrefix, issueId)
+		if issueContextRunes := []rune(issueContext); len(issueContextRunes) > maxIssueContextLength {
+			issueContext = string(issueContextRunes[:maxIssueContextLength])
+		}
 	}
 
-	maxBranchNameLength := b.cfg.MaxLength - len([]rune(repoNameWithOwner))
-	if maxBranchNameLength > 0 {
-		branchNameLength := len([]rune(branchName))
-		branchName = branchName[:min(maxBranchNameLength, branchNameLength)]
+	if issueContext != "" {
+		branchName = fmt.Sprintf("%s-%s", branchName, issueContext)
 	}
 
 	// Remove all trailing dashes to ensure branches never end with a dash
