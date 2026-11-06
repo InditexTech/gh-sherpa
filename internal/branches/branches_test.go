@@ -484,6 +484,51 @@ func TestFormatBranchName(t *testing.T) {
 			},
 			want: "feature/JIRA-123-back",
 		},
+		{
+			name: "Does not crop the issue id when the repository name is long",
+			args: args{
+				repository:   "some-organization/payments-reconciliation-svc-api", // 49 chars, 14 left: cropping the whole name gives "feature/GH-123"
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+			},
+			want: "feature/GH-1234",
+		},
+		{
+			name: "Does not crop the Jira issue key when the repository name is long",
+			args: args{
+				repository:   "some-organization/sales-reconciliation-services", // 47 chars, 16 left: cropping the whole name gives "feature/MPSSALES"
+				branchType:   "feature",
+				issueId:      "MPSSALES-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+			},
+			want: "feature/MPSSALES-1234",
+		},
+		{
+			name: "Keeps the prefix and issue id even if they do not fit in the max length",
+			args: args{
+				repository:   "some-organization/payments-reconciliation-service-backend", // 57 chars, 6 left: cropping the whole name gives "featur"
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+			},
+			want: "feature/GH-1234",
+		},
+		{
+			name: "Crops the issue context by characters when the prefix is not ASCII",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-42",
+				issueContext:         "add-export",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "característica"},
+				maxLength:            45, // 24 chars left for "característica/GH-42-add"
+			},
+			want: "característica/GH-42-add",
+		},
 	}
 
 	for _, tt := range tests {
