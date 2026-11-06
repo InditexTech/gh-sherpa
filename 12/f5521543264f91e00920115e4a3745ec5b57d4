@@ -1,0 +1,18 @@
+CHANGELOG.md
+  h_3463394a5f8c4a 10-13
+go.mod
+  h_3463394a5f8c4a 8,19-22,24-25,38,41,45,54
+go.sum
+  h_3463394a5f8c4a 1-2,11-26,31-34,83-84,92-93,99-100,138-139,152-153,160-161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.6",
+  "base_commit_sha": "12f5521543264f91e00920115e4a3745ec5b57d4",
+  "prompts": {},
+  "humans": {
+    "h_3463394a5f8c4a": {
+      "author": "Mario Escobedo Del Rio <marioer@inditex.com>"
+    }
+  }
+}
