@@ -9,7 +9,7 @@ type ConfigProvider interface {
 type Config map[string]IssueTrackerConfig
 
 type IssueTrackerConfig struct {
-	Auth AuthConfig `json:"auth,omitempty"`
+	Auth AuthConfig `json:"auth"`
 }
 
 type AuthConfig struct {

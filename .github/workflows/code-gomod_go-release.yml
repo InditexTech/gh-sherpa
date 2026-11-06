@@ -41,6 +41,8 @@ jobs:
       release_type: ${{ inputs.release_type }}
     secrets:
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+      CI_GPG_SECRET_KEY: ${{ secrets.CI_GPG_SECRET_KEY }}
+      CI_GPG_SECRET_KEY_PASSWORD: ${{ secrets.CI_GPG_SECRET_KEY_PASSWORD }}
 
   github-release:
     name: Create GitHub Release ${{ matrix.release.tag }}

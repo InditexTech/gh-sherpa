@@ -462,6 +462,81 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.Contains(body, "This is a test PR template")
 	})
 
+	s.Run("should use the pr body file when a pr title is also set", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/GH-3-title-and-body-file"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+
+		bodyFile := filepath.Join(s.T().TempDir(), "body.md")
+		s.Require().NoError(os.WriteFile(bodyFile, []byte("Closes #3\n\nBody from file"), 0o600))
+		s.uc.Cfg.PRTitle = "fix: custom title"
+		s.uc.Cfg.PRBody = "body from flag"
+		s.uc.Cfg.PRBodyFile = bodyFile
+
+		_, err := s.uc.Execute()
+
+		s.NoError(err)
+		pr := s.pullRequestProvider.PullRequests[branchName]
+		s.Require().NotNil(pr)
+		s.Equal("fix: custom title", pr.Title)
+		s.Equal("Closes #3\n\nBody from file", pr.Body)
+	})
+
+	s.Run("should use the pr body file and the issue title when no pr title is set", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/GH-3-body-file-only"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+
+		bodyFile := filepath.Join(s.T().TempDir(), "body.md")
+		s.Require().NoError(os.WriteFile(bodyFile, []byte("Body from file"), 0o600))
+		s.uc.Cfg.PRBodyFile = bodyFile
+
+		_, err := s.uc.Execute()
+
+		s.NoError(err)
+		body, exists := s.pullRequestProvider.GetPullRequestForBranchBody(branchName)
+		s.True(exists)
+		s.Equal("Body from file", body)
+	})
+
+	s.Run("should use the pr body flag when a pr title is set without a body file", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/GH-3-title-and-body-flag"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+
+		s.uc.Cfg.PRTitle = "fix: custom title"
+		s.uc.Cfg.PRBody = "body from flag"
+
+		_, err := s.uc.Execute()
+
+		s.NoError(err)
+		body, exists := s.pullRequestProvider.GetPullRequestForBranchBody(branchName)
+		s.True(exists)
+		s.Equal("body from flag", body)
+	})
+
+	s.Run("should error if the pr body file cannot be read when a pr title is set", func() {
+		s.gitProvider.ResetRemoteBranches()
+		branchName := "feature/GH-3-title-and-missing-body-file"
+		s.gitProvider.CurrentBranch = branchName
+		s.gitProvider.AddLocalBranches(branchName)
+		s.branchProvider.SetBranchName(branchName)
+
+		s.uc.Cfg.PRTitle = "fix: custom title"
+		s.uc.Cfg.PRBodyFile = filepath.Join(s.T().TempDir(), "missing.md")
+
+		_, err := s.uc.Execute()
+
+		s.ErrorContains(err, "failed to read --pr-body-file")
+		s.False(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+	})
+
 	s.Run("should error if could not get issue", func() {
 		branchName := "feature/GH-6-with-no-remote-branch"
 		s.gitProvider.CurrentBranch = branchName
