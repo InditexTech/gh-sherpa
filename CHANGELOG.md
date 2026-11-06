@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Dependencies
-
-- [#204](https://github.com/InditexTech/gh-sherpa/pull/204) Bump `github.com/cli/go-gh/v2` from 2.16.2 to 2.17.0
-
 ## [1.9.0] - 2026-10-21
 
 ### Fixed
