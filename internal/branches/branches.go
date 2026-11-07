@@ -14,6 +14,10 @@ import (
 // machine-readable output such as `--output json`. Tests replace it to capture the warnings.
 var warn = logging.PrintWarnStderr
 
+// croppedEndingPattern matches the endings that a cropped branch name must not keep: trailing dashes, and
+// "/", "." or ".lock", which git does not allow at the end of a branch name.
+var croppedEndingPattern = regexp.MustCompile(`(?:-|/|\.|\.lock)+$`)
+
 var patternBranchName = regexp.MustCompile(`^(?:(?P<branch_type>\w*)/)?(?P<issue_id>(?:(?P<issue_key>\w*)-)?(?P<issue_number>\d+))(?:-?(?P<issue_context>[\w\-]*))$`)
 
 type BranchProvider struct {
@@ -138,6 +142,7 @@ func (b BranchProvider) formatBranchName(repoNameWithOwner string, branchType st
 		// Crop by characters, not bytes, so a non-ASCII prefix is never cut in the middle of a character.
 		branchNameRunes := []rune(branchName)
 		branchName = string(branchNameRunes[:min(maxBranchNameLength, len(branchNameRunes))])
+		branchName = croppedEndingPattern.ReplaceAllString(branchName, "")
 	}
 
 	// Remove all trailing dashes to ensure branches never end with a dash

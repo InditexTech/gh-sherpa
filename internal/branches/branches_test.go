@@ -594,6 +594,44 @@ func TestFormatBranchName(t *testing.T) {
 			},
 			want: "característica/GH-1-add",
 		},
+		{
+			name: "Does not end a cropped branch name with a slash",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    29, // 8 chars left: the cut gives "feature/"
+			},
+			want:        "feature",
+			wantWarning: true,
+		},
+		{
+			name: "Does not end a cropped branch name with a slash when the prefix is not ASCII",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1234",
+				issueContext:         "add",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "característica"},
+				maxLength:            36, // 15 chars left: the cut gives "característica/"
+			},
+			want:        "característica",
+			wantWarning: true,
+		},
+		{
+			name: "Does not end a cropped branch name with a dot or .lock",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1234",
+				issueContext:         "add",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "deps.lock.update"},
+				maxLength:            31, // 10 chars left: the cut gives "deps.lock."
+			},
+			want:        "deps",
+			wantWarning: true,
+		},
 	}
 
 	for _, tt := range tests {
