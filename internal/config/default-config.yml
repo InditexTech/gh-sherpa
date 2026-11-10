@@ -82,8 +82,13 @@ branches:
     # bugfix: myfix
     # Example: map `feature` type to a branch prefix `feat/xxxx`:
     # feature: feat
-  # Branch name max number of characters
-  # Useful when you want to crop the branch name to a specific length.
-  # By default it will use 63 for Kubernetes resources compatibility.
-  # You can disable this limit of characters by setting this value to 0.
+  # Maximum combined length of owner/repo and the generated branch name.
+  # The full branch name counts toward this limit, including the configured prefix,
+  # issue identifier, description, and separators: <prefix>/<issue_identifier>-<description>.
+  # Example: with max_length: 63, "InditexTech/gh-sherpa" uses 21 characters,
+  # leaving 42 for the branch name. "feature/GH-1-" uses another 13,
+  # leaving up to 29 characters for the description.
+  # Branch names exceeding the remaining budget are truncated. Trailing dashes are removed.
+  # Must be 0 or greater.
+  # Defaults to 63 for Kubernetes resource compatibility. Set to 0 to disable truncation.
   max_length: 63
