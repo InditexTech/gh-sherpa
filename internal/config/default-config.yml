@@ -84,6 +84,11 @@ branches:
     # feature: feat
   # Branch name max number of characters
   # Useful when you want to crop the branch name to a specific length.
+  # The limit counts the repository name with its owner ("owner/repo") plus the branch name.
   # By default it will use 63 for Kubernetes resources compatibility.
   # You can disable this limit of characters by setting this value to 0.
   max_length: 63
+  # When max_length would crop "<prefix>/<issue id>", a warning is printed.
+  # Set this to true to keep "<prefix>/<issue id>" whole instead, exceeding
+  # max_length just enough to fit it.
+  keep_issue_id: false

@@ -364,11 +364,13 @@ func TestFormatBranchName(t *testing.T) {
 		issueContext         string
 		branchPrefixOverride map[issue_types.IssueType]string
 		maxLength            int
+		keepIssueId          bool
 	}
 	tests := []struct {
-		name string
-		args args
-		want string
+		name        string
+		args        args
+		want        string
+		wantWarning bool
 	}{
 		{
 			name: "Does format branch name",
@@ -484,21 +486,174 @@ func TestFormatBranchName(t *testing.T) {
 			},
 			want: "feature/JIRA-123-back",
 		},
+		{
+			name: "Crops the issue id and warns when the repository name is long",
+			args: args{
+				repository:   "some-organization/payments-reconciliation-svc-api", // 49 chars, 14 left
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+			},
+			want:        "feature/GH-123",
+			wantWarning: true,
+		},
+		{
+			name: "Keeps the issue id with keep_issue_id when the repository name is long",
+			args: args{
+				repository:   "some-organization/payments-reconciliation-svc-api", // 49 chars, 14 left
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+				keepIssueId:  true,
+			},
+			want: "feature/GH-1234",
+		},
+		{
+			name: "Crops the Jira issue key and warns when the repository name is long",
+			args: args{
+				repository:   "some-organization/sales-reconciliation-services", // 47 chars, 16 left
+				branchType:   "feature",
+				issueId:      "MPSSALES-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+			},
+			want:        "feature/MPSSALES",
+			wantWarning: true,
+		},
+		{
+			name: "Keeps the Jira issue key with keep_issue_id when the repository name is long",
+			args: args{
+				repository:   "some-organization/sales-reconciliation-services", // 47 chars, 16 left
+				branchType:   "feature",
+				issueId:      "MPSSALES-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+				keepIssueId:  true,
+			},
+			want: "feature/MPSSALES-1234",
+		},
+		{
+			name: "Crops the prefix and warns when not even the prefix fits",
+			args: args{
+				repository:   "some-organization/payments-reconciliation-service-backend", // 57 chars, 6 left
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+			},
+			want:        "featur",
+			wantWarning: true,
+		},
+		{
+			name: "Keeps the prefix and issue id with keep_issue_id even if they exceed the max length",
+			args: args{
+				repository:   "some-organization/payments-reconciliation-service-backend", // 57 chars, 6 left
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+				keepIssueId:  true,
+			},
+			want: "feature/GH-1234",
+		},
+		{
+			name: "keep_issue_id does not change a name whose prefix and issue id fit",
+			args: args{
+				repository:   "some-organization/sales-reconciliation-services", // 47 chars, 16 left
+				branchType:   "feature",
+				issueId:      "GH-1",
+				issueContext: "fix-login-timeout",
+				maxLength:    63,
+				keepIssueId:  true,
+			},
+			want: "feature/GH-1-fix",
+		},
+		{
+			name: "Crops by characters when the prefix is not ASCII",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-42",
+				issueContext:         "add-export",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "característica"},
+				maxLength:            45, // 24 chars left for "característica/GH-42-add"
+			},
+			want: "característica/GH-42-add",
+		},
+		{
+			name: "Does not change a name with a non-ASCII prefix that fits",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1",
+				issueContext:         "add",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "característica"},
+				maxLength:            63, // 42 chars left; the name has 23 characters and 24 bytes
+			},
+			want: "característica/GH-1-add",
+		},
+		{
+			name: "Does not end a cropped branch name with a slash",
+			args: args{
+				repository:   repositoryName,
+				branchType:   "feature",
+				issueId:      "GH-1234",
+				issueContext: "fix-login-timeout",
+				maxLength:    29, // 8 chars left: the cut gives "feature/"
+			},
+			want:        "feature",
+			wantWarning: true,
+		},
+		{
+			name: "Does not end a cropped branch name with a slash when the prefix is not ASCII",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1234",
+				issueContext:         "add",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "característica"},
+				maxLength:            36, // 15 chars left: the cut gives "característica/"
+			},
+			want:        "característica",
+			wantWarning: true,
+		},
+		{
+			name: "Does not end a cropped branch name with a dot or .lock",
+			args: args{
+				repository:           repositoryName,
+				branchType:           "feature",
+				issueId:              "GH-1234",
+				issueContext:         "add",
+				branchPrefixOverride: map[issue_types.IssueType]string{issue_types.Feature: "deps.lock.update"},
+				maxLength:            31, // 10 chars left: the cut gives "deps.lock."
+			},
+			want:        "deps",
+			wantWarning: true,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var warnings []string
+			defaultWarn := warn
+			warn = func(message string) { warnings = append(warnings, message) }
+			t.Cleanup(func() { warn = defaultWarn })
+
 			b := BranchProvider{
 				cfg: Configuration{
 					Branches: config.Branches{
-						Prefixes:  tt.args.branchPrefixOverride,
-						MaxLength: tt.args.maxLength,
+						Prefixes:    tt.args.branchPrefixOverride,
+						MaxLength:   tt.args.maxLength,
+						KeepIssueId: tt.args.keepIssueId,
 					},
 				},
 			}
 			branchName := b.formatBranchName(tt.args.repository, tt.args.branchType, tt.args.issueId, tt.args.issueContext)
 
 			assert.Equal(t, tt.want, branchName)
+			assert.Equal(t, tt.wantWarning, len(warnings) > 0, "warnings: %v", warnings)
 		})
 	}
 }

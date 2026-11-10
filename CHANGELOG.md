@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- [#135](https://github.com/InditexTech/gh-sherpa/issues/135) Warn when `max_length` crops the issue identifier of a branch name, add the `keep_issue_id` branch setting to keep it whole, and crop branch names by characters instead of bytes without leaving a trailing `/`, `.` or `.lock`
+
 ## [1.9.0] - 2026-10-21
 
 ### Fixed
