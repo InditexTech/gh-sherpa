@@ -88,11 +88,15 @@ branches:
   # Example: with max_length: 63, "InditexTech/gh-sherpa" uses 21 characters,
   # leaving 42 for the branch name. "feature/GH-1-" uses another 13,
   # leaving up to 29 characters for the description.
-  # Branch names exceeding the remaining budget are truncated. Trailing dashes are removed.
+  # When owner/repo leaves a positive budget, longer branch names are truncated by characters.
+  # If owner/repo uses the entire limit or more, no truncation is applied.
+  # After truncation, trailing dashes, slashes, dots, and .lock suffixes are removed.
+  # By default, truncation that affects "<prefix>/<issue_identifier>" prints a warning to stderr.
+  # Set keep_issue_id to true to preserve that portion even when it exceeds this limit.
   # Must be 0 or greater.
   # Defaults to 63 for Kubernetes resource compatibility. Set to 0 to disable truncation.
   max_length: 63
-  # When max_length would crop "<prefix>/<issue id>", a warning is printed.
-  # Set this to true to keep "<prefix>/<issue id>" whole instead, exceeding
-  # max_length just enough to fit it.
+  # Opt in to exceeding max_length just enough to keep "<prefix>/<issue_identifier>" whole.
+  # The description is still truncated to the remaining budget, if any.
+  # Defaults to false: respect the positive branch budget and warn if the issue ID is cropped.
   keep_issue_id: false

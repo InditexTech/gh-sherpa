@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Documentation
 
-- [#98](https://github.com/InditexTech/gh-sherpa/issues/98) Clarify that `max_length` counts the repository name with owner, branch prefix, issue identifier, and separators.
+- [#98](https://github.com/InditexTech/gh-sherpa/issues/98) Clarify the combined `max_length` calculation, truncation warnings and suffix cleanup, and the `keep_issue_id` opt-in.
 
 ### Fixed
 
