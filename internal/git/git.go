@@ -126,8 +126,8 @@ func (p *Provider) GetCurrentBranch() (branchName string, err error) {
 	return
 }
 
-func (p *Provider) FindBranch(substring string) (branch string, exists bool) {
-	args := []string{"rev-parse", "--abbrev-ref", "--branches=*" + substring + "*"}
+func (p *Provider) FindBranch(issueID string) (branch string, exists bool) {
+	args := []string{"rev-parse", "--abbrev-ref", "--branches=*/" + issueID, "--branches=*/" + issueID + "-*"}
 
 	out, _ := runGitCommand(args...)
 

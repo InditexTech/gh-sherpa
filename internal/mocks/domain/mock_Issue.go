@@ -5,6 +5,7 @@ package domain
 import (
 	domain "github.com/InditexTech/gh-sherpa/internal/domain"
 	issue_types "github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
+
 	mock "github.com/stretchr/testify/mock"
 )
 

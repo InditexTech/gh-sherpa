@@ -260,6 +260,23 @@ func (s *CreateGithubPullRequestExecutionTestSuite) TestCreatePullRequestExecuti
 		s.NoError(err)
 	})
 
+	s.Run("should reuse issue-only branch with an explicit issue ID", func() {
+		branchName := "feature/GH-1"
+		s.gitProvider.ResetLocalBranches()
+		s.gitProvider.ResetRemoteBranches()
+		s.gitProvider.AddLocalBranches("feature/GH-10", "feature/GH-10-other-issue", branchName)
+		s.uc.Cfg.IsInteractive = false
+		s.uc.Cfg.IssueID = "1"
+
+		result, err := s.uc.Execute()
+
+		s.Require().NoError(err)
+		s.Equal(branchName, result.BranchName)
+		s.Equal(branchName, s.gitProvider.CurrentBranch)
+		s.True(s.pullRequestProvider.HasPullRequestForBranch(branchName))
+		s.NotContains(s.gitProvider.LocalBranches, s.defaultBranchName)
+	})
+
 	s.Run("should error if branch already exists when using no-use-existing-branch flag", func() {
 		s.uc.Cfg.IsInteractive = false
 		s.uc.Cfg.IssueID = "1"
