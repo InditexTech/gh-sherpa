@@ -20,7 +20,8 @@ type GitProvider interface {
 	FetchBranchFromOrigin(branch string) (err error)
 	CheckoutNewBranchFromOrigin(branch string, base string) (err error)
 	GetCurrentBranch() (branchName string, err error)
-	FindBranch(substring string) (branch string, exists bool)
+	// FindBranch finds a branch ending in "/<issueID>" or containing "/<issueID>-".
+	FindBranch(issueID string) (branch string, exists bool)
 	CheckoutBranch(branch string) (err error)
 	GetCommitsToPush(branch string) (commits []string, err error)
 	RemoteBranchExists(branch string) (exists bool)

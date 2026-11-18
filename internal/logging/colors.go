@@ -2,6 +2,7 @@ package logging
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/jwalton/gchalk"
 )
@@ -49,6 +50,11 @@ func PrintInfo(message string) {
 // Print a warning message.
 func PrintWarn(message string) {
 	fmt.Println(warning.Paint("WARNING:", message))
+}
+
+// Print a warning message to stderr, so it does not mix with output meant for other programs.
+func PrintWarnStderr(message string) {
+	fmt.Fprintln(os.Stderr, warning.Paint("WARNING:", message))
 }
 
 // Print an error message.
