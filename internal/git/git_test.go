@@ -2,9 +2,11 @@ package git
 
 import (
 	"fmt"
+	"os/exec"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGitCheckoutNewBranchFromOrigin(t *testing.T) {
@@ -331,4 +333,49 @@ func TestGitPushBranch(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, []string{"push", "-u", "origin", "my-branch"}, argsSent)
 	})
+}
+
+func TestGitFindBranch(t *testing.T) {
+	repoDir := t.TempDir()
+	gitCommand := func(args ...string) (string, error) {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = repoDir
+		out, err := cmd.CombinedOutput()
+		return string(out), err
+	}
+	for _, args := range [][]string{
+		{"-c", "init.templateDir=", "init"},
+		{"-c", "user.name=Test", "-c", "user.email=test@example.com", "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "initial"},
+		{"branch", "feature/GH-1"},
+		{"branch", "feature/GH-10"},
+		{"branch", "feature/GH-10-other"},
+		{"branch", "feature/GH-2-description"},
+		{"branch", "feature/GH-30"},
+		{"branch", "feature/GH-30-other"},
+	} {
+		out, err := gitCommand(args...)
+		require.NoError(t, err, "%s", out)
+	}
+
+	previousRunGitCommand := runGitCommand
+	runGitCommand = gitCommand
+	t.Cleanup(func() { runGitCommand = previousRunGitCommand })
+	t.Setenv(DRY_RUN_ENV, "")
+
+	for _, tt := range []struct {
+		name    string
+		issueID string
+		want    string
+	}{
+		{name: "issue-only branch", issueID: "GH-1", want: "feature/GH-1"},
+		{name: "branch with description", issueID: "GH-2", want: "feature/GH-2-description"},
+		{name: "does not match longer issue numbers", issueID: "GH-3"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			provider := Provider{}
+			branch, exists := provider.FindBranch(tt.issueID)
+			assert.Equal(t, tt.want, branch)
+			assert.Equal(t, tt.want != "", exists)
+		})
+	}
 }

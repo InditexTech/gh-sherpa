@@ -296,9 +296,9 @@ func (_c *MockGitProvider_FetchBranchFromOrigin_Call) RunAndReturn(run func(stri
 	return _c
 }
 
-// FindBranch provides a mock function with given fields: substring
-func (_m *MockGitProvider) FindBranch(substring string) (string, bool) {
-	ret := _m.Called(substring)
+// FindBranch provides a mock function with given fields: issueID
+func (_m *MockGitProvider) FindBranch(issueID string) (string, bool) {
+	ret := _m.Called(issueID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindBranch")
@@ -307,16 +307,16 @@ func (_m *MockGitProvider) FindBranch(substring string) (string, bool) {
 	var r0 string
 	var r1 bool
 	if rf, ok := ret.Get(0).(func(string) (string, bool)); ok {
-		return rf(substring)
+		return rf(issueID)
 	}
 	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(substring)
+		r0 = rf(issueID)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) bool); ok {
-		r1 = rf(substring)
+		r1 = rf(issueID)
 	} else {
 		r1 = ret.Get(1).(bool)
 	}
@@ -330,12 +330,12 @@ type MockGitProvider_FindBranch_Call struct {
 }
 
 // FindBranch is a helper method to define mock.On call
-//   - substring string
-func (_e *MockGitProvider_Expecter) FindBranch(substring interface{}) *MockGitProvider_FindBranch_Call {
-	return &MockGitProvider_FindBranch_Call{Call: _e.mock.On("FindBranch", substring)}
+//   - issueID string
+func (_e *MockGitProvider_Expecter) FindBranch(issueID interface{}) *MockGitProvider_FindBranch_Call {
+	return &MockGitProvider_FindBranch_Call{Call: _e.mock.On("FindBranch", issueID)}
 }
 
-func (_c *MockGitProvider_FindBranch_Call) Run(run func(substring string)) *MockGitProvider_FindBranch_Call {
+func (_c *MockGitProvider_FindBranch_Call) Run(run func(issueID string)) *MockGitProvider_FindBranch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})

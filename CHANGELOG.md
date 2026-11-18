@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#98](https://github.com/InditexTech/gh-sherpa/issues/98) Clarify that `max_length` counts the repository name with owner, branch prefix, issue identifier, and separators.
 
+### Fixed
+
+- [#135](https://github.com/InditexTech/gh-sherpa/issues/135) Warn when `max_length` crops the issue identifier of a branch name, add the `keep_issue_id` branch setting to keep it whole, and crop branch names by characters instead of bytes without leaving a trailing `/`, `.` or `.lock`
+- [#135](https://github.com/InditexTech/gh-sherpa/issues/135) Reuse branches without a description when creating a pull request with an explicit issue ID, without matching longer issue numbers
+
 ## [1.9.0] - 2026-10-21
 
 ### Fixed

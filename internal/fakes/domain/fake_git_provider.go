@@ -105,14 +105,16 @@ func (f *FakeGitProvider) GetCurrentBranch() (branch string, err error) {
 	return "", ErrGetCurrentBranch
 }
 
-func (f *FakeGitProvider) FindBranch(substring string) (branch string, exists bool) {
+func (f *FakeGitProvider) FindBranch(issueID string) (branch string, exists bool) {
+	issueSuffix := "/" + issueID
+	issueWithDescription := issueSuffix + "-"
 	for _, b := range f.LocalBranches {
-		if strings.Contains(b, substring) {
+		if strings.HasSuffix(b, issueSuffix) || strings.Contains(b, issueWithDescription) {
 			return b, true
 		}
 	}
 	for _, b := range f.RemoteBranches {
-		if strings.Contains(b, substring) {
+		if strings.HasSuffix(b, issueSuffix) || strings.Contains(b, issueWithDescription) {
 			return b, true
 		}
 	}

@@ -3,8 +3,9 @@ package config
 import "github.com/InditexTech/gh-sherpa/internal/domain/issue_types"
 
 type Branches struct {
-	Prefixes  BranchesPrefixes `validate:"validIssueTypeKeys"`
-	MaxLength int              `mapstructure:"max_length" validate:"gte=0"`
+	Prefixes    BranchesPrefixes `validate:"validIssueTypeKeys"`
+	MaxLength   int              `mapstructure:"max_length" validate:"gte=0"`
+	KeepIssueId bool             `mapstructure:"keep_issue_id"`
 }
 
 type BranchesPrefixes map[issue_types.IssueType]string
