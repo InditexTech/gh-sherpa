@@ -6,6 +6,7 @@ require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
 	github.com/andygrunwald/go-jira v1.17.0
 	github.com/cli/go-gh/v2 v2.17.0
+	github.com/go-viper/mapstructure/v2 v2.4.0
 	github.com/go-playground/validator/v10 v10.30.6
 	github.com/jwalton/gchalk v1.3.0
 	github.com/mitchellh/mapstructure v1.5.0
@@ -28,7 +29,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
 	github.com/go-playground/locales v0.14.2 // indirect
 	github.com/go-playground/universal-translator v0.18.2 // indirect
-	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

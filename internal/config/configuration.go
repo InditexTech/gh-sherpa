@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
+	"regexp"
 	"time"
 
 	"github.com/InditexTech/gh-sherpa/internal/interactive"
 	"github.com/InditexTech/gh-sherpa/internal/logging"
 	"github.com/InditexTech/gh-sherpa/pkg/metadata"
 	"github.com/InditexTech/gh-sherpa/pkg/validator"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 )
 
@@ -23,6 +26,8 @@ const (
 
 //go:embed default-config.yml
 var defaultConfigBuff []byte
+
+var envReference = regexp.MustCompile(`\$\{env\.[A-Za-z_][A-Za-z0-9_]*\}`)
 
 var (
 	cfg *Configuration
@@ -110,12 +115,34 @@ func Initialize(isInteractive bool) error {
 		}
 	}
 
-	// Unmarshal configuration into target struct
-	if err := vip.Unmarshal(&cfg); err != nil {
+	// Expand environment references while decoding, without changing the saved configuration.
+	if err := vip.Unmarshal(&cfg, func(c *mapstructure.DecoderConfig) {
+		c.DecodeHook = mapstructure.ComposeDecodeHookFunc(c.DecodeHook, expandEnvReferences)
+	}); err != nil {
 		return err
 	}
 
 	return cfg.Validate()
+}
+
+func expandEnvReferences(from reflect.Value, _ reflect.Value) (any, error) {
+	if from.Kind() != reflect.String {
+		return from.Interface(), nil
+	}
+
+	var missing string
+	value := envReference.ReplaceAllStringFunc(from.String(), func(ref string) string {
+		name := ref[len("${env.") : len(ref)-1]
+		value, ok := os.LookupEnv(name)
+		if !ok && missing == "" {
+			missing = name
+		}
+		return value
+	})
+	if missing != "" {
+		return nil, fmt.Errorf("environment variable %q referenced in configuration is not set", missing)
+	}
+	return value, nil
 }
 
 func generateConfigurationFile(cfgFile ConfigFile, isInteractive bool) error {

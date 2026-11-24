@@ -116,6 +116,41 @@ func (s *ConfigurationTestSuite) TestGetConfiguration() {
 
 }
 
+func TestInitializeEnvironmentReferences(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	configFile, err := GetConfigFile()
+	require.NoError(t, err)
+	require.NoError(t, os.MkdirAll(configFile.Path, 0o700))
+	const source = `jira:
+  auth:
+    host: https://${env.SHERPA_TEST_JIRA_DOMAIN}/jira
+    token: ${env.SHERPA_TEST_JIRA_PAT}
+`
+	require.NoError(t, os.WriteFile(configFile.getFilePath(), []byte(source), 0o600))
+
+	t.Setenv("SHERPA_TEST_JIRA_DOMAIN", "jira.example.com")
+	t.Run("uses the value verbatim without rewriting the file", func(t *testing.T) {
+		const token = "pat: # literal\n${env.DO_NOT_EXPAND}"
+		t.Setenv("SHERPA_TEST_JIRA_PAT", token)
+
+		require.NoError(t, Initialize(false))
+		auth := GetConfig().Jira.Auth
+		assert.Equal(t, "https://jira.example.com/jira", auth.Host)
+		assert.Equal(t, token, auth.Token)
+
+		data, err := os.ReadFile(configFile.getFilePath())
+		require.NoError(t, err)
+		assert.Equal(t, source, string(data))
+	})
+
+	t.Run("reports an unset variable", func(t *testing.T) {
+		t.Setenv("SHERPA_TEST_JIRA_PAT", "")
+		require.NoError(t, os.Unsetenv("SHERPA_TEST_JIRA_PAT"))
+
+		require.ErrorContains(t, Initialize(false), `environment variable "SHERPA_TEST_JIRA_PAT" referenced in configuration is not set`)
+	})
+}
+
 func TestGetConfigFile(t *testing.T) {
 
 	t.Run("Returns the configuration file", func(t *testing.T) {
