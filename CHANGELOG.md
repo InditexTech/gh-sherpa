@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-11-24
+
 ### Added
 
 - [#209](https://github.com/InditexTech/gh-sherpa/issues/209) Resolve `${env.NAME}` references in YAML configuration values.
@@ -189,7 +191,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [#15](https://github.com/InditexTech/gh-sherpa/issues/15) Improve and update documentation
 
-[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/v1.9.0...HEAD
+[Unreleased]: https://github.com/InditexTech/gh-sherpa/compare/v1.10.0...HEAD
+
+[1.10.0]: https://github.com/InditexTech/gh-sherpa/compare/v1.9.0...v1.10.0
 
 [1.9.0]: https://github.com/InditexTech/gh-sherpa/compare/v1.8.0...v1.9.0
 
