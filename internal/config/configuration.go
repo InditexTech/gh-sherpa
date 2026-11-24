@@ -125,7 +125,7 @@ func Initialize(isInteractive bool) error {
 	return cfg.Validate()
 }
 
-func expandEnvReferences(from reflect.Value, _ reflect.Value) (any, error) {
+func expandEnvReferences(from, _ reflect.Value) (any, error) {
 	if from.Kind() != reflect.String {
 		return from.Interface(), nil
 	}
