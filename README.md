@@ -75,6 +75,18 @@ configuration file** located in `$HOME/.config/sherpa/config.yml` from the
 > If you are **using Jira as issue tracker**, so, the first time you run a command it will ask you to configure Jira
 credentials and then proceed to create the custom configuration file with the provided Jira credentials.
 
+#### Environment variables
+
+Use `${env.NAME}` in a YAML value to read a variable from Sherpa's environment. For example, to keep your Jira personal access token out of the config file:
+
+```yaml
+jira:
+  auth:
+    token: ${env.JIRA_PAT}
+```
+
+Export `JIRA_PAT` before running Sherpa. Variable names are case-sensitive, and an unset variable causes a configuration error. References can also appear inside a value, such as `https://${env.JIRA_HOST}/jira`. Sherpa resolves them in memory without rewriting the file.
+
 ## Usage
 
 After installing this extension in your development environment, you can know the available commands in the

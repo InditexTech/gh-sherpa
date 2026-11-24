@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- [#209](https://github.com/InditexTech/gh-sherpa/issues/209) Resolve `${env.NAME}` references in YAML configuration values.
+
 ### Documentation
 
 - [#98](https://github.com/InditexTech/gh-sherpa/issues/98) Clarify the combined `max_length` calculation, truncation warnings, and the `keep_issue_id` opt-in.
